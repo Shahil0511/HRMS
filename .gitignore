@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# TypeScript build output
+dist/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Debug
+.vscode/
+.idea/
+
+# npm package lock
+package-lock.json
+
+# Yarn lock (if you're using Yarn)
+yarn.lock
+
+# Optional: If you're using any test frameworks, add their build files
+coverage/
+
+# OS specific files
+.DS_Store
+Thumbs.db
