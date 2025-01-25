@@ -51,12 +51,7 @@ const Auth = () => {
         console.log("Form Data:", data);
 
         try {
-            // Post data to the backend
-            const response = await axios.post(`${API_BASE_URL}/auth/signup`, data, {
-                timeout: 10000, // Optional: Add a timeout for requests
-            });
-
-            // Handle successful response
+            const response = await axios.post(`${API_BASE_URL}/auth/signup`, data);
             toast.success("Signup successful! You can now log in.", {
                 position: "top-right",
                 autoClose: 3000,
@@ -64,27 +59,27 @@ const Auth = () => {
 
             console.log("Signup Successful:", response.data);
 
-            // Optionally, reset the form and toggle to login mode
+            // Reset form and toggle to login mode
             reset();
             setIsLogin(true);
         } catch (error: any) {
-            // Handle errors from the server or network
+            // Detailed error handling
             if (error.response) {
-                // Server responded with a status other than 2xx
+                // Server responded with an error
                 console.error("Server Error:", error.response.data);
                 toast.error(error.response.data.message || "Signup failed. Please try again.", {
                     position: "top-right",
                     autoClose: 5000,
                 });
             } else if (error.request) {
-                // Request was made but no response received
+                // Request was made, but no response
                 console.error("No Response:", error.request);
                 toast.error("No response from the server. Please try again later.", {
                     position: "top-right",
                     autoClose: 5000,
                 });
             } else {
-                // Something else caused the error
+                // General error
                 console.error("Error:", error.message);
                 toast.error("An unexpected error occurred. Please try again.", {
                     position: "top-right",
@@ -93,6 +88,7 @@ const Auth = () => {
             }
         }
     };
+
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-r from-gray-900 to-indigo-900 text-white">
