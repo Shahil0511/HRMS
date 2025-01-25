@@ -1,6 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { User } from "../models/UserSchema";
+import { loginUser } from "../services/authServices";
+import { HttpStatus } from "../utils/httpStatus";
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
@@ -33,5 +35,23 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error("Error in signup:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+    const token = await loginUser(email, password);
+
+    res.status(HttpStatus.OK).json({
+      message: "Login Successful",
+      token,
+    });
+  } catch (error) {
+    next(error);
   }
 };
