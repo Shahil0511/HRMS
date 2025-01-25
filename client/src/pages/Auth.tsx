@@ -4,9 +4,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = "http://localhost:8000/api";
-
 
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -25,6 +25,7 @@ const signupSchema = loginSchema
 
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
+    const navigate = useNavigate();
 
     const {
         control,
@@ -48,47 +49,31 @@ const Auth = () => {
     const toggleForm = () => setIsLogin(!isLogin);
 
     const onSubmit = async (data: any) => {
-        console.log("Form Data:", data);
-
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/signup`, data);
-            toast.success("Signup successful! You can now log in.", {
-                position: "top-right",
-                autoClose: 3000,
-            });
+            const endpoint = isLogin ? "login" : "signup";
+            const response = await axios.post(`${API_BASE_URL}/auth/${endpoint}`, data);
 
-            console.log("Signup Successful:", response.data);
+            if (isLogin) {
+                toast.success("Login successful!", { position: "top-right", autoClose: 3000 });
+                localStorage.setItem("token", response.data.token);
 
-            // Reset form and toggle to login mode
-            reset();
-            setIsLogin(true);
-        } catch (error: any) {
-            // Detailed error handling
-            if (error.response) {
-                // Server responded with an error
-                console.error("Server Error:", error.response.data);
-                toast.error(error.response.data.message || "Signup failed. Please try again.", {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
-            } else if (error.request) {
-                // Request was made, but no response
-                console.error("No Response:", error.request);
-                toast.error("No response from the server. Please try again later.", {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                // Navigate to the employee dashboard
+                navigate("/employee/dashboard", { replace: true });
             } else {
-                // General error
-                console.error("Error:", error.message);
-                toast.error("An unexpected error occurred. Please try again.", {
+                toast.success("Signup successful! You can now log in.", {
                     position: "top-right",
-                    autoClose: 5000,
+                    autoClose: 3000,
                 });
+                reset();
+                setIsLogin(true);
             }
+        } catch (error: any) {
+            const message =
+                error.response?.data?.message ||
+                (isLogin ? "Login failed. Please try again." : "Signup failed. Please try again.");
+            toast.error(message, { position: "top-right", autoClose: 5000 });
         }
     };
-
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-r from-gray-900 to-indigo-900 text-white">

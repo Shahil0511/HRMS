@@ -17,7 +17,7 @@ export const validateSignup = (
   }
 
   if (password.length < 6) {
-    res.status(400).json({ message: "Passord must be at least 6 characters" });
+    res.status(400).json({ message: "Password must be at least 6 characters" });
     return;
   }
   next();
