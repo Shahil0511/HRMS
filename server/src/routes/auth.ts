@@ -1,32 +1,15 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import { signup, login } from "../controllers/authController";
 import { validateSignup } from "../middlewares/validateSignup";
 import { loginValidator } from "../validators/authValidator";
-import { validationResult } from "express-validator";
-import { errorHandler } from "../middlewares/errorMiddleware";
+import { handleValidationErrors } from "../middlewares/handleValidationErrors";
 
 const router = express.Router();
 
+// User signup
 router.post("/signup", validateSignup, signup);
 
-router.post(
-  "/login",
-  loginValidator,
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
-      return;
-    }
-
-    try {
-      await login(req, res, next);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-router.use(errorHandler);
+// User login
+router.post("/login", loginValidator, handleValidationErrors, login);
 
 export default router;
