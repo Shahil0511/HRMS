@@ -2,6 +2,12 @@ import bcrypt from "bcryptjs";
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/UserSchema";
 import { loginUser } from "../services/authServices";
+import jwt from "jsonwebtoken";
+
+interface DecodedToken {
+  id: string;
+  role: "employee" | "admin";
+}
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
@@ -36,9 +42,13 @@ export const login = async (
     const { email, password } = req.body;
     const token = await loginUser(email, password);
 
+    // Decode the JWT token and type it using the DecodedToken interface
+    const decodedToken = jwt.decode(token) as DecodedToken;
+
     res.status(200).json({
       message: "Login Successful",
       token,
+      role: decodedToken.role,
     });
   } catch (error) {
     next(error);
