@@ -42,7 +42,7 @@ const Sidebar = () => {
             {/* Sidebar Links */}
             <div className="flex-1 mt-5">
                 <NavLink
-                    to="/dashboard"
+                    to="/admin/dashboard"
                     className={({ isActive }) =>
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }
@@ -53,7 +53,7 @@ const Sidebar = () => {
                     </span>
                 </NavLink>
                 <NavLink
-                    to="/employees"
+                    to="/admin/employee"
                     className={({ isActive }) =>
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }
@@ -64,7 +64,7 @@ const Sidebar = () => {
                     </span>
                 </NavLink>
                 <NavLink
-                    to="/leaves"
+                    to="/admin/leaves"
                     className={({ isActive }) =>
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }
@@ -75,7 +75,7 @@ const Sidebar = () => {
                     </span>
                 </NavLink>
                 <NavLink
-                    to="/attendance"
+                    to="/admin/attendance"
                     className={({ isActive }) =>
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }
@@ -86,7 +86,7 @@ const Sidebar = () => {
                     </span>
                 </NavLink>
                 <NavLink
-                    to="/payroll"
+                    to="/admin/payroll"
                     className={({ isActive }) =>
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }
@@ -97,7 +97,7 @@ const Sidebar = () => {
                     </span>
                 </NavLink>
                 <NavLink
-                    to="/settings"
+                    to="/admin/settings"
                     className={({ isActive }) =>
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }

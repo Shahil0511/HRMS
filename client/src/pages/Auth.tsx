@@ -135,9 +135,9 @@ const Auth = () => {
 
                 // Redirect based on role
                 if (role === "admin") {
-                    navigate("/admin/dashboard", { replace: true });
+                    navigate("/admin", { replace: true });
                 } else {
-                    navigate("/employee/dashboard", { replace: true });
+                    navigate("/employee", { replace: true });
                 }
             } else {
                 // Handle successful signup
