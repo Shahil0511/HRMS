@@ -11,6 +11,9 @@ import Leaves from "./components/AdminDashboard/Leaves";
 import Attendance from "./components/AdminDashboard/Attendance";
 import Payroll from "./components/AdminDashboard/Payroll";
 import Setting from "./components/AdminDashboard/Setting";
+import AddEmployee from "./components/AdminDashboard/adminUtils/AddEmployee";
+import Department from "./components/AdminDashboard/Department";
+import AddDepartment from "./components/AdminDashboard/adminUtils/AddDepartment";
 
 
 const App = () => {
@@ -22,7 +25,11 @@ const App = () => {
         <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
         <Route path="/admin" element={<AdminDashboard />}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/department" element={<Department />} />
+          <Route path="/admin/department/add-department" element={<AddDepartment />} />
+
           <Route path="/admin/employee" element={<Employee />} />
+          <Route path="/admin/employee/add-employe" element={<AddEmployee />} />
           <Route path="/admin/leaves" element={<Leaves />} />
           <Route path="/admin/attendance" element={<Attendance />} />
           <Route path="/admin/payroll" element={<Payroll />} />
