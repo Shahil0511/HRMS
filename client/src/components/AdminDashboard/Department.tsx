@@ -13,7 +13,7 @@ const Department: React.FC = () => {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 7;
     const navigate = useNavigate();
 
     // Fetch departments from the backend
@@ -56,12 +56,12 @@ const Department: React.FC = () => {
     );
 
     return (
-        <div className="p-6 bg-gradient-to-r from-gray-900 to-indigo-900 text-white shadow-lg">
+        <div className="p-8 bg-gradient-to-r from-gray-900 to-indigo-900 text-white shadow-lg">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <button
                     onClick={handleAddDepartment}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    className="bg-blue-500 text-white px-4 py-3 rounded hover:bg-blue-600"
                 >
                     Add Department
                 </button>
@@ -122,8 +122,8 @@ const Department: React.FC = () => {
                             key={page}
                             onClick={() => handlePageChange(page)}
                             className={`px-3 py-1 rounded ${page === currentPage
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-200 hover:bg-gray-300"
+                                ? "bg-indigo-700 text-white"
+                                : "bg-blue-500 hover:bg-blue-600"
                                 }`}
                         >
                             {page}
