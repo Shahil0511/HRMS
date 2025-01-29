@@ -1,10 +1,10 @@
-import { Request, RequestHandler, Response } from "express";
+import { Request, Response } from "express";
 import { Department } from "../models/DepartmentSchema";
 
 // @desc    Create a new department
 // @route   POST /api/departments
 // @access  Admin Only
-export const addDepartment: RequestHandler = async (
+export const addDepartment = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -34,15 +34,23 @@ export const addDepartment: RequestHandler = async (
   }
 };
 
-// @desc    Get all departments
+// @desc    Get all departments with optional search filter
 // @route   GET /api/departments
 // @access  Public
-export const getDepartments: RequestHandler = async (
+export const getDepartments = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const departments = await Department.find().lean();
+    const { search } = req.query; // Get the search query from the request
+
+    let filter = {};
+    if (search) {
+      // If search query is present, filter by departmentName
+      filter = { departmentName: { $regex: search, $options: "i" } }; // Case-insensitive regex search
+    }
+
+    const departments = await Department.find(filter).lean();
 
     res.status(200).json({
       message: "Departments retrieved successfully",
