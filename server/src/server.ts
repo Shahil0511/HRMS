@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { connectDb } from "./lib/db";
 import authRoutes from "./routes/auth";
+import departmentRoutes from "./routes/department";
 import cors from "cors";
 
 // Load environment variables
@@ -19,6 +20,7 @@ app.use(
 );
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/", departmentRoutes);
 
 // Start server
 const startServer = async () => {

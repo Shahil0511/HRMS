@@ -10,6 +10,7 @@ import {
     FaCog,
     FaAngleDoubleRight,
     FaAngleDoubleLeft,
+    FaLayerGroup
 } from "react-icons/fa";
 
 const Sidebar = () => {
@@ -58,7 +59,7 @@ const Sidebar = () => {
                         `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                     }
                 >
-                    <FaTachometerAlt size={22} />
+                    < FaLayerGroup size={22} />
                     <span className={`${isCollapsed ? "hidden" : "block"} font-medium text-sm`}>
                         Department
                     </span>

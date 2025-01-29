@@ -94,7 +94,7 @@ const AddEmployee: React.FC = () => {
         <div>
             <form
                 onSubmit={handleSubmit}
-                className="bg-gradient-to-l from-indigo-900 to-blue-900 px-8 py-5 shadow-lg text-white"
+                className="bg-gradient-to-r from-gray-900 to-indigo-900 px-8 py-5 shadow-lg text-white"
             >
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

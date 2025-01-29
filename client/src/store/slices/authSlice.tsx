@@ -1,8 +1,8 @@
-// src/redux/slices/auth/authSlice.ts
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { User, AuthPayload } from "../../../src/types/common";
 
-// Define the AuthState interface
+
 interface AuthState {
     isLoading: boolean;
     token: string | null;
