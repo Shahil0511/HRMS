@@ -16,40 +16,45 @@ const Department: React.FC = () => {
     const itemsPerPage = 7;
     const navigate = useNavigate();
 
-    // Fetch departments from the backend
+    // Fetch departments from the backend with search query
     const fetchDepartments = async (search: string) => {
         try {
             const fetchedDepartments = await getDepartments(search);
             if (fetchedDepartments && Array.isArray(fetchedDepartments.departments)) {
                 setDepartments(fetchedDepartments.departments);
-                setFilteredDepartments(fetchedDepartments.departments);
+                setFilteredDepartments(fetchedDepartments.departments); // Filtered departments initially same as fetched
             } else {
                 console.error("Fetched data is not an array:", fetchedDepartments);
-                setFilteredDepartments([]);
+                setFilteredDepartments([]); // Reset if data is not an array
             }
         } catch (error) {
             console.error("Error fetching departments:", error);
-            setFilteredDepartments([]);
+            setFilteredDepartments([]); // Reset in case of an error
         }
     };
 
+    // Initial fetch of departments
     useEffect(() => {
-        fetchDepartments("");
+        fetchDepartments(""); // Empty query fetches all departments
     }, []);
 
+    // Handle search
     const handleSearch = () => {
-        fetchDepartments(searchQuery);
-        setCurrentPage(1);
+        fetchDepartments(searchQuery); // Fetch departments with search query
+        setCurrentPage(1); // Reset to first page on new search
     };
 
+    // Navigate to the Add Department page
     const handleAddDepartment = () => {
         navigate("/admin/department/add-department");
     };
 
+    // Handle page change for pagination
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
 
+    // Slice departments for pagination
     const paginatedDepartments = filteredDepartments.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -95,16 +100,29 @@ const Department: React.FC = () => {
                     </thead>
                     <tbody>
                         {paginatedDepartments.map((department, index) => (
-                            <tr key={department._id} className="bg-gradient-to-r from-gray-900 to-indigo-900 text-white">
+                            <tr
+                                key={department._id}
+                                className="bg-gradient-to-r from-gray-900 to-indigo-900 text-white"
+                            >
                                 <td className="border border-gray-300 px-4 py-2">
                                     {(currentPage - 1) * itemsPerPage + index + 1}
                                 </td>
-                                <td className="border border-gray-300 px-4 py-2">{department.departmentName}</td>
-                                <td className="border border-gray-300 px-4 py-2">{department.headOfDepartment}</td>
                                 <td className="border border-gray-300 px-4 py-2">
-                                    <button className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 mr-2">View</button>
-                                    <button className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 mr-2">Edit</button>
-                                    <button className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
+                                    {department.departmentName}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2">
+                                    {department.headOfDepartment}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2">
+                                    <button className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 mr-2">
+                                        View
+                                    </button>
+                                    <button className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 mr-2">
+                                        Edit
+                                    </button>
+                                    <button className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -117,13 +135,16 @@ const Department: React.FC = () => {
             {/* Pagination */}
             {filteredDepartments.length > 0 && (
                 <div className="flex justify-center mt-4 gap-2">
-                    {Array.from({ length: Math.ceil(filteredDepartments.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                    {Array.from(
+                        { length: Math.ceil(filteredDepartments.length / itemsPerPage) },
+                        (_, i) => i + 1
+                    ).map((page) => (
                         <button
                             key={page}
                             onClick={() => handlePageChange(page)}
                             className={`px-3 py-1 rounded ${page === currentPage
-                                ? "bg-indigo-700 text-white"
-                                : "bg-blue-500 hover:bg-blue-600"
+                                    ? "bg-indigo-700 text-white"
+                                    : "bg-blue-500 hover:bg-blue-600"
                                 }`}
                         >
                             {page}

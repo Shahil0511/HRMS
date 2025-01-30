@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { getAllDepartments } from "../../../services/departmentServices";
+import { addEmployee } from "../../../services/employeeServices";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom"; // Importing useNavigate for navigation
 
+// Improved InputField component
 type InputFieldProps = {
     label: string;
     id: string;
@@ -9,7 +13,7 @@ type InputFieldProps = {
     value: string | undefined;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     required?: boolean;
-    options?: string[];
+    options?: { name: string; id: string }[];  // For select type, expect an array of objects with name and id
 };
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -20,14 +24,11 @@ const InputField: React.FC<InputFieldProps> = ({
     value,
     onChange,
     required = false,
-    options = [],
+    options = [],  // For select type, an array of objects { name, id }
 }) => {
     return (
         <div>
-            <label
-                htmlFor={id}
-                className="block text-sm text-white font-bold mb-2"
-            >
+            <label htmlFor={id} className="block text-sm text-white font-bold mb-2">
                 {label}
             </label>
             {type === "select" ? (
@@ -40,11 +41,15 @@ const InputField: React.FC<InputFieldProps> = ({
                     required={required}
                 >
                     <option value="">Select {label}</option>
-                    {options.map((option, index) => (
-                        <option key={index} value={option}>
-                            {option}
-                        </option>
-                    ))}
+                    {options.length === 0 ? (
+                        <option disabled>Loading...</option>
+                    ) : (
+                        options.map((option, index) => (
+                            <option key={index} value={option.id}>
+                                {option.name}
+                            </option>
+                        ))
+                    )}
                 </select>
             ) : (
                 <input
@@ -70,28 +75,29 @@ const AddEmployee: React.FC = () => {
         phoneNumber: "",
         email: "",
         address: "",
-        department: "",
+        department: "",  // department will store ObjectId here
         designation: "",
-        image: null as File | null,
     });
 
-    // Departments state
-    const [departments, setDepartments] = useState<string[]>([]);
+    const [departments, setDepartments] = useState<{ name: string; id: string }[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate(); // Using useNavigate for navigation
 
-
+    // Fetch departments
     useEffect(() => {
         const fetchDepartments = async () => {
             setLoading(true);
             try {
                 const response = await getAllDepartments();
-
-
-                if (response && response.departments && Array.isArray(response.departments)) {
-                    setDepartments(response.departments.map((dept: { departmentName: any; }) => dept.departmentName)); // Extract department names
+                if (response?.departments && Array.isArray(response.departments)) {
+                    const deptData = response.departments.map((dept: { departmentName: string; _id: string }) => ({
+                        name: dept.departmentName,
+                        id: dept._id,
+                    }));
+                    setDepartments(deptData);
                 } else {
-                    setError("Departments data is not an array.");
+                    setError("Departments data is not in the expected format.");
                 }
             } catch (err) {
                 setError("Failed to load departments");
@@ -101,22 +107,43 @@ const AddEmployee: React.FC = () => {
         };
 
         fetchDepartments();
-    }, []); // Empty array ensures the effect runs only once
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setFormData({ ...formData, image: e.target.files[0] });
+        if (name === "department") {
+            const selectedDept = departments.find((dept) => dept.id === value);
+            setFormData({ ...formData, [name]: selectedDept ? selectedDept.id : "" }); // Store ObjectId
+        } else {
+            setFormData({ ...formData, [name]: value });
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log(formData);
+        setError(null); // Reset any previous errors
+
+        try {
+            const response = await addEmployee(formData);
+            toast.success("Employee added successfully!"); // Success toast notification
+            console.log("Employee added successfully:", response);
+            setFormData({ // Clear the form data
+                firstName: "",
+                lastName: "",
+                gender: "",
+                dob: "",
+                phoneNumber: "",
+                email: "",
+                address: "",
+                department: "",
+                designation: "",
+            });
+            navigate("/admin/employee"); // Redirect to /admin/employee
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            setError(errorMessage);
+            toast.error(`Error: ${errorMessage}`);  // Error toast notification
+        }
     };
 
     return (
@@ -125,6 +152,7 @@ const AddEmployee: React.FC = () => {
                 onSubmit={handleSubmit}
                 className="bg-gradient-to-r from-gray-900 to-indigo-900 px-8 py-5 shadow-lg text-white"
             >
+                {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField
                         label="First Name"
@@ -152,7 +180,8 @@ const AddEmployee: React.FC = () => {
                         value={formData.gender}
                         onChange={handleChange}
                         required
-                        options={["Male", "Female", "Other"]}
+                        options={[{ name: "Male", id: "Male" }, { name: "Female", id: "Female" }, { name: "Other", id: "Other" }]}
+
                     />
                     <InputField
                         label="Date of Birth"
@@ -181,33 +210,15 @@ const AddEmployee: React.FC = () => {
                         onChange={handleChange}
                         required
                     />
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <InputField
-                            label="Address"
-                            id="address"
-                            name="address"
-                            type="text"
-                            value={formData.address}
-                            onChange={handleChange}
-                            required
-                        />
-                        <div>
-                            <label
-                                htmlFor="image"
-                                className="block text-sm font-medium mb-2"
-                            >
-                                Upload Image
-                            </label>
-                            <input
-                                type="file"
-                                id="image"
-                                name="image"
-                                accept="image/*"
-                                onChange={handleImageChange}
-                                className="block w-full text-sm py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                    </div>
+                    <InputField
+                        label="Address"
+                        id="address"
+                        name="address"
+                        type="text"
+                        value={formData.address}
+                        onChange={handleChange}
+                        required
+                    />
                     <InputField
                         label="Department"
                         id="department"
@@ -216,7 +227,7 @@ const AddEmployee: React.FC = () => {
                         value={formData.department}
                         onChange={handleChange}
                         required
-                        options={loading ? ["Loading..."] : departments}
+                        options={loading ? [] : departments}
                     />
                     <InputField
                         label="Designation"

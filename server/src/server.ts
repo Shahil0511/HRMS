@@ -3,7 +3,10 @@ import dotenv from "dotenv";
 import { connectDb } from "./lib/db";
 import authRoutes from "./routes/auth";
 import departmentRoutes from "./routes/department";
+import employeeRoutes from "./routes/employee";
 import cors from "cors";
+import multer from "multer";
+const upload = multer();
 
 // Load environment variables
 dotenv.config();
@@ -18,9 +21,13 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
+app.use(upload.none());
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/", departmentRoutes);
+app.use("/api/", employeeRoutes);
 
 // Start server
 const startServer = async () => {
