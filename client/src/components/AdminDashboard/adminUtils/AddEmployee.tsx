@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getAllDepartments } from "../../../services/departmentServices";
 
 type InputFieldProps = {
     label: string;
@@ -8,7 +9,7 @@ type InputFieldProps = {
     value: string | undefined;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     required?: boolean;
-    options?: string[]; // For select fields
+    options?: string[];
 };
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -25,7 +26,7 @@ const InputField: React.FC<InputFieldProps> = ({
         <div>
             <label
                 htmlFor={id}
-                className="block text-sm  text-white font-bold mb-2"
+                className="block text-sm text-white font-bold mb-2"
             >
                 {label}
             </label>
@@ -35,7 +36,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className="block w-full  py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-blue-950"
+                    className="block w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-blue-950"
                     required={required}
                 >
                     <option value="">Select {label}</option>
@@ -74,6 +75,34 @@ const AddEmployee: React.FC = () => {
         image: null as File | null,
     });
 
+    // Departments state
+    const [departments, setDepartments] = useState<string[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            setLoading(true);
+            try {
+                const response = await getAllDepartments();
+
+
+                if (response && response.departments && Array.isArray(response.departments)) {
+                    setDepartments(response.departments.map((dept: { departmentName: any; }) => dept.departmentName)); // Extract department names
+                } else {
+                    setError("Departments data is not an array.");
+                }
+            } catch (err) {
+                setError("Failed to load departments");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDepartments();
+    }, []); // Empty array ensures the effect runs only once
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
@@ -96,7 +125,6 @@ const AddEmployee: React.FC = () => {
                 onSubmit={handleSubmit}
                 className="bg-gradient-to-r from-gray-900 to-indigo-900 px-8 py-5 shadow-lg text-white"
             >
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <InputField
                         label="First Name"
@@ -188,7 +216,7 @@ const AddEmployee: React.FC = () => {
                         value={formData.department}
                         onChange={handleChange}
                         required
-                        options={["HR", "Engineering", "Marketing", "Sales"]}
+                        options={loading ? ["Loading..."] : departments}
                     />
                     <InputField
                         label="Designation"

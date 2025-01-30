@@ -50,3 +50,12 @@ export const getDepartments = async (searchQuery: string) => {
     throw error;
   }
 };
+export const getAllDepartments = async () => {
+  try {
+    const response = await axios.get(API_URL); // No parameters are passed
+    return response?.data; // Assuming response.data contains the department list
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+    throw error;
+  }
+};
