@@ -1,18 +1,20 @@
 // AdminDashboard.jsx
-import DashboardNavbar from "../components/AdminDashboard/DashboardNavbar";
-import Sidebar from "../components/AdminDashboard/Sidebar";
+import DashboardNavbar from "../components/common/DashboardNavbar";
+import Sidebar from "../components/common/Sidebar";
 import { Outlet } from "react-router-dom";
 
 const AdminDashboard = () => {
     return (
         <div className="flex h-screen">
             {/* Sidebar */}
-            <Sidebar />
+            <Sidebar role="admin" />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Navbar */}
-                <DashboardNavbar />
+                <DashboardNavbar
+                    user={{ name: "Admin User", role: "admin" }}
+                />
 
                 {/* Page Content */}
                 <div className="flex-1 ">

@@ -1,9 +1,27 @@
-
+import DashboardNavbar from "../components/common/DashboardNavbar";
+import Sidebar from "../components/common/Sidebar";
+import { Outlet } from "react-router-dom";
 
 const EmployeeDashboard = () => {
     return (
-        <div>EmployeeDashboard</div>
-    )
-}
+        <div className="flex h-screen">
+            {/* Sidebar */}
+            <Sidebar role="employee" />
 
-export default EmployeeDashboard
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col">
+                {/* Navbar */}
+                <DashboardNavbar
+                    user={{ name: "Employee User", role: "employee" }}
+                />
+
+                {/* Page Content */}
+                <div className="flex-1 overflow-auto">
+                    <Outlet />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default EmployeeDashboard;
