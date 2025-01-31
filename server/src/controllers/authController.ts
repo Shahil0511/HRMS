@@ -9,6 +9,9 @@ interface DecodedToken {
   role: "employee" | "admin";
 }
 
+/**
+ * User signup controller
+ */
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
 
@@ -33,6 +36,9 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * User login controller
+ */
 export const login = async (
   req: Request,
   res: Response,
@@ -42,8 +48,7 @@ export const login = async (
     const { email, password } = req.body;
     const token = await loginUser(email, password);
 
-    // Decode the JWT token and type it using the DecodedToken interface
-    const decodedToken = jwt.decode(token) as DecodedToken;
+    const decodedToken = jwt.decode(token) as { id: string; role: string };
 
     res.status(200).json({
       message: "Login Successful",

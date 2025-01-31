@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { Department } from "../models/DepartmentSchema";
 
-// @desc    Create a new department
-// @route   POST /api/departments
-// @access  Admin Only
+/**
+ * Create a new department
+ */
 export const addDepartment = async (
   req: Request,
   res: Response
@@ -11,7 +11,6 @@ export const addDepartment = async (
   try {
     const { departmentName, description, headOfDepartment } = req.body;
 
-    // Check if department already exists
     const existingDepartment = await Department.findOne({ departmentName });
     if (existingDepartment) {
       res.status(400).json({ message: "Department already exists" });
@@ -29,26 +28,24 @@ export const addDepartment = async (
       department: newDepartment,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating department:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-// @desc    Get all departments with optional search filter
-// @route   GET /api/departments
-// @access  Public
+/**
+ * Get all departments with optional search filter
+ */
 export const getDepartments = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const { search } = req.query; // Get the search query from the request
+    const { search } = req.query;
 
-    let filter = {};
-    if (search) {
-      // If search query is present, filter by departmentName
-      filter = { departmentName: { $regex: search, $options: "i" } }; // Case-insensitive regex search
-    }
+    const filter = search
+      ? { departmentName: { $regex: search, $options: "i" } }
+      : {};
 
     const departments = await Department.find(filter).lean();
 
@@ -57,7 +54,7 @@ export const getDepartments = async (
       departments,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching departments:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
