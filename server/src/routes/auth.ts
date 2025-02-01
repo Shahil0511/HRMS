@@ -6,10 +6,10 @@ import { handleValidationErrors } from "../middlewares/handleValidationErrors";
 
 const router = express.Router();
 
-// User signup
+// User signup route
 router.post("/signup", validateSignup, signup);
 
-// User login
+// User login route
 router.post("/login", loginValidator, handleValidationErrors, login);
 
 export default router;

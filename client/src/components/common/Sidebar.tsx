@@ -41,8 +41,8 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
 
     return (
         <div
-            className={`h-screen bg-indigo-900 text-gray-200 flex flex-col ${isCollapsed ? "w-16" : "w-72"
-                } transition-all duration-600 ease-in-out shadow-lg sm:relative`}
+            className={`h-screen bg-indigo-900 text-gray-200 flex flex-col ${isCollapsed ? "w-16" : "w-72"} 
+                        transition-all duration-600 ease-in-out shadow-lg sm:relative`}
         >
             {/* Sidebar Header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-700">
@@ -54,6 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="text-gray-400 hover:text-white focus:outline-none"
+                    aria-label="Toggle Sidebar"
                 >
                     {isCollapsed ? (
                         <FaAngleDoubleRight size={24} />
@@ -70,7 +71,8 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
                         key={to}
                         to={to}
                         className={({ isActive }) =>
-                            `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
+                            `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md 
+                             ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                         }
                     >
                         {icon}

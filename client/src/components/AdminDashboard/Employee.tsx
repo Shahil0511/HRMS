@@ -68,7 +68,7 @@ const EmployeeDashboard: React.FC = () => {
     };
 
     const handleAddEmployee = () => {
-        navigate("/admin/employee/add-employee");
+        navigate("/admin/add-employee");
     };
 
     const handlePageChange = (page: number) => {

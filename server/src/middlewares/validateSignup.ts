@@ -1,27 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { body } from "express-validator";
 
-export const validateSignup = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  const { name, email, password } = req.body;
-
-  if (!name || !email || !password) {
-    res.status(400).json({ message: "All Fields are Required" });
-    return;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    res.status(400).json({ message: "Invalid email format" });
-    return;
-  }
-
-  if (password.length < 6) {
-    res.status(400).json({ message: "Password must be at least 6 characters" });
-    return;
-  }
-
-  next();
-};
+export const validateSignup = [
+  body("name").notEmpty().withMessage("Name is required"),
+  body("email").isEmail().withMessage("Invalid email format").normalizeEmail(),
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters"),
+];

@@ -4,6 +4,7 @@ import { connectDb } from "./lib/db";
 import authRoutes from "./routes/auth";
 import departmentRoutes from "./routes/department";
 import employeeRoutes from "./routes/employee";
+import attendanceRoutes from "./routes/attendance";
 import cors from "cors";
 import multer from "multer";
 const upload = multer();
@@ -28,6 +29,7 @@ app.use(upload.none());
 app.use("/api/auth", authRoutes);
 app.use("/api/", departmentRoutes);
 app.use("/api/", employeeRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // Start server
 const startServer = async () => {

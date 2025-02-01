@@ -13,8 +13,7 @@ export const isAdmin = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Extract Bearer token
-  const token = req.headers.authorization?.split(" ")[1]?.trim();
+  const token = req.headers.authorization?.split(" ")[1]; // Get the token
 
   if (!token) {
     res.status(401).json({ message: "Authorization token is required" });
@@ -22,7 +21,7 @@ export const isAdmin = async (
   }
 
   try {
-    // Verify JWT Token
+    // Verify token and decode the user
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET || "secret"
@@ -31,10 +30,11 @@ export const isAdmin = async (
     const userId = decoded.id;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      res.status(401).json({ message: "Invalid token" });
+      res.status(400).json({ message: "Invalid token" });
       return;
     }
 
+    // Check if the user exists
     const user = await User.findById(userId).select("role");
 
     if (!user) {
@@ -47,9 +47,12 @@ export const isAdmin = async (
       return;
     }
 
+    // Attach the user to the request object for further use
     req.user = user;
     next();
-  } catch (error: any) {
+  } catch (error) {
+    console.error("Error verifying token:", error);
     res.status(401).json({ message: "Invalid or expired token" });
+    return;
   }
 };

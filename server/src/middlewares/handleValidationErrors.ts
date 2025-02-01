@@ -7,7 +7,6 @@ export const handleValidationErrors = (
   next: NextFunction
 ): void => {
   const errors = validationResult(req);
-
   if (!errors.isEmpty()) {
     res.status(400).json({
       success: false,
@@ -16,6 +15,5 @@ export const handleValidationErrors = (
     });
     return;
   }
-
   next();
 };

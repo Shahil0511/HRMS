@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { loginUser, signupUser } from "../services/authServices";
 import { RootState } from "../store/store";
 
+// Zod schema for form validation
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -28,6 +29,7 @@ const signupSchema = loginSchema
         message: "Passwords must match",
     });
 
+// Input field component for reusable form field rendering
 const InputField: React.FC<{
     name: string;
     type: string;
@@ -59,7 +61,7 @@ const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isLoading } = useSelector((state: RootState) => state.auth);
+    const { isLoading, isLoggedIn, role } = useSelector((state: RootState) => state.auth);
 
     const {
         control,
@@ -76,21 +78,30 @@ const Auth = () => {
         },
     });
 
+    // Redirect user if they're already logged in
     useEffect(() => {
+        // Checking if user is logged in
         const token = localStorage.getItem("token");
-        if (token) {
-            const role = localStorage.getItem("role");
+        const role = localStorage.getItem("role");
+
+        if (token && role) {
+            // We check local storage to synchronize login
+            dispatch(loginSuccess({
+                token,
+                role,
+                user: JSON.parse(localStorage.getItem("user") || "{}")
+            }));
+
+            // Navigate based on role
             if (role === "admin") {
                 navigate("/admin/dashboard", { replace: true });
-            } else {
+            } else if (role === "employee") {
                 navigate("/employee/dashboard", { replace: true });
+            } else {
+                navigate("/404", { replace: true });
             }
         }
-    }, [navigate]);
-
-    useEffect(() => {
-        reset();
-    }, [isLogin, reset]);
+    }, [dispatch, navigate]);
 
     const toggleForm = () => setIsLogin(!isLogin);
 
@@ -99,6 +110,7 @@ const Auth = () => {
         try {
             let response;
 
+            // Handle login or signup based on the current form
             if (isLogin) {
                 const loginData = { email: data.email, password: data.password };
                 response = await loginUser(loginData);
@@ -117,22 +129,24 @@ const Auth = () => {
                 toast.success("Login successful!");
                 localStorage.setItem("token", token);
                 localStorage.setItem("role", role);
+                localStorage.setItem("user", JSON.stringify(user)); // Save user data in localStorage
                 dispatch(loginSuccess({ token, user, role }));
 
+                // Redirect based on role
                 if (role === "admin") {
                     navigate("/admin/dashboard", { replace: true });
-                } else {
+                } else if (role === "employee") {
                     navigate("/employee/dashboard", { replace: true });
+                } else {
+                    navigate("/404", { replace: true }); // Invalid role, redirect to 404
                 }
             } else {
                 toast.success("Signup successful! You can now log in.");
                 reset();
-                setIsLogin(true);
+                setIsLogin(true); // Switch to login form after successful signup
             }
         } catch (error: any) {
             toast.error(error.response?.data?.message || (isLogin ? "Login failed." : "Signup failed."));
-            dispatch(loginFailure());
-        } finally {
             dispatch(loginFailure());
         }
     };

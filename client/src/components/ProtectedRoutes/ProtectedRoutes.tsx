@@ -1,3 +1,4 @@
+// ProtectedRoute.tsx
 import { ReactNode, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
@@ -11,24 +12,24 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     const dispatch = useDispatch();
-    const { token, role } = useSelector((state: RootState) => state.auth);
+    const { isLoggedIn, role } = useSelector((state: RootState) => state.auth);
 
     useEffect(() => {
-        // Persist authentication state from localStorage in case of page refresh
+        // Sync state with localStorage
         const savedToken = localStorage.getItem("token");
         const savedRole = localStorage.getItem("role");
-
         if (savedToken && savedRole) {
-            dispatch(setAuthState({ token: savedToken, role: savedRole }));
+            dispatch(setAuthState());  // Only dispatch once to sync the state
         }
     }, [dispatch]);
 
-    if (!token) {
+    // If the user is not logged in or role does not match
+    if (!isLoggedIn) {
         return <Navigate to="/login" replace />;
     }
 
     if (role !== requiredRole) {
-        return <Navigate to="/employee/dashboard" replace />;
+        return <Navigate to="/404" replace />;
     }
 
     return <>{children}</>;

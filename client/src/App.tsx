@@ -21,11 +21,12 @@ import EmployeeDepartment from "./components/EmployeeDashboard/Department";
 import EmployeeLeaves from "./components/EmployeeDashboard/Leaves";
 import EmployeeAttendance from "./components/EmployeeDashboard/Attendance";
 import EmployeeSettings from "./components/EmployeeDashboard/Settings";
-import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp"
+import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
 
 // Protected Route Component
 import ProtectedRoute from "./components/ProtectedRoutes/ProtectedRoutes";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
+import NotFound from "./pages/NotFound";
 
 const App = () => {
   return (
@@ -34,7 +35,7 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/" element={<Hero />} />
         <Route path="/login" element={<Auth />} />
-
+        <Route path="/404" element={<NotFound />} />
         {/* Protected Employee Routes */}
         <Route
           path="/employee"
@@ -62,13 +63,13 @@ const App = () => {
         >
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="department" element={<Department />} />
+          <Route path="add-department" element={<AddDepartment />} />
           <Route path="employee" element={<Employee />} />
           <Route path="leaves" element={<Leaves />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="payroll" element={<Payroll />} />
           <Route path="settings" element={<Setting />} />
           <Route path="add-employee" element={<AddEmployee />} />
-          <Route path="add-department" element={<AddDepartment />} />
         </Route>
       </Routes>
 

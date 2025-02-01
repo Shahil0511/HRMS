@@ -46,12 +46,25 @@ const Department: React.FC = () => {
 
     // Navigate to the Add Department page
     const handleAddDepartment = () => {
-        navigate("/admin/department/add-department");
+        navigate("/admin/add-department");
     };
 
     // Handle page change for pagination
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
+    };
+
+    // Handle next and previous page
+    const handleNextPage = () => {
+        if (currentPage < Math.ceil(filteredDepartments.length / itemsPerPage)) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
     };
 
     // Slice departments for pagination
@@ -135,6 +148,13 @@ const Department: React.FC = () => {
             {/* Pagination */}
             {filteredDepartments.length > 0 && (
                 <div className="flex justify-center mt-4 gap-2">
+                    <button
+                        onClick={handlePrevPage}
+                        className={`px-3 py-1 rounded ${currentPage === 1 ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"}`}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </button>
                     {Array.from(
                         { length: Math.ceil(filteredDepartments.length / itemsPerPage) },
                         (_, i) => i + 1
@@ -143,13 +163,20 @@ const Department: React.FC = () => {
                             key={page}
                             onClick={() => handlePageChange(page)}
                             className={`px-3 py-1 rounded ${page === currentPage
-                                    ? "bg-indigo-700 text-white"
-                                    : "bg-blue-500 hover:bg-blue-600"
+                                ? "bg-indigo-700 text-white"
+                                : "bg-blue-500 hover:bg-blue-600"
                                 }`}
                         >
                             {page}
                         </button>
                     ))}
+                    <button
+                        onClick={handleNextPage}
+                        className={`px-3 py-1 rounded ${currentPage === Math.ceil(filteredDepartments.length / itemsPerPage) ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"}`}
+                        disabled={currentPage === Math.ceil(filteredDepartments.length / itemsPerPage)}
+                    >
+                        Next
+                    </button>
                 </div>
             )}
         </div>

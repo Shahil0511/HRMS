@@ -1,14 +1,12 @@
-// src/redux/slices/user/userSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-// Define the UserState interface
+// Define the user state interface
 interface UserState {
     name: string | null;
     email: string | null;
     role: string | null;
 }
 
-// Initial state
 const initialState: UserState = {
     name: null,
     email: null,
@@ -35,6 +33,5 @@ const userSlice = createSlice({
     },
 });
 
-// Export the user actions and reducer
 export const { setUser, clearUser } = userSlice.actions;
 export default userSlice.reducer;
