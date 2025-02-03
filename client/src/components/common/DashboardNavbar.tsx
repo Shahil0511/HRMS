@@ -1,31 +1,48 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import LogoutButton from "../../utils/LogoutButton";
+import { fetchUserName } from "../../services/UserServices"; // Import the service to fetch user data
 
-interface User {
-    name: string;
-    role: "admin" | "employee"; // You can add more roles as needed
-    // image?: string; // Optional image for the user
-}
+const DashboardNavbar: React.FC = () => {
+    const [userName, setUserName] = useState<string | null>(null);
+    const [role, setRole] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-interface DashboardNavbarProps {
-    user: User;
-}
+    useEffect(() => {
+        // Fetch user data when component mounts
+        const getUserData = async () => {
+            try {
+                const user = await fetchUserName(); // Fetch user data
+                if (user?.name && user?.role) {
+                    setUserName(user.name);  // Set the user name
+                    setRole(user.role);  // Set the user role
+                } else {
+                    setError("User data is incomplete.");
+                }
+                setLoading(false);
+            } catch (error) {
+                setError("Failed to fetch user information.");
+                setLoading(false);
+            }
+        };
 
-const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ user }) => {
+        getUserData();
+    }, []); // Empty dependency array to run on component mount
+
     return (
         <nav className="bg-indigo-900 text-white h-16 flex items-center justify-between px-4 sm:px-6 shadow-md">
             {/* User Info */}
             <div className="flex items-center gap-3">
-                {/* 
-                {user.image && (
-                    <img
-                        src={user.image}
-                        alt={`${user.name}'s Profile`}
-                        className="w-10 h-10 rounded-full border-2 border-gray-200"
-                    />
+                {loading ? (
+                    <span>Loading...</span> // Display loading state
+                ) : error ? (
+                    <span>{error}</span> // Display error message
+                ) : (
+                    <>
+                        <span className="font-medium hidden sm:block">{`Welcome, ${userName}`}</span>
+                        <span className="text-sm text-gray-300">{`Role: ${role}`}</span> {/* Display role */}
+                    </>
                 )}
-                */}
-                <span className="font-medium hidden sm:block">{user.name}</span>
             </div>
 
             {/* Logout Button */}

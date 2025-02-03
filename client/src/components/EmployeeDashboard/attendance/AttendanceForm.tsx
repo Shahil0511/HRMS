@@ -18,7 +18,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({ onSubmit }) => {
 
     // Get the employee ID from auth or user state (assuming it's stored there)
     const { user } = useSelector((state: RootState) => state.auth);
-    const employeeId = user?.id || ""; // Default to an empty string if user is not found
+    const employeeId = user?._id || ""; // Default to an empty string if user is not found
 
     // Fetch attendance when the component mounts
     useEffect(() => {
