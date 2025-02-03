@@ -1,101 +1,179 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  fetchTodayAttendance,
-  markAttendance,
-} from "../../services/AttendanceService";
+import axios from "axios";
 
-// Define a type for Attendance state
+// API URL
+const API_URL = "http://localhost:8000/api/attendance";
+
+// Type definitions
 interface AttendanceState {
-  status: "Present" | "Absent" | "Pending";
-  checkInTime: string | null;
-  checkOutTime: string | null;
-  isLoading: boolean;
-  message: string | null;
+  data: AttendanceEntry[];
+  loading: boolean;
   error: string | null;
 }
 
-const initialState: AttendanceState = {
-  status: "Absent",
-  checkInTime: null,
-  checkOutTime: null,
-  isLoading: false,
-  message: null,
-  error: null,
+interface AttendanceEntry {
+  _id: string;
+  checkIn: string | null;
+  checkOut: string | null;
+}
+
+// Helper function to get the token from localStorage
+const getToken = () => {
+  return localStorage.getItem("token");
 };
 
-// Thunk to fetch today's attendance
-export const fetchAttendance = createAsyncThunk<
-  {
-    status: "Present" | "Absent" | "Pending";
-    checkInTime: string | null;
-    checkOutTime: string | null;
-    message: string;
-  },
-  string,
-  { rejectValue: string }
->("attendance/fetchToday", async (employeeId, { rejectWithValue }) => {
-  try {
-    const response = await fetchTodayAttendance(employeeId);
-    return response; // Ensure this matches the expected shape
-  } catch (error) {
-    return rejectWithValue("An error occurred while fetching attendance.");
-  }
-});
+// Async Thunks
+export const checkIn = createAsyncThunk(
+  "attendance/checkIn",
+  async (_, { rejectWithValue }) => {
+    const token = getToken(); // Get token here dynamically
+    if (!token) {
+      return rejectWithValue("No token found");
+    }
 
-// Thunk to mark attendance (check-in & check-out)
-export const markEmployeeAttendance = createAsyncThunk<
-  { checkIn: string; checkOut: string },
-  { employeeId: string; checkIn: string; checkOut: string },
-  { rejectValue: string }
->(
-  "attendance/mark",
-  async ({ employeeId, checkIn, checkOut }, { rejectWithValue }) => {
     try {
-      const response = await markAttendance(employeeId, checkIn, checkOut);
-      return response; // Ensure this matches the expected shape
-    } catch (error) {
-      return rejectWithValue("An error occurred while marking attendance.");
+      const response = await axios.post(
+        `${API_URL}/check-in`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the header
+          },
+        }
+      );
+      return response.data; // Assuming the payload contains the check-in entry with time
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data.message || "Check-in failed"
+        );
+      } else {
+        return rejectWithValue(error.message || "Check-in failed");
+      }
     }
   }
 );
 
+export const checkOut = createAsyncThunk(
+  "attendance/checkOut",
+  async (_, { rejectWithValue }) => {
+    const token = getToken(); // Get token here dynamically
+    if (!token) {
+      return rejectWithValue("No token found");
+    }
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/check-out`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the header
+          },
+        }
+      );
+      return response.data; // Assuming the payload contains the check-out entry with time
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data.message || "Check-out failed"
+        );
+      } else {
+        return rejectWithValue(error.message || "Check-out failed");
+      }
+    }
+  }
+);
+
+export const fetchTodayAttendance = createAsyncThunk(
+  "attendance/fetchToday",
+  async (_, { rejectWithValue }) => {
+    const token = getToken(); // Get token here dynamically
+    if (!token) {
+      return rejectWithValue("No token found");
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/today`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token in the header
+        },
+      });
+      return response.data; // Assuming the payload contains an array of attendance entries
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data.message || "Failed to fetch today's attendance"
+        );
+      } else {
+        return rejectWithValue(
+          error.message || "Failed to fetch today's attendance"
+        );
+      }
+    }
+  }
+);
+
+// Initial State
+const initialState: AttendanceState = {
+  data: [],
+  loading: false,
+  error: null,
+};
+
+// Slice
 const attendanceSlice = createSlice({
   name: "attendance",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAttendance.pending, (state) => {
-        state.isLoading = true;
+      // Handling Check-In
+      .addCase(checkIn.pending, (state) => {
+        state.loading = true;
         state.error = null;
       })
-      .addCase(fetchAttendance.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.status = action.payload.status;
-        state.checkInTime = action.payload.checkInTime;
-        state.checkOutTime = action.payload.checkOutTime;
-        state.message = action.payload.message;
+      .addCase(checkIn.fulfilled, (state, action) => {
+        state.loading = false;
+        const checkInEntry = action.payload;
+        state.data.push({ ...checkInEntry, checkOut: null });
       })
-      .addCase(fetchAttendance.rejected, (state, action) => {
-        state.isLoading = false;
+      .addCase(checkIn.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
-        state.message = null;
       })
-      .addCase(markEmployeeAttendance.pending, (state) => {
-        state.isLoading = true;
+
+      // Handling Check-Out
+      .addCase(checkOut.pending, (state) => {
+        state.loading = true;
         state.error = null;
       })
-      .addCase(markEmployeeAttendance.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.status = "Present";
-        state.checkInTime = action.payload.checkIn;
-        state.checkOutTime = action.payload.checkOut;
-        state.message = "Attendance marked successfully.";
+      .addCase(checkOut.fulfilled, (state, action) => {
+        state.loading = false;
+        const checkOutEntry = action.payload;
+        state.data = state.data.map((entry) =>
+          entry._id === checkOutEntry._id
+            ? { ...entry, checkOut: checkOutEntry.checkOut }
+            : entry
+        );
       })
-      .addCase(markEmployeeAttendance.rejected, (state, action) => {
-        state.isLoading = false;
+      .addCase(checkOut.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
-        state.message = null;
+      })
+
+      // Fetching Today's Attendance
+      .addCase(fetchTodayAttendance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTodayAttendance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchTodayAttendance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

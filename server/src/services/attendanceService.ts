@@ -5,13 +5,13 @@ import { IAttendance } from "../types/attendance";
 /**
  * Get today's attendance for an employee
  */
-export const getTodayAttendance = async (employeeId: string, date: string) => {
+export const getTodayAttendance = async (
+  employeeId: string,
+  date: string
+): Promise<IAttendance | null> => {
   try {
-    const objectId = new mongoose.Types.ObjectId(employeeId); // Use 'new' to instantiate ObjectId
-    const attendance = await Attendance.findOne({
-      employeeId: objectId,
-      date,
-    });
+    const objectId = new mongoose.Types.ObjectId(employeeId); // Convert employeeId to ObjectId
+    const attendance = await Attendance.findOne({ employeeId: objectId, date });
 
     return attendance;
   } catch (error) {
@@ -30,7 +30,7 @@ export const markAttendance = async (
   checkOut?: string
 ): Promise<IAttendance> => {
   try {
-    const parsedEmployeeId = new mongoose.Types.ObjectId(employeeId); // Use 'new' to instantiate ObjectId
+    const parsedEmployeeId = new mongoose.Types.ObjectId(employeeId); // Convert to ObjectId
 
     if (!checkIn) {
       throw new Error("Check-in time is required");
@@ -55,7 +55,7 @@ export const markAttendance = async (
       duration,
     });
 
-    return (await attendance.save()).toObject() as IAttendance; // Return attendance object
+    return (await attendance.save()).toObject() as IAttendance;
   } catch (error) {
     console.error("Error marking attendance:", error);
     throw new Error("Failed to mark attendance");

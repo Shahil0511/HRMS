@@ -1,15 +1,22 @@
-import { Router } from "express";
+import express from "express";
 import {
+  checkIn,
+  checkOut,
   getAttendanceForToday,
-  markEmployeeAttendance,
+  getAttendanceHistory,
 } from "../controllers/attendanceController";
+import { verifyToken } from "../middlewares/verifyToken";
 
-const router = Router();
+const router = express.Router();
 
-// Get today's attendance for an employee
-router.get("/:employeeId/today", getAttendanceForToday);
+// Check-in and Check-out routes
+router.post("/check-in", verifyToken, checkIn);
+router.post("/check-out", verifyToken, checkOut);
 
-// Mark attendance for an employee
-router.post("/", markEmployeeAttendance);
+// Fetch today's attendance for a specific employee (individual)
+router.get("/:employeeId/today", verifyToken, getAttendanceForToday);
+
+// Fetch attendance history for employees
+router.get("/history", verifyToken, getAttendanceHistory);
 
 export default router;
