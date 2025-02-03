@@ -20,7 +20,7 @@ export const addEmployee = async (
       phoneNumber,
       email,
       address,
-      department, // Ensure department is an ObjectId or valid reference
+      department,
       designation,
     } = req.body;
 
@@ -52,32 +52,59 @@ export const addEmployee = async (
       phoneNumber,
       email,
       address,
-      department, // Department is passed directly; should be a valid ObjectId from Department model
+      department,
       designation,
     });
 
     // Saving employee to the database
     const savedEmployee = await newEmployee.save();
 
-    // Returning success response with the saved employee details
+    // Generate password from first characters of first and last name, and last 5 digits of phone number
+    const generatePassword = (
+      firstName: string,
+      lastName: string,
+      phoneNumber: string
+    ): string => {
+      const firstCharFirstName = firstName.charAt(0).toLowerCase(); // First character of first name
+      const firstCharLastName = lastName.charAt(0).toLowerCase(); // First character of last name
+      const last5PhoneNumber = phoneNumber.slice(-5); // Last 5 digits of phone number
+      return `${firstCharFirstName}${firstCharLastName}@${last5PhoneNumber}`;
+    };
+
+    const password = generatePassword(firstName, lastName, phoneNumber);
+
+    // Create a new user instance with the generated password
+    const newUser = new User({
+      name: `${firstName} ${lastName}`, // Full name from first and last name
+      email: email, // Use the employee's email
+      password: password, // Generated password
+      role: "employee", // Default to employee role; adjust if necessary
+      isActive: true, // Assuming the user is active by default
+    });
+
+    // Save the user to the database
+    await newUser.save();
+
+    // Returning success response with the saved employee and user details
     res.status(201).json({
       success: true,
-      message: "Employee added successfully",
+      message: "Employee and user added successfully",
       employee: savedEmployee,
+      user: newUser,
     });
   } catch (error: unknown) {
     // Enhanced error handling
     if (error instanceof Error) {
       res.status(500).json({
         success: false,
-        message: "Failed to add employee",
-        error: error.message, // Safely accessing error message
+        message: "Failed to add employee and user",
+        error: error.message,
       });
     } else {
       res.status(500).json({
         success: false,
-        message: "Failed to add employee",
-        error: "An unknown error occurred", // Fallback error message
+        message: "Failed to add employee and user",
+        error: "An unknown error occurred",
       });
     }
   }
