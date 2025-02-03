@@ -6,6 +6,11 @@ import { User } from "../models/UserSchema";
 /**
  * Add a new employee
  */
+import bcrypt from "bcryptjs";
+
+/**
+ * Add a new employee and automatically create the corresponding user with a hashed password
+ */
 export const addEmployee = async (
   req: Request,
   res: Response
@@ -40,7 +45,7 @@ export const addEmployee = async (
         success: false,
         message: "All fields are required",
       });
-      return; // Ensure function doesn't continue if validation fails
+      return;
     }
 
     // Create new employee instance
@@ -71,14 +76,17 @@ export const addEmployee = async (
       return `${firstCharFirstName}${firstCharLastName}@${last5PhoneNumber}`;
     };
 
-    const password = generatePassword(firstName, lastName, phoneNumber);
+    const rawPassword = generatePassword(firstName, lastName, phoneNumber);
 
-    // Create a new user instance with the generated password
+    // Hash the generated password
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
+    // Create a new user instance with the hashed password
     const newUser = new User({
       name: `${firstName} ${lastName}`, // Full name from first and last name
       email: email, // Use the employee's email
-      password: password, // Generated password
-      role: "employee", // Default to employee role; adjust if necessary
+      password: hashedPassword, // Hashed password
+      role: "employee", // Default to employee role
       isActive: true, // Assuming the user is active by default
     });
 
@@ -93,7 +101,6 @@ export const addEmployee = async (
       user: newUser,
     });
   } catch (error: unknown) {
-    // Enhanced error handling
     if (error instanceof Error) {
       res.status(500).json({
         success: false,

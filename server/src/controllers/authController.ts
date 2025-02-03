@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
  * User signup controller
  */
 export const signup = async (req: Request, res: Response): Promise<void> => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role = "employee" } = req.body; // Default role is 'employee'
 
   try {
     // Check if email already exists
@@ -20,13 +20,19 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
     // Hash password and save the new user
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, email, password: hashedPassword });
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role, // Ensure the role is saved
+    });
     await newUser.save();
 
-    // Return response with user ID
+    // Return response with user ID and role
     res.status(201).json({
       message: "User registered successfully",
       userId: newUser._id,
+      role: newUser.role, // Return role for debugging
     });
   } catch (error) {
     console.error("Error in signup:", error);
@@ -44,27 +50,40 @@ export const login = async (
 ): Promise<void> => {
   const { email, password } = req.body;
 
+  // Basic validation for email and password
+  if (!email || !password) {
+    res.status(400).json({ message: "Email and password are required" });
+    return;
+  }
+
   try {
-    // Attempt to login and return token
+    // Authenticate the user and generate the token
     const token = await loginUser(email, password);
 
-    // Decode token for the user info (optional: if you want to return the user role here)
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
-      role: string;
-    };
-    const user = await User.findById(decodedToken.id);
+    // Fetch user details from database
+    const user = await User.findOne({ email }).select(
+      "name email role isActive"
+    );
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
-    // Respond with the token and role
+
+    // Debugging: Log user data
+
+    // Send response with token & user details
     res.status(200).json({
-      message: "Login Successful",
+      message: "Login successful",
       token,
-      user,
-      role: decodedToken.role,
+      role: user.role,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
     });
   } catch (error) {
     next(error);

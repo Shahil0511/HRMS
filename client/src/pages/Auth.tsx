@@ -3,11 +3,11 @@ import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
-import { loginStart, loginSuccess, loginFailure } from "../store/slices/authSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { loginUser, signupUser } from "../services/authServices";
 import { RootState } from "../store/store";
+import { loginFailure, loginStart, loginSuccess } from "../store/slices/authSlice";
 
 // Zod schema for form validation
 const loginSchema = z.object({
@@ -84,6 +84,8 @@ const Auth = () => {
         const token = localStorage.getItem("token");
         const role = localStorage.getItem("role");
 
+
+
         if (token && role) {
             // We check local storage to synchronize login
             dispatch(loginSuccess({
@@ -108,6 +110,7 @@ const Auth = () => {
     const onSubmit = async (data: any) => {
         dispatch(loginStart());
         try {
+
             let response;
 
             // Handle login or signup based on the current form
@@ -121,15 +124,19 @@ const Auth = () => {
                     password: data.password,
                     confirmPassword: data.confirmPassword,
                 };
+
                 response = await signupUser(signupData);
             }
 
             if (isLogin) {
                 const { token, role, user } = response.data;
+
                 toast.success("Login successful!");
                 localStorage.setItem("token", token);
                 localStorage.setItem("role", role);
-                localStorage.setItem("user", JSON.stringify(user)); // Save user data in localStorage
+                localStorage.setItem("user", JSON.stringify(user));
+
+                // Save user data in localStorage
                 dispatch(loginSuccess({ token, user, role }));
 
                 // Redirect based on role
@@ -138,6 +145,7 @@ const Auth = () => {
                 } else if (role === "employee") {
                     navigate("/employee/dashboard", { replace: true });
                 } else {
+                    toast.error("Invalid user role!");
                     navigate("/404", { replace: true }); // Invalid role, redirect to 404
                 }
             } else {
@@ -146,6 +154,7 @@ const Auth = () => {
                 setIsLogin(true); // Switch to login form after successful signup
             }
         } catch (error: any) {
+            console.error("🔴 Login Error:", error);
             toast.error(error.response?.data?.message || (isLogin ? "Login failed." : "Signup failed."));
             dispatch(loginFailure());
         }
