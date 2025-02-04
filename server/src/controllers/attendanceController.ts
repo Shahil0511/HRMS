@@ -5,6 +5,7 @@ import {
   getTodayAttendance,
 } from "../services/attendanceService";
 import { Employee } from "../models/EmployeeSchema";
+import Attendance from "../models/AttendanceSchema";
 
 export const checkIn = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -23,16 +24,19 @@ export const checkIn = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if already checked in today
+    // ✅ Allow multiple check-ins per day
     const today = moment().startOf("day").toDate();
-    const existingAttendance = await getTodayAttendance(employeeId, today);
+    const lastAttendance = await getTodayAttendance(employeeId, today);
 
-    if (existingAttendance) {
-      res.status(400).json({ message: "You have already checked in today" });
+    // If last check-in exists but no check-out, prevent another check-in
+    if (lastAttendance && !lastAttendance.checkOut) {
+      res
+        .status(400)
+        .json({ message: "Please check out before checking in again" });
       return;
     }
 
-    // Mark attendance
+    // ✅ Allow new check-in since either no check-in exists or the last check-in was completed
     const newCheckIn = await markAttendance(employeeId, today, new Date());
 
     console.log("✅ Check-In Successful:", newCheckIn);
@@ -56,16 +60,18 @@ export const checkOut = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Fetch today's attendance
-    const today = moment().startOf("day").toDate();
-    const lastAttendance = await getTodayAttendance(employeeId, today);
+    // ✅ Fetch the most recent check-in (instead of first check-in of the day)
+    const lastAttendance = await Attendance.findOne({
+      employeeId,
+      checkOut: null, // ✅ Only fetch records where checkOut is missing
+    }).sort({ checkIn: -1 }); // ✅ Get the latest check-in
 
-    if (!lastAttendance || lastAttendance.checkOut) {
+    if (!lastAttendance) {
       res.status(400).json({ message: "No active check-in found" });
       return;
     }
 
-    // Update check-out time
+    // ✅ Update check-out time and calculate duration
     lastAttendance.checkOut = new Date();
     lastAttendance.status = "Present";
     lastAttendance.duration = parseFloat(
