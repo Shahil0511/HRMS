@@ -11,16 +11,16 @@ export const AttendanceForm = () => {
     const userData = localStorage.getItem("user");
     const employeeId = userData ? JSON.parse(userData)?.employeeId || JSON.parse(userData)?._id : null;
 
-    console.log("📌 Retrieved Employee ID:", employeeId);
+
 
     // ✅ Fetch attendance status from localStorage on mount
     useEffect(() => {
-        console.log("🔄 Fetching Attendance Data from localStorage...");
+
         const storedAttendance = localStorage.getItem("attendance");
         if (storedAttendance) {
             const parsedAttendance = JSON.parse(storedAttendance);
             if (parsedAttendance.data) {
-                console.log("✅ Loaded Attendance:", parsedAttendance.data);
+
                 setAttendance(parsedAttendance.data); // ✅ Extract only `data`
             } else {
                 console.warn("⚠️ Attendance Data Missing `data` Field");
@@ -30,7 +30,7 @@ export const AttendanceForm = () => {
 
     // ✅ Check-In Handler
     const handleCheckIn = useCallback(async () => {
-        console.log("🚀 Check-In Button Clicked");
+
         if (!employeeId) {
             console.error("❌ Check-In Error: No Employee ID Found");
             toast.error("⚠️ Employee ID not found. Please log in again.");
@@ -47,9 +47,9 @@ export const AttendanceForm = () => {
 
         setLoading(true);
         try {
-            console.log("🔍 Sending Check-In Request for Employee ID:", employeeId);
+
             const response = await checkIn(employeeId);
-            console.log("✅ Check-In API Response:", response);
+
 
             const newAttendance = response.data; // ✅ Extract only `data`
 
@@ -66,7 +66,7 @@ export const AttendanceForm = () => {
 
     // ✅ Check-Out Handler
     const handleCheckOut = useCallback(async () => {
-        console.log("🚀 Check-Out Button Clicked");
+
         if (!employeeId) {
             console.error("❌ Check-Out Error: No Employee ID Found");
             toast.error("⚠️ Employee ID not found. Please log in again.");
@@ -87,9 +87,8 @@ export const AttendanceForm = () => {
 
         setLoading(true);
         try {
-            console.log("🔍 Sending Check-Out Request for Employee ID:", employeeId);
+
             const response = await checkOut(employeeId);
-            console.log("✅ Check-Out API Response:", response);
 
             const updatedAttendance = response.data; // ✅ Extract only `data`
 

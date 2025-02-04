@@ -17,7 +17,6 @@ export const verifyToken = (
     const token = req.header("Authorization")?.replace("Bearer ", "");
 
     // Log the token for debugging
-    console.log("Token received:", token);
 
     // Check if the token is missing
     if (!token) {
@@ -35,7 +34,6 @@ export const verifyToken = (
     ) as IUser;
 
     // Log the decoded token for debugging
-    console.log("Decoded Token:", decoded);
 
     // Ensure the decoded token contains the expected structure
     if (!decoded || !decoded.id) {

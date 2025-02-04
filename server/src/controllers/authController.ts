@@ -70,10 +70,6 @@ export const login = async (
     // 🔥 Fetch the corresponding Employee record
     const employee = await Employee.findOne({ email });
 
-    // ✅ Debugging logs
-    console.log("🔍 User:", user);
-    console.log("🔍 Employee:", employee);
-
     res.status(200).json({
       message: "Login successful",
       token,

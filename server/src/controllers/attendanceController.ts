@@ -9,7 +9,7 @@ import Attendance from "../models/AttendanceSchema";
 
 export const checkIn = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("✅ Check-In Request Received:", req.body);
+  
     const { employeeId } = req.body;
 
     if (!employeeId) {
@@ -39,7 +39,7 @@ export const checkIn = async (req: Request, res: Response): Promise<void> => {
     // ✅ Allow new check-in since either no check-in exists or the last check-in was completed
     const newCheckIn = await markAttendance(employeeId, today, new Date());
 
-    console.log("✅ Check-In Successful:", newCheckIn);
+    
     res.status(201).json({ message: "Check-in recorded", data: newCheckIn });
   } catch (error: unknown) {
     console.error("❌ Error during check-in:", error);
@@ -52,7 +52,7 @@ export const checkIn = async (req: Request, res: Response): Promise<void> => {
 
 export const checkOut = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("✅ Check-Out Request Received:", req.body);
+
     const { employeeId } = req.body;
 
     if (!employeeId) {
@@ -83,7 +83,7 @@ export const checkOut = async (req: Request, res: Response): Promise<void> => {
 
     await lastAttendance.save();
 
-    console.log("✅ Check-Out Successful:", lastAttendance);
+   
     res
       .status(200)
       .json({ message: "Check-out recorded", data: lastAttendance });
