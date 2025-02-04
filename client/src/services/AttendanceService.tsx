@@ -1,95 +1,61 @@
 import axios from "axios";
 
-// Define the API URL
 const API_URL = "http://localhost:8000/api/attendance";
 
-// Define the response type for Attendance API calls
-export interface AttendanceResponse {
-    success: boolean;
-    message: string;
-    attendance?: {
-        status: string;
-        checkIn: string;
-        checkOut?: string;
-    };
+// ✅ Get Token from LocalStorage
+const getToken = (): string | null => localStorage.getItem("token");
+
+// ✅ Strict TypeScript Interface for Attendance Data
+export interface AttendanceEntry {
+    _id: string;
+    employeeId: string;
+    date: string;
+    checkIn: string;
+    checkOut?: string;
+    status: string;
+    duration?: number;
 }
 
-// Get token from localStorage (or from state if using Redux)
-const getToken = () => {
-    return localStorage.getItem("authToken"); // Adjust based on your token storage method
-}
-
-// ✅ Fetch today's attendance for a specific employee
-export const fetchTodayAttendance = async (employeeId: string): Promise<AttendanceResponse> => {
-    const token = getToken(); // Get the token from localStorage (or from state)
+// ✅ Centralized Check-In API Call
+export const checkIn = async (employeeId: string): Promise<AttendanceEntry> => {
+    if (!employeeId) throw new Error("Employee ID is required");
 
     try {
-        const response = await axios.get(`${API_URL}/${employeeId}/today`, {
-            headers: {
-                Authorization: `Bearer ${token}`, // Add token in Authorization header
-            },
-        });
+        const response = await axios.post(
+            `${API_URL}/check-in`,
+            { employeeId },
+            {
+                headers: {
+                    Authorization: `Bearer ${getToken()}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
         return response.data;
-    } catch (error: unknown) {
-        console.error("Error fetching today's attendance:", error);
-
-        // Type guard to check if error is an AxiosError
-        if (axios.isAxiosError(error)) {
-            // Handle specific error messages from the API
-            throw new Error(error.response?.data.message || "Failed to fetch attendance");
-        }
-
-        // Fallback for unknown error type
-        throw new Error("Error fetching today's attendance");
+    } catch (error: any) {
+        console.error("❌ Check-In API Error:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || "Check-in failed");
     }
 };
 
-// ✅ Mark attendance (Check-In or Check-Out)
-export const markAttendance = async (
-    employeeId: string,
-    checkIn: string,
-    checkOut?: string
-): Promise<AttendanceResponse> => {
-    const token = getToken(); // Get the token from localStorage (or from state)
+// ✅ Centralized Check-Out API Call
+export const checkOut = async (employeeId: string): Promise<AttendanceEntry> => {
+    if (!employeeId) throw new Error("Employee ID is required");
 
     try {
-        let response;
-
-        if (checkOut) {
-            // Mark Check-Out
-            response = await axios.post(
-                `${API_URL}/check-out`,
-                { employeeId, checkIn, checkOut },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Add token in Authorization header
-                    },
-                }
-            );
-        } else {
-            // Mark Check-In
-            response = await axios.post(
-                `${API_URL}/check-in`,
-                { employeeId, checkIn },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Add token in Authorization header
-                    },
-                }
-            );
-        }
-
+        const response = await axios.post(
+            `${API_URL}/check-out`,
+            { employeeId },
+            {
+                headers: {
+                    Authorization: `Bearer ${getToken()}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
         return response.data;
-    } catch (error: unknown) {
-        console.error("Error marking attendance:", error);
-
-        // Type guard to check if error is an AxiosError
-        if (axios.isAxiosError(error)) {
-            // Handle specific error messages from the API
-            throw new Error(error.response?.data.message || "Failed to mark attendance");
-        }
-
-        // Fallback for unknown error type
-        throw new Error("Error marking attendance");
+    } catch (error: any) {
+        console.error("❌ Check-Out API Error:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || "Check-out failed");
     }
 };

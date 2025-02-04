@@ -2,29 +2,37 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { IUser } from "../models/UserSchema";
 
+// Extend the Request interface to include the user object
+interface RequestWithUser extends Request {
+  user?: IUser;
+}
+
 export const verifyToken = (
-  req: Request,
+  req: RequestWithUser,
   res: Response,
   next: NextFunction
 ): void => {
-  // Get token from Authorization header
-  const token = req.header("Authorization")?.replace("Bearer ", "");
-
-  // Log the token to check its format (for debugging)
-  console.log("Token received:", token);
-
-  // Check if the token is missing
-  if (!token) {
-    res.status(401).json({
-      success: false,
-      message: "Unauthorized - Token is required",
-    });
-    return;
-  }
-
   try {
+    // Get token from Authorization header
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    // Log the token for debugging
+    console.log("Token received:", token);
+
+    // Check if the token is missing
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized - Token is required",
+      });
+      return;
+    }
+
     // Verify the token and decode the payload
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as IUser;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as IUser;
 
     // Log the decoded token for debugging
     console.log("Decoded Token:", decoded);
@@ -38,13 +46,15 @@ export const verifyToken = (
       return;
     }
 
-    // Attach the decoded user to the request object for further processing
-    (req as any).user = decoded;
+    // Attach the decoded user to the request object
+    req.user = decoded;
 
-    // Proceed to the next middleware or route handler
+    // Proceed to the next middleware
     next();
   } catch (error: any) {
-    // Handle specific errors, such as expired token
+    console.error("Token verification error:", error);
+
+    // Handle expired token
     if (error.name === "TokenExpiredError") {
       res.status(401).json({
         success: false,
@@ -53,10 +63,7 @@ export const verifyToken = (
       return;
     }
 
-    // Log the error for debugging purposes
-    console.error("Token verification error:", error);
-
-    // General invalid token error
+    // Handle general invalid token error
     res.status(401).json({
       success: false,
       message: "Unauthorized - Invalid token",

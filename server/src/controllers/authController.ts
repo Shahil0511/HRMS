@@ -2,7 +2,8 @@ import bcrypt from "bcryptjs";
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/UserSchema";
 import { loginUser } from "../services/authServices";
-import jwt from "jsonwebtoken";
+
+import { Employee } from "../models/EmployeeSchema";
 
 /**
  * User signup controller
@@ -50,17 +51,13 @@ export const login = async (
 ): Promise<void> => {
   const { email, password } = req.body;
 
-  // Basic validation for email and password
   if (!email || !password) {
     res.status(400).json({ message: "Email and password are required" });
     return;
   }
 
   try {
-    // Authenticate the user and generate the token
     const token = await loginUser(email, password);
-
-    // Fetch user details from database
     const user = await User.findOne({ email }).select(
       "name email role isActive"
     );
@@ -70,9 +67,13 @@ export const login = async (
       return;
     }
 
-    // Debugging: Log user data
+    // 🔥 Fetch the corresponding Employee record
+    const employee = await Employee.findOne({ email });
 
-    // Send response with token & user details
+    // ✅ Debugging logs
+    console.log("🔍 User:", user);
+    console.log("🔍 Employee:", employee);
+
     res.status(200).json({
       message: "Login successful",
       token,
@@ -83,6 +84,7 @@ export const login = async (
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        employeeId: employee ? employee._id : null, // ✅ Include employeeId
       },
     });
   } catch (error) {

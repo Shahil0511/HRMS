@@ -5,7 +5,11 @@ import { AuthPayload } from "../../../src/types/common";
 interface AuthState {
     isLoading: boolean;
     token: string | null;
-    user: any | null;  // Store user as part of the auth state
+    user: {
+        id: string;
+        email: string;
+        employeeId?: string;  // 🔥 Add employeeId here
+    } | null;
     role: string | null;
     isLoggedIn: boolean;
 }
@@ -31,15 +35,19 @@ const authSlice = createSlice({
         loginSuccess: (state, action: PayloadAction<AuthPayload>) => {
             state.isLoading = false;
             state.token = action.payload.token;
-            state.user = action.payload.user;  // Save user data
+            state.user = {
+                id: action.payload.user._id,  // ✅ User ID
+                email: action.payload.user.email,
+                employeeId: action.payload.user.employeeId || "", // ✅ Store employeeId
+            };
             state.role = action.payload.role;
             state.isLoggedIn = true;
 
-            // Persist user data in localStorage (for persistence across refreshes)
+            // Persist user data in localStorage
             if (state.user && state.token && state.role) {
                 localStorage.setItem("user", JSON.stringify(state.user));
                 localStorage.setItem("token", state.token);
-                localStorage.setItem("role", state.role);  // Ensure role is also stored in localStorage
+                localStorage.setItem("role", state.role);
             }
         },
         // Handle login failure
@@ -58,21 +66,24 @@ const authSlice = createSlice({
             // Clear from localStorage on logout
             localStorage.removeItem("user");
             localStorage.removeItem("token");
-            localStorage.removeItem("role");  // Ensure role is also removed from localStorage
+            localStorage.removeItem("role");
         },
-        // Set auth state from persisted localStorage (for persistence across refreshes)
+        // Set auth state from persisted localStorage
         setAuthState: (state) => {
             const user = localStorage.getItem("user");
             const token = localStorage.getItem("token");
             const role = localStorage.getItem("role");
 
-            // If user, token, and role exist in localStorage
             if (user && token && role) {
                 try {
                     const parsedUser = JSON.parse(user);
-                    state.user = parsedUser;  // Safely parse user data
+                    state.user = {
+                        id: parsedUser.id,
+                        email: parsedUser.email,
+                        employeeId: parsedUser.employeeId || "", // ✅ Ensure employeeId is loaded
+                    };
                     state.token = token;
-                    state.role = role;  // Set role from localStorage
+                    state.role = role;
                     state.isLoggedIn = true;
                 } catch (error) {
                     console.error("Error parsing user data from localStorage", error);
@@ -82,7 +93,6 @@ const authSlice = createSlice({
                     state.role = null;
                 }
             } else {
-                // If no user, token, or role found in localStorage, reset state
                 state.isLoggedIn = false;
                 state.user = null;
                 state.token = null;

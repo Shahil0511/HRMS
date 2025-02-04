@@ -30,7 +30,8 @@ const AttendanceSchema = new Schema<IAttendance>(
       type: Date,
       validate: {
         validator: function (this: IAttendance, value: Date) {
-          return !this.checkIn || (value && value > this.checkIn);
+          if (!value) return true; // ✅ Allow null check-out on check-in
+          return value > this.checkIn;
         },
         message: "Check-out time must be after check-in time.",
       },
