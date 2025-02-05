@@ -28,7 +28,7 @@ const EmployeeDashboard: React.FC = () => {
     // Fetch Employees and Departments
     const fetchDepartments = async (searchQuery: string) => {
         try {
-            const data = await getDepartments(searchQuery); // Pass the searchQuery to the API
+            const data = await getDepartments(searchQuery);
             const departmentMap = data.departments.reduce((acc: { [key: string]: string }, department: { _id: string; departmentName: string }) => {
                 acc[department._id] = department.departmentName;
                 return acc;
@@ -122,7 +122,7 @@ const EmployeeDashboard: React.FC = () => {
                     </thead>
                     <tbody>
                         {paginatedEmployees.map((employee, index) => (
-                            <tr key={employee.id} className="bg-gradient-to-r from-gray-900 to-indigo-900 text-white">
+                            <tr key={`${employee.id}-${employee.firstName}-${employee.lastName}`} className="bg-gradient-to-r from-gray-900 to-indigo-900 text-white">
                                 <td className="border border-gray-300 px-4 py-2">
                                     {(currentPage - 1) * itemsPerPage + index + 1}
                                 </td>

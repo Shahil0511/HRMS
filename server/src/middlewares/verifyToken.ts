@@ -2,9 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { IUser } from "../models/UserSchema";
 
-// Extend the Request interface to include the user object
-interface RequestWithUser extends Request {
-  user?: IUser;
+export interface RequestWithUser extends Request {
+  user?: IUser; // Make user optional as it’s set by middleware
 }
 
 export const verifyToken = (
@@ -13,12 +12,8 @@ export const verifyToken = (
   next: NextFunction
 ): void => {
   try {
-    // Get token from Authorization header
     const token = req.header("Authorization")?.replace("Bearer ", "");
 
-    // Log the token for debugging
-
-    // Check if the token is missing
     if (!token) {
       res.status(401).json({
         success: false,
@@ -27,16 +22,12 @@ export const verifyToken = (
       return;
     }
 
-    // Verify the token and decode the payload
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET as string
     ) as IUser;
 
-    // Log the decoded token for debugging
-
-    // Ensure the decoded token contains the expected structure
-    if (!decoded || !decoded.id) {
+    if (!decoded || !decoded.employeeId) {
       res.status(401).json({
         success: false,
         message: "Unauthorized - Invalid token structure",
@@ -44,15 +35,11 @@ export const verifyToken = (
       return;
     }
 
-    // Attach the decoded user to the request object
+    // Attach the decoded user to req.user
     req.user = decoded;
 
-    // Proceed to the next middleware
     next();
   } catch (error: any) {
-    console.error("Token verification error:", error);
-
-    // Handle expired token
     if (error.name === "TokenExpiredError") {
       res.status(401).json({
         success: false,
@@ -61,7 +48,6 @@ export const verifyToken = (
       return;
     }
 
-    // Handle general invalid token error
     res.status(401).json({
       success: false,
       message: "Unauthorized - Invalid token",
