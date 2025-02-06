@@ -34,24 +34,37 @@ export const addDepartment = async (
 };
 
 /**
- * Get all departments with optional search filter
+ * Get all departments with optional search filter and pagination
  */
 export const getDepartments = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const { search } = req.query;
+    const { search, page = 1, limit = 10 } = req.query; // Set default pagination
 
     const filter = search
       ? { departmentName: { $regex: search, $options: "i" } }
       : {};
 
-    const departments = await Department.find(filter).lean();
+    // Convert page and limit to numbers
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    // Fetch departments with pagination
+    const departments = await Department.find(filter)
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber)
+      .lean();
+
+    const totalDepartments = await Department.countDocuments(filter);
 
     res.status(200).json({
       message: "Departments retrieved successfully",
       departments,
+      totalDepartments,
+      totalPages: Math.ceil(totalDepartments / limitNumber),
+      currentPage: pageNumber,
     });
   } catch (error) {
     console.error("Error fetching departments:", error);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import LogoutButton from "../../utils/LogoutButton";
-import { fetchUserName } from "../../services/UserServices"; // Import the service to fetch user data
+import { fetchUserName } from "../../services/UserServices";
 
 const DashboardNavbar: React.FC = () => {
     const [userName, setUserName] = useState<string | null>(null);
@@ -12,17 +12,22 @@ const DashboardNavbar: React.FC = () => {
         // Fetch user data when component mounts
         const getUserData = async () => {
             try {
-                const user = await fetchUserName(); // Fetch user data
+                setLoading(true);  // Ensuring loading state is true when initiating fetch
+                const user = await fetchUserName();
+
                 if (user?.name && user?.role) {
-                    setUserName(user.name);  // Set the user name
-                    setRole(user.role);  // Set the user role
+                    setUserName(user.name);
+                    setRole(user.role);
                 } else {
                     setError("User data is incomplete.");
+                    console.error("User data is incomplete."); // Debugging log
                 }
-                setLoading(false);
-            } catch (error) {
+            } catch (err) {
                 setError("Failed to fetch user information.");
+                console.error("Error fetching user data:", err); // Debugging log
+            } finally {
                 setLoading(false);
+
             }
         };
 

@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthPayload } from "../../../src/types/common";
 
 // Define the initial state for auth
 interface AuthState {
@@ -9,6 +8,7 @@ interface AuthState {
         id: string;
         email: string;
         employeeId?: string;  // 🔥 Add employeeId here
+        employeeName?: string; // Optional: employee name
     } | null;
     role: string | null;
     isLoggedIn: boolean;
@@ -32,13 +32,14 @@ const authSlice = createSlice({
             state.isLoading = true;
         },
         // Handle successful login
-        loginSuccess: (state, action: PayloadAction<AuthPayload>) => {
+        loginSuccess: (state, action: PayloadAction<{ token: string; user: { id: string; email: string; employeeId?: string; employeeName?: string }; role: string }>) => {
             state.isLoading = false;
             state.token = action.payload.token;
             state.user = {
-                id: action.payload.user._id,  // ✅ User ID
+                id: action.payload.user.id,  // ✅ User ID
                 email: action.payload.user.email,
-                employeeId: action.payload.user.employeeId || "", // ✅ Store employeeId
+                employeeId: action.payload.user.employeeId || "", // Optional: Employee ID
+                employeeName: action.payload.user.employeeName || "", // Optional: Employee Name
             };
             state.role = action.payload.role;
             state.isLoggedIn = true;
@@ -80,7 +81,8 @@ const authSlice = createSlice({
                     state.user = {
                         id: parsedUser.id,
                         email: parsedUser.email,
-                        employeeId: parsedUser.employeeId || "", // ✅ Ensure employeeId is loaded
+                        employeeId: parsedUser.employeeId || "", // Ensure employeeId is loaded
+                        employeeName: parsedUser.employeeName || "", // Ensure employeeName is loaded
                     };
                     state.token = token;
                     state.role = role;
@@ -102,5 +104,6 @@ const authSlice = createSlice({
     },
 });
 
+// Export actions and reducer
 export const { loginStart, loginSuccess, loginFailure, logout, setAuthState } = authSlice.actions;
 export default authSlice.reducer;

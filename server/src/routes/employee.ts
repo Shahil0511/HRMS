@@ -2,15 +2,20 @@ import { Router } from "express";
 import {
   addEmployee,
   getEmployees,
-  getUser,
+  getUserEmployeeData,
 } from "../controllers/employeeController";
 import { isAdmin } from "../middlewares/verifyAdmin";
+import { verifyToken } from "../middlewares/verifyToken";
 
 const router = Router();
 
-router.post("/employees", isAdmin, addEmployee);
+// Admin only: Add a new employee
+router.post("/employees", verifyToken, isAdmin, addEmployee); // First verify token, then check if admin
 
+// Public: Get all employees
 router.get("/employees", getEmployees);
-router.get("/employees/user", getUser);
+
+// Get the current authenticated user's employee data
+router.get("/employees/user", verifyToken, getUserEmployeeData); // Ensure token is verified first
 
 export default router;

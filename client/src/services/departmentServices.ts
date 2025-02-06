@@ -11,7 +11,6 @@ export const addDepartment = async (
   },
   token: string
 ) => {
-  console.log("Token being sent:", token); // Log the token
   try {
     const response = await axios.post(API_URL, formData, {
       headers: {
@@ -53,7 +52,7 @@ export const getDepartments = async (searchQuery: string) => {
 export const getAllDepartments = async () => {
   try {
     const response = await axios.get(API_URL); // No parameters are passed
-    console.log("Departments fetched:", response?.data); // Log the response for debugging
+
     return response?.data; // Assuming response.data contains the department list
   } catch (error) {
     console.error("Error fetching departments:", error);

@@ -4,12 +4,20 @@ import { User } from "../models/UserSchema";
 import { loginUser } from "../services/authServices";
 
 import { Employee } from "../models/EmployeeSchema";
+import mongoose from "mongoose";
 
 /**
  * User signup controller
  */
 export const signup = async (req: Request, res: Response): Promise<void> => {
-  const { name, email, password, role = "employee" } = req.body; // Default role is 'employee'
+  const {
+    name,
+    email,
+    password,
+    role = "employee",
+    department,
+    designation,
+  } = req.body;
 
   try {
     // Check if email already exists
@@ -25,15 +33,29 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       name,
       email,
       password: hashedPassword,
-      role, // Ensure the role is saved
+      role,
     });
     await newUser.save();
 
-    // Return response with user ID and role
+    // Create the Employee record and link it to the User
+    const newEmployee = new Employee({
+      firstName: name.split(" ")[0], // Assuming first name is the first part of the full name
+      lastName: name.split(" ")[1] || "",
+      email,
+      department,
+      designation,
+    });
+    await newEmployee.save();
+
+    // Update the User model with employeeId reference
+    newUser.employeeId = newEmployee._id as mongoose.Types.ObjectId;
+    await newUser.save();
+
     res.status(201).json({
       message: "User registered successfully",
       userId: newUser._id,
-      role: newUser.role, // Return role for debugging
+      role: newUser.role,
+      employeeId: newEmployee._id,
     });
   } catch (error) {
     console.error("Error in signup:", error);
@@ -59,7 +81,7 @@ export const login = async (
   try {
     const token = await loginUser(email, password);
     const user = await User.findOne({ email }).select(
-      "name email role isActive"
+      "name email role isActive employeeId"
     );
 
     if (!user) {
@@ -67,23 +89,36 @@ export const login = async (
       return;
     }
 
-    // 🔥 Fetch the corresponding Employee record
-    const employee = await Employee.findOne({ email });
+    // Fetch the corresponding Employee record using the employeeId
+    const employee = user.employeeId
+      ? await Employee.findById(user.employeeId)
+      : null;
+
+    // 🛠 Debugging Logs to check data before responding
+
+    // 🛠 Check if role is undefined
+    if (!user.role) {
+      console.error("❌ ERROR: User role is missing in database");
+    }
 
     res.status(200).json({
       message: "Login successful",
       token,
-      role: user.role,
+      role: user.role || "unknown", // 🔥 Ensure role is not undefined
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role || "unknown", // 🔥 Ensure role is present
         isActive: user.isActive,
-        employeeId: employee ? employee._id : null, // ✅ Include employeeId
+        employeeId: employee ? employee._id : null,
+        employeeName: employee
+          ? `${employee.firstName} ${employee.lastName}`
+          : null,
       },
     });
   } catch (error) {
+    console.error("❌ Login Error:", error);
     next(error);
   }
 };

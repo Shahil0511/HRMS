@@ -8,6 +8,9 @@ export interface IDepartment extends Document {
   updatedAt: Date;
 }
 
+/**
+ * DepartmentSchema - Defines the schema for Department records.
+ */
 const DepartmentSchema: Schema = new Schema(
   {
     departmentName: {
@@ -16,7 +19,7 @@ const DepartmentSchema: Schema = new Schema(
       trim: true,
       minlength: [3, "Department name must be at least 3 characters"],
       maxlength: [50, "Department name must be at most 50 characters"],
-      unique: true, // Keep only this for uniqueness
+      unique: true,
     },
     description: {
       type: String,
@@ -31,15 +34,15 @@ const DepartmentSchema: Schema = new Schema(
       trim: true,
     },
   },
-  {
-    timestamps: true,
-    versionKey: false,
-  }
+  { timestamps: true, versionKey: false }
 );
 
-// Keep only necessary index
+// Indexing for optimized searches
 DepartmentSchema.index({ headOfDepartment: 1 });
 
+/**
+ * Custom JSON transformation to exclude _id.
+ */
 DepartmentSchema.methods.toJSON = function () {
   const department = this.toObject();
   department.id = department._id;

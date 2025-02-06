@@ -1,22 +1,24 @@
+// src/controllers/employeeController.ts
 import { Request, Response } from "express";
-import { IEmployee, Employee } from "../models/EmployeeSchema";
-import jwt from "jsonwebtoken";
-import { User } from "../models/UserSchema";
-
-/**
- * Add a new employee
- */
 import bcrypt from "bcryptjs";
+import { User } from "../models/UserSchema";
+import { Employee } from "../models/EmployeeSchema";
+import crypto from "crypto";
+
+interface RequestWithUser extends Request {
+  user?: any;
+}
 
 /**
  * Add a new employee and automatically create the corresponding user with a hashed password
  */
+// Backend: Corrected addEmployee function
+
 export const addEmployee = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    // Destructuring required fields from the request body
     const {
       firstName,
       lastName,
@@ -64,19 +66,12 @@ export const addEmployee = async (
     // Saving employee to the database
     const savedEmployee = await newEmployee.save();
 
-    // Generate password from first characters of first and last name, and last 5 digits of phone number
-    const generatePassword = (
-      firstName: string,
-      lastName: string,
-      phoneNumber: string
-    ): string => {
-      const firstCharFirstName = firstName.charAt(0).toLowerCase(); // First character of first name
-      const firstCharLastName = lastName.charAt(0).toLowerCase(); // First character of last name
-      const last5PhoneNumber = phoneNumber.slice(-5); // Last 5 digits of phone number
-      return `${firstCharFirstName}${firstCharLastName}@${last5PhoneNumber}`;
+    // Generate a secure password for the employee user
+    const generateSecurePassword = (): string => {
+      return crypto.randomBytes(8).toString("hex"); // 8-byte random password
     };
 
-    const rawPassword = generatePassword(firstName, lastName, phoneNumber);
+    const rawPassword = generateSecurePassword(); // Generate a random password
 
     // Hash the generated password
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
@@ -88,6 +83,7 @@ export const addEmployee = async (
       password: hashedPassword, // Hashed password
       role: "employee", // Default to employee role
       isActive: true, // Assuming the user is active by default
+      employeeId: savedEmployee._id, // Link the employee to the user
     });
 
     // Save the user to the database
@@ -126,7 +122,7 @@ export const getEmployees = async (
 ): Promise<void> => {
   try {
     // Query the database for all employees
-    const employees: IEmployee[] = await Employee.find();
+    const employees = await Employee.find();
 
     // Returning success response with employee list
     res.status(200).json({
@@ -134,7 +130,6 @@ export const getEmployees = async (
       employees,
     });
   } catch (error: unknown) {
-    // Enhanced error handling for fetching employees
     if (error instanceof Error) {
       res.status(500).json({
         success: false,
@@ -145,31 +140,26 @@ export const getEmployees = async (
       res.status(500).json({
         success: false,
         message: "Failed to fetch employees",
-        error: "An unknown error occurred", // Fallback error message
+        error: "An unknown error occurred",
       });
     }
   }
 };
 
 /**
- * Get the current authenticated employee's data
+ * Get the current authenticated user's employee data
  */
-export const getUser = async (req: Request, res: Response): Promise<void> => {
+export const getUserEmployeeData = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<void> => {
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) {
-      res.status(401).json({
-        success: false,
-        message: "No token provided. Please log in.",
-      });
-      return;
+    // Ensure req.user exists and has an id (not _id)
+    if (!req.user || !req.user.id) {
+      res.status(403).json({ message: "Access denied. User not found." });
     }
 
-    // Verify the token and extract the user ID
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
-    const userId = decoded.id;
-
-    const user = await User.findById(userId).select("name email role isActive"); // Select relevant fields (no firstName, lastName)
+    const user = await User.findById(req.user.id).select("name email role");
 
     if (!user) {
       res.status(404).json({
@@ -179,28 +169,21 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Respond with the user data (no employee data is fetched)
     res.status(200).json({
       success: true,
       user: {
         name: user.name,
         email: user.email,
         role: user.role,
-        isActive: user.isActive,
       },
     });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch user",
-        error: error.message,
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch user",
-        error: "An unknown error occurred",
-      });
-    }
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user",
+      error: "An unknown error occurred",
+    });
   }
 };

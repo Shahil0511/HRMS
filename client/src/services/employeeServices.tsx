@@ -24,7 +24,7 @@ const isTokenValid = (token: string): boolean => {
  * Set the Authorization header for API requests
  */
 const setAuthHeader = (token: string) => ({
-    "Content-Type": "multipart/form-data",
+    "Content-Type": "application/json", // Corrected content type
     Authorization: `Bearer ${token}`,
 });
 
@@ -48,13 +48,18 @@ const handleTokenValidation = () => {
 /**
  * Add a new employee
  */
-export const addEmployee = async (employeeData: any) => {  // Remove FormData type
+export const addEmployee = async (employeeData: any) => {
     try {
         const token = handleTokenValidation();
+        console.log("Stored Token:", localStorage.getItem("token"));
 
         const response = await axios.post(API_URL, employeeData, {
             headers: setAuthHeader(token),
         });
+
+        // Log the response to see both employee and user data
+        console.log(response.data.employee); // Employee Data
+        console.log(response.data.user); // User Data (if necessary)
 
         return response.data;
     } catch (error: any) {
@@ -62,7 +67,6 @@ export const addEmployee = async (employeeData: any) => {  // Remove FormData ty
         throw new Error(error.response?.data?.message || "Failed to add employee");
     }
 };
-
 
 /**
  * Get all employees
@@ -80,5 +84,22 @@ export const getAllEmployees = async (search?: string) => {
     } catch (error: any) {
         console.error("Error fetching employees:", error.response?.data || error.message);
         throw new Error(error.response?.data?.message || "Failed to fetch employees");
+    }
+};
+
+/**
+ * Get the current authenticated user's employee data
+ */
+export const getUserEmployeeData = async () => {
+    try {
+        const token = handleTokenValidation();
+        const response = await axios.get(`${API_URL}/user`, {
+            headers: setAuthHeader(token),
+        });
+
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching employee data:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || "Failed to fetch employee data");
     }
 };
