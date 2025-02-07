@@ -11,3 +11,12 @@ export interface AuthPayload {
   user: User;
   role: string;
 }
+
+export interface IAttendance {
+  employeeId: string;
+  date: string;
+  checkIn: string;
+  checkOut?: string;
+  status: "Present" | "Absent";
+  duration?: number;
+}

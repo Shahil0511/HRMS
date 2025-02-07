@@ -50,6 +50,20 @@ export const addEmployee = async (
       return;
     }
 
+    // Generate password: first name + '@' + last 4 digits of phone number
+    const generatePassword = (
+      firstName: string,
+      phoneNumber: string
+    ): string => {
+      const last4Digits = phoneNumber.slice(-4); // Get last 4 digits of phone number
+      return `${firstName}@${last4Digits}`; // Create password as: firstName@last4digits
+    };
+
+    const rawPassword = generatePassword(firstName, phoneNumber); // Generate the password using the new format
+
+    // Hash the generated password
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,
@@ -65,16 +79,6 @@ export const addEmployee = async (
 
     // Saving employee to the database
     const savedEmployee = await newEmployee.save();
-
-    // Generate a secure password for the employee user
-    const generateSecurePassword = (): string => {
-      return crypto.randomBytes(8).toString("hex"); // 8-byte random password
-    };
-
-    const rawPassword = generateSecurePassword(); // Generate a random password
-
-    // Hash the generated password
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
     // Create a new user instance with the hashed password
     const newUser = new User({

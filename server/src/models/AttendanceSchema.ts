@@ -49,7 +49,6 @@ const AttendanceSchema = new Schema<IAttendance>(
   }
 );
 
-// ✅ Virtual field to calculate duration (in hours)
 AttendanceSchema.virtual("duration").get(function (this: IAttendance) {
   if (this.checkIn && this.checkOut) {
     return (
@@ -58,10 +57,6 @@ AttendanceSchema.virtual("duration").get(function (this: IAttendance) {
   }
   return 0;
 });
-
-// ✅ Ensure `duration` is included in queries
-AttendanceSchema.set("toJSON", { virtuals: true });
-AttendanceSchema.set("toObject", { virtuals: true });
 
 const Attendance = mongoose.model<IAttendance>("Attendance", AttendanceSchema);
 

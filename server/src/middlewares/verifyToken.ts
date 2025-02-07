@@ -50,6 +50,7 @@ export const verifyToken = (
 
     // If the token has expired, send a specific error message
     if (error.name === "TokenExpiredError") {
+      console.log("Token expired");
       res.status(401).json({
         success: false,
         message: "Unauthorized - Token has expired",
@@ -57,10 +58,12 @@ export const verifyToken = (
     }
 
     // For any other errors, send a generic invalid token error message
-
-    res.status(401).json({
-      success: false,
-      message: "Unauthorized - Invalid token",
-    });
+    else {
+      console.log("Invalid token");
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized - Invalid token",
+      });
+    }
   }
 };

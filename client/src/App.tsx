@@ -19,7 +19,7 @@ import AddDepartment from "./components/AdminDashboard/adminUtils/AddDepartment"
 // Employee Pages
 import EmployeeDepartment from "./components/EmployeeDashboard/Department";
 import EmployeeLeaves from "./components/EmployeeDashboard/Leaves";
-// import EmployeeAttendance from "./components/EmployeeDashboard/Attendance";
+import EmployeeAttendance from "./components/EmployeeDashboard/Attendance";
 import EmployeeSettings from "./components/EmployeeDashboard/Settings";
 import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
 
@@ -27,6 +27,7 @@ import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
 import ProtectedRoute from "./components/ProtectedRoutes/ProtectedRoutes";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import NotFound from "./pages/NotFound";
+import EmployeeAttendanceList from "./components/EmployeeDashboard/attendanceUtils/EmployeeAttendanceList";
 
 const App = () => {
   return (
@@ -48,8 +49,9 @@ const App = () => {
           <Route path="dashboard" element={<DashboardEmp />} />
           <Route path="department" element={<EmployeeDepartment />} />
           <Route path="leaves" element={<EmployeeLeaves />} />
-          {/* <Route path="attendance" element={<EmployeeAttendance />} /> */}
+          <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="settings" element={<EmployeeSettings />} />
+
         </Route>
 
         {/* Protected Admin Routes */}
