@@ -1,46 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../store/store";
-import { checkIn, checkOut } from "../../store/slices/attendanceSlice";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { checkIn, checkOut, fetchAttendanceRecords } from "../../store/slices/attendanceSlice";
+import { RootState, AppDispatch } from "../../store/store";
 import { toast } from "react-toastify";
 
 const AttendanceForm = () => {
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const { attendance, loading } = useSelector((state: RootState) => state.attendance);
-    const [isCheckedIn, setIsCheckedIn] = useState(!!attendance?.checkIn && !attendance?.checkOut);
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
+
+    // Update check-in state based on attendance data
+    useEffect(() => {
+        dispatch(fetchAttendanceRecords()); // Fetch latest attendance data
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (attendance?.checkIn && !attendance?.checkOut) {
+            setIsCheckedIn(true);
+        } else {
+            setIsCheckedIn(false);
+        }
+    }, [attendance]);
 
     const handleCheckIn = async () => {
-        console.log("Attempting to check in..."); // Debug log
+        console.log("Attempting to check in...");
         try {
             await dispatch(checkIn()).unwrap();
-            setIsCheckedIn(true);
             toast.success("Checked in successfully");
-            console.log("Check-in successful!"); // Debug log
+            console.log("Check-in successful!");
         } catch (error: any) {
             toast.error(error.message || "Failed to check in");
-            console.error("Check-in error:", error); // Debug log for error
+            console.error("Check-in error:", error);
         }
     };
 
     const handleCheckOut = async () => {
-        console.log("Attempting to check out..."); // Debug log
+        console.log("Attempting to check out...");
         try {
             await dispatch(checkOut()).unwrap();
-            setIsCheckedIn(false);
             toast.success("Checked out successfully");
-            console.log("Check-out successful!"); // Debug log
+            console.log("Check-out successful!");
         } catch (error: any) {
             toast.error(error.message || "Failed to check out");
-            console.error("Check-out error:", error); // Debug log for error
+            console.error("Check-out error:", error);
         }
     };
 
     const goToAttendanceList = () => {
-        console.log("Navigating to attendance list..."); // Debug log
-        navigate("/employee-attendance-list");
+        navigate("/employee/attendance-list");
     };
 
     return (
@@ -71,9 +80,7 @@ const AttendanceForm = () => {
                         <button
                             onClick={handleCheckIn}
                             disabled={isCheckedIn || loading}
-                            className={`w-full py-3 rounded-lg text-white font-medium transition duration-300 ${isCheckedIn || loading
-                                ? "bg-indigo-900 cursor-not-allowed"
-                                : "bg-indigo-600 hover:bg-indigo-700"
+                            className={`w-full py-3 rounded-lg text-white font-medium transition duration-300 ${isCheckedIn || loading ? "bg-indigo-900 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
                                 }`}
                         >
                             {loading ? "Checking In..." : "Check In"}
@@ -83,9 +90,7 @@ const AttendanceForm = () => {
                         <button
                             onClick={handleCheckOut}
                             disabled={!isCheckedIn || loading}
-                            className={`w-full py-3 rounded-lg text-white font-medium transition duration-300 ${!isCheckedIn || loading
-                                ? "bg-blue-900 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700"
+                            className={`w-full py-3 rounded-lg text-white font-medium transition duration-300 ${!isCheckedIn || loading ? "bg-blue-900 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                                 }`}
                         >
                             {loading ? "Checking Out..." : "Check Out"}

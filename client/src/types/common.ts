@@ -12,11 +12,12 @@ export interface AuthPayload {
   role: string;
 }
 
-export interface IAttendance {
-  employeeId: string;
+export interface Attendance {
+  status: string;
+  id: string;
   date: string;
-  checkIn: string;
-  checkOut?: string;
-  status: "Present" | "Absent";
-  duration?: number;
+  checkIn: string[];
+  checkOut: string[];
+  totalTimeWorked: string;
+  isPresent: boolean;
 }

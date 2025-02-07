@@ -29,6 +29,7 @@ import EmployeeDashboard from "./pages/EmployeeDashboard";
 import NotFound from "./pages/NotFound";
 import EmployeeAttendanceList from "./components/EmployeeDashboard/attendanceUtils/EmployeeAttendanceList";
 
+
 const App = () => {
   return (
     <Router>
@@ -50,6 +51,7 @@ const App = () => {
           <Route path="department" element={<EmployeeDepartment />} />
           <Route path="leaves" element={<EmployeeLeaves />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
+          <Route path="attendance-list" element={<EmployeeAttendanceList />} />
           <Route path="settings" element={<EmployeeSettings />} />
 
         </Route>
