@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { Department } from "../models/DepartmentSchema";
 
 /**
- * Create a new department
+ * Controller to create a new department.
+ * Ensures no duplicate department names exist before creation.
  */
 export const addDepartment = async (
   req: Request,
@@ -11,12 +12,14 @@ export const addDepartment = async (
   try {
     const { departmentName, description, headOfDepartment } = req.body;
 
+    // Check if the department already exists
     const existingDepartment = await Department.findOne({ departmentName });
     if (existingDepartment) {
       res.status(400).json({ message: "Department already exists" });
       return;
     }
 
+    // Create and save the new department
     const newDepartment = await Department.create({
       departmentName,
       description,
@@ -34,15 +37,17 @@ export const addDepartment = async (
 };
 
 /**
- * Get all departments with optional search filter and pagination
+ * Controller to retrieve all departments.
+ * Supports optional search queries and pagination.
  */
 export const getDepartments = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const { search, page = 1, limit = 10 } = req.query; // Set default pagination
+    const { search, page = 1, limit = 10 } = req.query; // Default pagination settings
 
+    // Apply search filter if provided
     const filter = search
       ? { departmentName: { $regex: search, $options: "i" } }
       : {};
@@ -57,6 +62,7 @@ export const getDepartments = async (
       .limit(limitNumber)
       .lean();
 
+    // Get the total count of departments matching the filter
     const totalDepartments = await Department.countDocuments(filter);
 
     res.status(200).json({

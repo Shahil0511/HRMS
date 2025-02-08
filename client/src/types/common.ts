@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export interface User {
   _id: string;
   employeeId: string;
@@ -13,6 +15,9 @@ export interface AuthPayload {
 }
 
 export interface Attendance {
+  email: string;
+  employeeName: ReactNode;
+  department: ReactNode;
   status: string;
   id: string;
   date: string;

@@ -8,10 +8,17 @@ import { verifyToken } from "../middlewares/verifyToken";
 
 const router = Router();
 
-// Admin only: Add a new department
+/**
+ * Route to add a new department.
+ * Protected: Requires authentication and admin privileges.
+ */
 router.post("/departments", verifyToken, isAdmin, addDepartment);
 
-// Public: Get all departments with optional search query
+/**
+ * Route to get all departments.
+ * Public: Can be accessed without authentication.
+ * Supports optional search queries.
+ */
 router.get("/departments", getDepartments);
 
 export default router;

@@ -1,10 +1,8 @@
 import { Request, Response } from "express";
 import Attendance from "../models/AttendanceSchema";
 import { RequestWithUser } from "../middlewares/verifyToken";
+import { User } from "../models/UserSchema"; // Assuming you are importing User model
 
-/**
- * Check-in for an employee.
- */
 export const checkIn = async (
   req: RequestWithUser,
   res: Response
@@ -24,14 +22,10 @@ export const checkIn = async (
     await attendance.save();
     res.status(201).json(attendance);
   } catch (error) {
-    console.error("Error during check-in:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-/**
- * Check-out for an employee.
- */
 export const checkOut = async (
   req: RequestWithUser,
   res: Response
@@ -60,34 +54,27 @@ export const checkOut = async (
 
     res.status(200).json(attendance);
   } catch (error) {
-    console.error("Error during check-out:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-/**
- * Get attendance records for an individual employee.
- */
 export const getEmployeeAttendanceList = async (
   req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { id: employeeId } = req.user!;
+
     const attendanceRecords = await Attendance.find({ employeeId }).sort({
       date: -1,
     });
 
     res.status(200).json(attendanceRecords);
   } catch (error) {
-    console.error("Error fetching employee attendance:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-/**
- * Admin: Get all attendance records (with pagination and filtering).
- */
 export const getAllAttendanceRecords = async (
   req: Request,
   res: Response
@@ -99,7 +86,10 @@ export const getAllAttendanceRecords = async (
     if (employeeId) filter.employeeId = employeeId;
     if (date) filter.date = new Date(date as string);
 
+    // Get total record count before applying pagination
     const totalRecords = await Attendance.countDocuments(filter);
+
+    // Fetch filtered attendance records with pagination
     const attendanceRecords = await Attendance.find(filter)
       .populate("employeeId", "firstName lastName department designation") // Fetch employee details
       .sort({ date: -1 })
@@ -113,7 +103,72 @@ export const getAllAttendanceRecords = async (
       attendanceRecords,
     });
   } catch (error) {
-    console.error("Error fetching all attendance records:", error);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const getTodayPresentEmployees = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Fetch today's attendance records
+    const attendanceRecords = await Attendance.find(
+      { checkIn: { $gte: today, $lt: tomorrow }, status: "Present" },
+      { employeeId: 1, checkIn: 1, checkOut: 1 }
+    ).lean();
+
+    if (!attendanceRecords.length) {
+      res.status(200).json([]);
+      return;
+    }
+
+    // Extract unique User IDs from attendance records
+    const userIds = attendanceRecords.map((record) =>
+      record.employeeId.toString()
+    );
+
+    // Fetch user details without including employeeId
+    const users = await User.find(
+      { _id: { $in: userIds } },
+      { _id: 1, name: 1, email: 1 }
+    ).lean();
+
+    if (!users.length) {
+      res.status(200).json([]);
+      return;
+    }
+
+    // Create a lookup map for user details
+    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+
+    // Format the response data
+    const formattedEmployees = attendanceRecords.map((record) => {
+      const user = userMap.get(record.employeeId.toString());
+
+      return {
+        id: record._id,
+        userId: record.employeeId.toString(),
+        employeeName: user ? user.name : "Unknown",
+        email: user ? user.email : "No Email",
+        checkIn: record.checkIn
+          ? new Date(record.checkIn).toLocaleTimeString()
+          : "N/A",
+        checkOut: record.checkOut
+          ? new Date(record.checkOut).toLocaleTimeString()
+          : "N/A",
+      };
+    });
+
+    res.status(200).json(formattedEmployees);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Server Error", error: (error as Error).message });
   }
 };

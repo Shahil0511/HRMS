@@ -1,81 +1,115 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAttendanceRecords } from "../../../store/slices/attendanceSlice";
 import { RootState, AppDispatch } from "../../../store/store";
 import { format } from "date-fns";
+import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { fetchUserName } from "../../../services/UserServices";
 
 const EmployeeAttendanceList = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { records, loading, error } = useSelector((state: RootState) => state.attendance);
 
+    const [userName, setUserName] = useState<string | null>(null);
+    const [userLoading, setUserLoading] = useState<boolean>(true);
+    const [userError, setUserError] = useState<string | null>(null);
+
     useEffect(() => {
-        dispatch(fetchAttendanceRecords()); // Fetch attendance data when component mounts
+        // Fetch user data (used in Navbar as well)
+        const getUserData = async () => {
+            try {
+                setUserLoading(true);
+                const user = await fetchUserName();
+                if (user?.name) {
+                    setUserName(user.name);
+                } else {
+                    setUserError("User data is incomplete.");
+                }
+            } catch (err) {
+                setUserError("Failed to fetch user information.");
+            } finally {
+                setUserLoading(false);
+            }
+        };
+
+        getUserData();
+    }, []); // Runs once on mount
+
+    useEffect(() => {
+        dispatch(fetchAttendanceRecords()); // Fetch all attendance records
     }, [dispatch]);
 
-    if (loading) return <div className="text-center p-4">Loading...</div>;
-    if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
+    if (loading || userLoading) return <div className="text-center p-4 text-white">Loading...</div>;
+    if (error || userError) return <div className="text-red-500 p-4 text-center">{error || userError}</div>;
 
     return (
-        <div className="p-6 bg-white shadow-md rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Employee Attendance</h2>
-            <div className="overflow-x-auto">
-                <table className="min-w-full border border-gray-300">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="border p-2">Date</th>
-                            <th className="border p-2">Day</th>
-                            <th className="border p-2">Check In & Check Out</th>
-                            <th className="border p-2">Total Time Worked</th>
-                            <th className="border p-2">Present</th>
-                            <th className="border p-2">Absent</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {records?.map((record) => {
-                            // ✅ Ensure checkIn and checkOut are treated as single Date values
-                            const checkInTime = Array.isArray(record.checkIn)
-                                ? new Date(record.checkIn[0])
-                                : new Date(record.checkIn);
+        <div className="min-h-screen bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 text-white p-6">
+            <div className="max-w-6xl mx-auto bg-gradient-to-l from-indigo-900 to-blue-800 text-white p-6 rounded-lg shadow-lg">
+                <h2 className="text-2xl font-semibold text-center mb-6">{userName ? `${userName}'s Attendance` : "Attendance"}</h2>
 
-                            const checkOutTime = record.checkOut
-                                ? (Array.isArray(record.checkOut)
-                                    ? new Date(record.checkOut[0])
-                                    : new Date(record.checkOut))
-                                : null;
+                <div className="overflow-x-auto rounded-sm">
+                    <table className="w-full border border-gray-700 rounded-sm">
+                        <thead className="bg-blue-700 text-white">
+                            <tr>
+                                <th className="border border-gray-200 p-3">Date</th>
+                                <th className="border border-gray-200 p-3">Day</th>
+                                <th className="border border-gray-200 p-3">Check In & Check Out</th>
+                                <th className="border border-gray-200 p-3">Total Time Worked</th>
+                                <th className="border border-gray-200 p-3">Present</th>
+                                <th className="border border-gray-200 p-3">Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {records?.map((record) => {
+                                const checkIns = Array.isArray(record.checkIn) ? record.checkIn : [record.checkIn];
+                                const checkOuts = Array.isArray(record.checkOut) ? record.checkOut : [record.checkOut];
 
-                            return (
-                                <tr key={record.id} className="text-center">
-                                    <td className="border p-2">{format(new Date(record.date), "yyyy-MM-dd")}</td>
-                                    <td className="border p-2">{format(new Date(record.date), "EEEE")}</td>
-                                    <td className="border p-2">
-                                        {checkInTime ? format(checkInTime, "HH:mm:ss") : "N/A"} -{" "}
-                                        {checkOutTime ? format(checkOutTime, "HH:mm:ss") : "N/A"}
-                                    </td>
-                                    <td className="border p-2">
-                                        {checkInTime && checkOutTime
-                                            ? ((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(2) +
-                                            " hrs"
-                                            : "N/A"}
-                                    </td>
-                                    <td className="border p-2">
-                                        {record.status === "Present" ? (
-                                            <span className="text-green-600 font-bold">✔</span>
-                                        ) : (
-                                            "-"
-                                        )}
-                                    </td>
-                                    <td className="border p-2">
-                                        {record.status === "Absent" ? (
-                                            <span className="text-red-600 font-bold">✘</span>
-                                        ) : (
-                                            "-"
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                return (
+                                    <tr key={record.id} className="text-center hover:bg-blue-800 transition duration-300">
+                                        <td className="border border-gray-200 p-3">{format(new Date(record.date), "yyyy-MM-dd")}</td>
+                                        <td className="border border-gray-200 p-3">{format(new Date(record.date), "EEEE")}</td>
+                                        <td className="border border-gray-200 p-3">
+                                            {checkIns.map((checkIn, index) => (
+                                                <div key={index} className="py-1">
+                                                    {format(new Date(checkIn), "HH:mm:ss")} -{" "}
+                                                    {checkOuts[index] ? format(new Date(checkOuts[index]), "HH:mm:ss") : "N/A"}
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td className="border border-gray-200 p-3">
+                                            {checkIns.map((checkIn, index) => {
+                                                const checkOut = checkOuts[index];
+                                                return (
+                                                    <div key={index} className="py-1">
+                                                        {checkOut
+                                                            ? ((new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+                                                                (1000 * 60 * 60)
+                                                            ).toFixed(2) + " hrs"
+                                                            : "N/A"}
+                                                    </div>
+                                                );
+                                            })}
+                                        </td>
+                                        <td className="border border-gray-200 p-3">
+                                            {record.status === "Present" ? (
+                                                <FaCheckCircle className="text-green-400 text-xl mx-auto" />
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                        <td className="border border-gray-200 p-3">
+                                            {record.status === "Absent" ? (
+                                                <FaTimesCircle className="text-red-500 text-xl mx-auto" />
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

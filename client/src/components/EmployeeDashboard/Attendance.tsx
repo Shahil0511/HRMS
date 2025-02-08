@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { checkIn, checkOut, fetchAttendanceRecords } from "../../store/slices/attendanceSlice";
@@ -9,42 +9,32 @@ const AttendanceForm = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { attendance, loading } = useSelector((state: RootState) => state.attendance);
-    const [isCheckedIn, setIsCheckedIn] = useState(false);
 
-    // Update check-in state based on attendance data
+    // ✅ Fetch latest attendance on page load
     useEffect(() => {
-        dispatch(fetchAttendanceRecords()); // Fetch latest attendance data
+        dispatch(fetchAttendanceRecords());
     }, [dispatch]);
 
-    useEffect(() => {
-        if (attendance?.checkIn && !attendance?.checkOut) {
-            setIsCheckedIn(true);
-        } else {
-            setIsCheckedIn(false);
-        }
-    }, [attendance]);
+    // ✅ Determine check-in state based on attendance from Redux
+    const isCheckedIn = attendance?.checkIn && !attendance?.checkOut;
 
     const handleCheckIn = async () => {
-        console.log("Attempting to check in...");
         try {
             await dispatch(checkIn()).unwrap();
             toast.success("Checked in successfully");
-            console.log("Check-in successful!");
+            dispatch(fetchAttendanceRecords()); // ✅ Refresh attendance after check-in
         } catch (error: any) {
             toast.error(error.message || "Failed to check in");
-            console.error("Check-in error:", error);
         }
     };
 
     const handleCheckOut = async () => {
-        console.log("Attempting to check out...");
         try {
             await dispatch(checkOut()).unwrap();
             toast.success("Checked out successfully");
-            console.log("Check-out successful!");
+            dispatch(fetchAttendanceRecords()); // ✅ Refresh attendance after check-out
         } catch (error: any) {
             toast.error(error.message || "Failed to check out");
-            console.error("Check-out error:", error);
         }
     };
 
@@ -63,7 +53,6 @@ const AttendanceForm = () => {
                 </button>
             </div>
 
-            {/* Attendance Form */}
             <div className="bg-gradient-to-l from-gray-900 to-indigo-900 p-8 rounded-xl shadow-lg w-full sm:w-96 transition-all">
                 <h2 className="text-2xl font-semibold text-center mb-6 text-white">
                     Attendance
@@ -76,7 +65,6 @@ const AttendanceForm = () => {
                     </div>
 
                     <div className="flex justify-between gap-4">
-                        {/* Check In Button */}
                         <button
                             onClick={handleCheckIn}
                             disabled={isCheckedIn || loading}
@@ -86,7 +74,6 @@ const AttendanceForm = () => {
                             {loading ? "Checking In..." : "Check In"}
                         </button>
 
-                        {/* Check Out Button */}
                         <button
                             onClick={handleCheckOut}
                             disabled={!isCheckedIn || loading}

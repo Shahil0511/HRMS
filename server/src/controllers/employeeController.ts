@@ -1,4 +1,3 @@
-// src/controllers/employeeController.ts
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { User } from "../models/UserSchema";
@@ -10,10 +9,9 @@ interface RequestWithUser extends Request {
 }
 
 /**
- * Add a new employee and automatically create the corresponding user with a hashed password
+ * Controller to add a new employee.
+ * Automatically creates a corresponding user with a generated password.
  */
-// Backend: Corrected addEmployee function
-
 export const addEmployee = async (
   req: Request,
   res: Response
@@ -31,7 +29,7 @@ export const addEmployee = async (
       designation,
     } = req.body;
 
-    // Validating that all required fields are provided
+    // Validate that all required fields are provided
     if (
       !firstName ||
       !lastName ||
@@ -50,21 +48,21 @@ export const addEmployee = async (
       return;
     }
 
-    // Generate password: first name + '@' + last 4 digits of phone number
+    // Generate a default password based on the employee's first name and phone number
     const generatePassword = (
       firstName: string,
       phoneNumber: string
     ): string => {
-      const last4Digits = phoneNumber.slice(-4); // Get last 4 digits of phone number
-      return `${firstName}@${last4Digits}`; // Create password as: firstName@last4digits
+      const last4Digits = phoneNumber.slice(-4); // Extract last 4 digits of phone number
+      return `${firstName}@${last4Digits}`; // Format: firstName@last4digits
     };
 
-    const rawPassword = generatePassword(firstName, phoneNumber); // Generate the password using the new format
+    const rawPassword = generatePassword(firstName, phoneNumber);
 
     // Hash the generated password
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
-    // Create new employee instance
+    // Create a new employee instance
     const newEmployee = new Employee({
       firstName,
       lastName,
@@ -77,23 +75,22 @@ export const addEmployee = async (
       designation,
     });
 
-    // Saving employee to the database
+    // Save the employee record to the database
     const savedEmployee = await newEmployee.save();
 
-    // Create a new user instance with the hashed password
+    // Create a new user instance linked to the employee
     const newUser = new User({
-      name: `${firstName} ${lastName}`, // Full name from first and last name
-      email: email, // Use the employee's email
-      password: hashedPassword, // Hashed password
-      role: "employee", // Default to employee role
-      isActive: true, // Assuming the user is active by default
-      employeeId: savedEmployee._id, // Link the employee to the user
+      name: `${firstName} ${lastName}`, // Full name
+      email,
+      password: hashedPassword, // Store hashed password
+      role: "employee", // Default role
+      isActive: true, // User is active by default
+      employeeId: savedEmployee._id, // Link employee record
     });
 
-    // Save the user to the database
+    // Save the user record to the database
     await newUser.save();
 
-    // Returning success response with the saved employee and user details
     res.status(201).json({
       success: true,
       message: "Employee and user added successfully",
@@ -118,17 +115,16 @@ export const addEmployee = async (
 };
 
 /**
- * Get all employees
+ * Controller to fetch all employees.
  */
 export const getEmployees = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    // Query the database for all employees
+    // Retrieve all employees from the database
     const employees = await Employee.find();
 
-    // Returning success response with employee list
     res.status(200).json({
       success: true,
       employees,
@@ -151,18 +147,20 @@ export const getEmployees = async (
 };
 
 /**
- * Get the current authenticated user's employee data
+ * Controller to retrieve the authenticated user's employee data.
  */
 export const getUserEmployeeData = async (
   req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
-    // Ensure req.user exists and has an id (not _id)
+    // Ensure the request contains a valid authenticated user
     if (!req.user || !req.user.id) {
       res.status(403).json({ message: "Access denied. User not found." });
+      return;
     }
 
+    // Fetch user details
     const user = await User.findById(req.user.id).select("name email role");
 
     if (!user) {
@@ -173,7 +171,7 @@ export const getUserEmployeeData = async (
       return;
     }
 
-    // Respond with the user data (no employee data is fetched)
+    // Respond with the user details
     res.status(200).json({
       success: true,
       user: {
@@ -183,7 +181,6 @@ export const getUserEmployeeData = async (
       },
     });
   } catch (error) {
-    console.error("Error fetching user:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch user",

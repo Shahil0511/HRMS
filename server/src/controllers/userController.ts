@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/UserSchema";
 
 /**
- * User signup controller
+ * Controller for user signup.
+ * Registers a new user with a hashed password.
  */
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password, role = "employee" } = req.body;
@@ -17,7 +18,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Hash password and save the new user
+    // Hash the password and save the new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       name,
@@ -33,13 +34,13 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       role: newUser.role,
     });
   } catch (error) {
-    console.error("Error in signup:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 /**
- * User login controller
+ * Controller for user login.
+ * Authenticates the user and generates a JWT token.
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
@@ -50,6 +51,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
+    // Find user by email and select necessary fields
     const user = await User.findOne({ email }).select(
       "name email password role"
     );
@@ -59,14 +61,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Compare password with hashed password
+    // Compare input password with the stored hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       res.status(401).json({ message: "Invalid credentials" });
       return;
     }
 
-    // Generate JWT token
+    // Generate JWT token with user ID and role
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET as string,
@@ -84,16 +86,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error("Error in login:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 /**
- * Get the current authenticated user's data
+ * Controller to get the authenticated user's details.
  */
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Extract the token from the Authorization header
     const token = req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
       res.status(401).json({
@@ -103,9 +105,11 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Verify the token and extract the user ID
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
     const userId = decoded.id;
 
+    // Find the user by ID and select necessary fields
     const user = await User.findById(userId).select("name email role");
 
     if (!user) {
@@ -125,7 +129,6 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching user:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch user",

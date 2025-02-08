@@ -2,12 +2,12 @@ import bcrypt from "bcryptjs";
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/UserSchema";
 import { loginUser } from "../services/authServices";
-
 import { Employee } from "../models/EmployeeSchema";
 import mongoose from "mongoose";
 
 /**
- * User signup controller
+ * User signup controller.
+ * Registers a new user and links them to an employee record.
  */
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const {
@@ -27,7 +27,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Hash password and save the new user
+    // Hash password and create a new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       name,
@@ -37,17 +37,17 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     });
     await newUser.save();
 
-    // Create the Employee record and link it to the User
+    // Create an associated Employee record
     const newEmployee = new Employee({
-      firstName: name.split(" ")[0], // Assuming first name is the first part of the full name
-      lastName: name.split(" ")[1] || "",
+      firstName: name.split(" ")[0], // Extract first name from full name
+      lastName: name.split(" ")[1] || "", // Extract last name (if available)
       email,
       department,
       designation,
     });
     await newEmployee.save();
 
-    // Update the User model with employeeId reference
+    // Link the Employee record to the User
     newUser.employeeId = newEmployee._id as mongoose.Types.ObjectId;
     await newUser.save();
 
@@ -64,7 +64,8 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
- * User login controller
+ * User login controller.
+ * Authenticates a user and returns a JWT token along with user details.
  */
 export const login = async (
   req: Request,
@@ -79,6 +80,7 @@ export const login = async (
   }
 
   try {
+    // Authenticate user and generate a JWT token
     const token = await loginUser(email, password);
     const user = await User.findOne({ email }).select(
       "name email role isActive employeeId"
@@ -89,27 +91,20 @@ export const login = async (
       return;
     }
 
-    // Fetch the corresponding Employee record using the employeeId
+    // Fetch the associated Employee record, if available
     const employee = user.employeeId
       ? await Employee.findById(user.employeeId)
       : null;
 
-    // 🛠 Debugging Logs to check data before responding
-
-    // 🛠 Check if role is undefined
-    if (!user.role) {
-      console.error("❌ ERROR: User role is missing in database");
-    }
-
     res.status(200).json({
       message: "Login successful",
       token,
-      role: user.role || "unknown", // 🔥 Ensure role is not undefined
+      role: user.role || "unknown",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || "unknown", // 🔥 Ensure role is present
+        role: user.role || "unknown",
         isActive: user.isActive,
         employeeId: employee ? employee._id : null,
         employeeName: employee
