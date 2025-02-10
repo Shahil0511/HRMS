@@ -19,7 +19,7 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://192.168.1.7:5173"],
+    origin: ["http://localhost:5173", "http://192.168.1.7:5173","https://hrms-pioneer.onrender.com"],
     credentials: true,
   })
 );
