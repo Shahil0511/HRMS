@@ -10,7 +10,7 @@ interface Department {
 
 const Department: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [departments, setDepartments] = useState<Department[]>([]);
+    const [, setDepartments] = useState<Department[]>([]);
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const itemsPerPage = 7;
