@@ -12,7 +12,7 @@ const EmployeeDashboard = () => {
             <div className="flex-1 flex flex-col">
                 {/* Navbar */}
                 <DashboardNavbar
-                    user={{ name: "Employee User", role: "employee" }}
+                  
                 />
 
                 {/* Page Content */}
