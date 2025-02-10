@@ -8,7 +8,7 @@ export const fetchUserName = async () => {
             console.error("No token found, user might not be logged in.");
             throw new Error("No token found, user might not be logged in.");
         }
-        const response = await axios.get("http://localhost:8000/api/employees/user", {
+        const response = await axios.get("https://hrms-backend-7176.onrender.com/api/employees/user", {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
