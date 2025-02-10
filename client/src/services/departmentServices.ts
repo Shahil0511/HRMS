@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/api/departments";
+const API_URL = "https://hrms-backend-7176.onrender.com/api/departments";
 
 // Add department function using axios
 export const addDepartment = async (
