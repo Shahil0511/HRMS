@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     const dispatch = useDispatch();
-    const { token, role, isLoggedIn } = useSelector((state: RootState) => state.auth);
+    const { role, isLoggedIn } = useSelector((state: RootState) => state.auth); // Removed 'token'
 
     // ✅ State to track if authentication is restored
     const [authRestored, setAuthRestored] = useState(false);
