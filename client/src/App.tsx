@@ -24,7 +24,7 @@ import EmployeeSettings from "./components/EmployeeDashboard/Settings";
 import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
 
 // Protected Route Component
-import ProtectedRoute from "./components/ProtectedRoutes/ProtectedRoutes";
+import ProtectedRoute from "./ProtectedRoutes/ProtectedRoutes";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import NotFound from "./pages/NotFound";
 import EmployeeAttendanceList from "./components/EmployeeDashboard/attendanceUtils/EmployeeAttendanceList";
