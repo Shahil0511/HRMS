@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { loginUser, signupUser } from "../services/authServices";
 import { RootState } from "../store/store";
 import { loginFailure, loginStart, loginSuccess } from "../store/slices/authSlice";
@@ -54,7 +54,6 @@ const InputField: React.FC<{
 const Auth = () => {
     const [isLogin, setIsLogin] = useState(true);
     const navigate = useNavigate();
-    const location = useLocation(); // Get current location
     const dispatch = useDispatch();
     const { isLoading } = useSelector((state: RootState) => state.auth);
 
@@ -73,32 +72,23 @@ const Auth = () => {
         },
     });
 
-    // 🔹 Save last visited path before redirecting to login
+    // 🔹 Check for existing token and redirect user
     useEffect(() => {
         const token = localStorage.getItem("token");
         const role = localStorage.getItem("role");
         const user = localStorage.getItem("user");
-
-        if (!token || !role || !user) {
-            localStorage.setItem("lastPath", location.pathname); // Save current path
-        }
 
         if (token && role && user) {
             try {
                 const parsedUser = JSON.parse(user);
                 dispatch(loginSuccess({ token, role, user: parsedUser }));
 
-                const lastPath = localStorage.getItem("lastPath");
-
-                // Redirect only if lastPath exists and is different from the current path
-                if (lastPath && lastPath !== location.pathname) {
-                    navigate(lastPath, { replace: true });
-                }
+                navigate(role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
             } catch (error) {
-                console.error("Error parsing user data:", error);
+                console.error("🔴 Error parsing user data:", error);
             }
         }
-    }, [dispatch, navigate, location.pathname]);
+    }, [dispatch, navigate]);
 
     const toggleForm = () => setIsLogin(!isLogin);
 
@@ -106,18 +96,24 @@ const Auth = () => {
     const onSubmit = async (data: any) => {
         dispatch(loginStart());
         try {
+
             let response;
             if (isLogin) {
-                response = await loginUser({ email: data.email, password: data.password });
+                const loginData = { email: data.email, password: data.password };
+                response = await loginUser(loginData);
             } else {
-                response = await signupUser({
+                const signupData = {
                     name: data.name,
                     email: data.email,
                     password: data.password,
-                });
+                    confirmPassword: data.confirmPassword,
+                };
+                response = await signupUser(signupData);
             }
 
+
             if (!response || !response.token) {
+                console.error("❌ Response does not contain a token:", response);
                 throw new Error("Invalid response format: Missing token");
             }
 
@@ -131,15 +127,14 @@ const Auth = () => {
 
                 dispatch(loginSuccess({ token, user, role }));
 
-                // 🔹 After login, send users to their dashboard
-                const dashboardPath = role === "admin" ? "/admin/dashboard" : "/employee/dashboard";
-                navigate(dashboardPath, { replace: true });
+                navigate(role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
             } else {
                 toast.success("✅ Signup successful! Please log in.");
                 reset();
                 setIsLogin(true);
             }
         } catch (error: any) {
+            console.error("🔴 Login Error:", error);
             toast.error(error.response?.data?.message || (isLogin ? "Login failed." : "Signup failed."));
             dispatch(loginFailure());
         }
