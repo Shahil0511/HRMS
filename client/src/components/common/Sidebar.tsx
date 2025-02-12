@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
     FaTachometerAlt,
@@ -7,22 +6,19 @@ import {
     FaClipboardList,
     FaDollarSign,
     FaCog,
-    FaAngleDoubleRight,
-    FaAngleDoubleLeft,
-    FaLayerGroup
+    FaLayerGroup,
+    FaTimes
 } from "react-icons/fa";
 
-// Define the possible roles as a type
 type Role = "admin" | "employee";
 
 interface SidebarProps {
     role: Role;
+    isOpen: boolean;
+    toggleSidebar: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ role }) => {
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
-    // Define the links based on the user role
+const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, toggleSidebar }) => {
     const links = role === "admin" ? [
         { to: "/admin/dashboard", icon: <FaTachometerAlt size={22} />, text: "Dashboard" },
         { to: "/admin/department", icon: <FaLayerGroup size={22} />, text: "Department" },
@@ -39,28 +35,25 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
         { to: "/employee/settings", icon: <FaCog size={22} />, text: "Settings" }
     ];
 
+    // Function to handle link click and collapse sidebar on mobile
+    const handleLinkClick = () => {
+        if (window.innerWidth < 768) {
+            toggleSidebar();
+        }
+    };
+
     return (
-        <div
-            className={`h-screen bg-indigo-900 text-gray-200 flex flex-col ${isCollapsed ? "w-16" : "w-72"} 
-                        transition-all duration-600 ease-in-out shadow-lg sm:relative`}
-        >
+        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-indigo-900 text-gray-200 flex flex-col transform transition-transform duration-300 shadow-lg
+                         ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:relative`}>
             {/* Sidebar Header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-700">
-                <h3
-                    className={`text-2xl font-bold text-white transition-all duration-900 ${isCollapsed ? "hidden" : "block"}`}
-                >
+                <h3 className="text-2xl font-bold text-white">
                     {role === "admin" ? "Admin Dashboard" : "Employee Dashboard"}
                 </h3>
-                <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="text-gray-400 hover:text-white focus:outline-none"
-                    aria-label="Toggle Sidebar"
-                >
-                    {isCollapsed ? (
-                        <FaAngleDoubleRight size={24} />
-                    ) : (
-                        <FaAngleDoubleLeft size={24} />
-                    )}
+
+                {/* Close Button for Mobile */}
+                <button onClick={toggleSidebar} className="md:hidden text-gray-400 hover:text-white">
+                    <FaTimes size={22} />
                 </button>
             </div>
 
@@ -70,15 +63,14 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
                     <NavLink
                         key={to}
                         to={to}
+                        onClick={handleLinkClick} // Close sidebar on mobile
                         className={({ isActive }) =>
                             `flex items-center gap-4 px-4 py-3 hover:bg-blue-700 transition-all ease-in-out rounded-md 
                              ${isActive ? "bg-blue-800 text-white" : "text-gray-100"}`
                         }
                     >
                         {icon}
-                        <span className={`${isCollapsed ? "hidden" : "block"} font-medium text-sm`}>
-                            {text}
-                        </span>
+                        <span className="font-medium text-sm">{text}</span>
                     </NavLink>
                 ))}
             </div>
