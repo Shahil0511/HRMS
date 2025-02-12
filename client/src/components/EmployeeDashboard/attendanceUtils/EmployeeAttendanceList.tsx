@@ -52,11 +52,12 @@ const EmployeeAttendanceList = () => {
                         <thead className="bg-blue-700 text-white">
                             <tr>
                                 <th className="border border-gray-200 p-3">Date</th>
-                                <th className="border border-gray-200 p-3">Day</th>
+                                <th className="border border-gray-200 p-3 hidden sm:table-cell">Day</th>
                                 <th className="border border-gray-200 p-3">Check In & Check Out</th>
                                 <th className="border border-gray-200 p-3">Total Time Worked</th>
-                                <th className="border border-gray-200 p-3">Present</th>
-                                <th className="border border-gray-200 p-3">Absent</th>
+                                <th className="border border-gray-200 p-3 sm:hidden">Status</th>
+                                <th className="border border-gray-200 p-3 hidden sm:table-cell">Present</th>
+                                <th className="border border-gray-200 p-3 hidden sm:table-cell">Absent</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -67,7 +68,7 @@ const EmployeeAttendanceList = () => {
                                 return (
                                     <tr key={record.id} className="text-center hover:bg-blue-800 transition duration-300">
                                         <td className="border border-gray-200 p-3">{format(new Date(record.date), "yyyy-MM-dd")}</td>
-                                        <td className="border border-gray-200 p-3">{format(new Date(record.date), "EEEE")}</td>
+                                        <td className="border border-gray-200 p-3 hidden sm:table-cell">{format(new Date(record.date), "EEEE")}</td>
                                         <td className="border border-gray-200 p-3">
                                             {checkIns.map((checkIn, index) => (
                                                 <div key={index} className="py-1">
@@ -90,14 +91,23 @@ const EmployeeAttendanceList = () => {
                                                 );
                                             })}
                                         </td>
-                                        <td className="border border-gray-200 p-3">
+                                        <td className="border border-gray-200 p-3 sm:hidden">
+                                            {record.status === "Present" ? (
+                                                <FaCheckCircle className="text-green-400 text-xl mx-auto" />
+                                            ) : record.status === "Absent" ? (
+                                                <FaTimesCircle className="text-red-500 text-xl mx-auto" />
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </td>
+                                        <td className="border border-gray-200 p-3 hidden sm:table-cell">
                                             {record.status === "Present" ? (
                                                 <FaCheckCircle className="text-green-400 text-xl mx-auto" />
                                             ) : (
                                                 "-"
                                             )}
                                         </td>
-                                        <td className="border border-gray-200 p-3">
+                                        <td className="border border-gray-200 p-3 hidden sm:table-cell">
                                             {record.status === "Absent" ? (
                                                 <FaTimesCircle className="text-red-500 text-xl mx-auto" />
                                             ) : (
