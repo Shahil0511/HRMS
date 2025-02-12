@@ -45,13 +45,9 @@ export const checkOut = async (
 
     // Find the last check-in for the employee that hasn't been checked out
     const attendance = await Attendance.findOne({
-      employeeId,
-      date: {
-        $gte: new Date(`${dateIST}T00:00:00.000Z`),
-        $lt: new Date(`${dateIST}T23:59:59.999Z`),
-      },
-      checkOut: null,
-    });
+  employeeId,
+  checkOut: null, // Find the last check-in that is still open
+}).sort({ date: -1 }); // Sort by latest check-in
 
     if (!attendance) {
       res.status(400).json({ message: "No active check-in found for today." });
