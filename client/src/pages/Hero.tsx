@@ -21,12 +21,12 @@ export default function Hero() {
                             Empower your team with tools for seamless collaboration.
                         </p>
                         <div className="flex justify-center gap-4">
-                            <button className="bg-indigo-700 px-6 py-2 rounded hover:bg-indigo-800">
+                            {/* <button className="bg-indigo-700 px-6 py-2 rounded hover:bg-indigo-800">
                                 Login
                             </button>
                             <button className="bg-indigo-700 px-6 py-2 rounded hover:bg-indigo-800">
                                 Signup
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                 </section>
