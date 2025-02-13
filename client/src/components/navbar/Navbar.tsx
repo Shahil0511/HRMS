@@ -17,12 +17,12 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="bg-gradient-to-l from-gray-900 to-indigo-900 text-white shadow-lg">
+        <nav className="bg-white text-white shadow-lg z-10 relative">
             <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-                <img src="/HRMS-01.png" alt="" className="w-12 " />
+                <img src="/HRMS-01.png" alt="" className="w-11" />
                 <button
                     onClick={handleAuthClick}
-                    className="bg-indigo-900 px-4 py-2 rounded hover:bg-indigo-700 transition duration-200"
+                    className="bg-blue-900 px-4 py-2 rounded hover:bg-blue-950 transition duration-200"
                 >
                     {isLoggedIn ? "Logout" : "Login"}
                 </button>
