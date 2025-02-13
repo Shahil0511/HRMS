@@ -65,113 +65,130 @@ const Department: React.FC = () => {
     );
 
     return (
-        <div className="w-full h-screen flex flex-col bg-gradient-to-r from-gray-900 to-indigo-900 text-white">
-            <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                {/* Add Department Button */}
-                <button
-                    onClick={handleAddDepartment}
-                    className="bg-blue-500 text-white px-5 py-2 rounded hover:bg-blue-600 transition"
-                >
-                    Add Department
-                </button>
-
-                {/* Search Bar + Button (Properly Aligned) */}
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <input
-                        type="text"
-                        placeholder="Search departments..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="border border-gray-400  text-white rounded px-3 py-2 w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 flex flex-col">
+            {/* Header Section */}
+            <div className="p-6 w-full max-w-full px-4 md:px-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <button
-                        onClick={handleSearch}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                        onClick={handleAddDepartment}
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
                     >
-                        Search
+                        Add Department
                     </button>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                        <input
+                            type="text"
+                            placeholder="Search departments..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="border border-gray-400 bg-gray-800 text-white rounded px-3 py-2 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <button
+                            onClick={handleSearch}
+                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
+                        >
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table Section */}
+
+            {/* Table Section */}
+            <div className="flex-1 px-4 md:px-8 pb-6">
+                <div className="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 rounded-2xl shadow-xl overflow-hidden">
+                    {/* Scrollable container */}
+                    <div className="overflow-x-auto w-full">
+                        <table className="w-full border-collapse text-white min-w-max">
+                            <thead className="bg-gray-800">
+                                <tr>
+                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium">#Id</th>
+                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Department Name</th>
+                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium hidden sm:table-cell">
+                                        Head of Department
+                                    </th>
+                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paginatedDepartments.map((department, index) => (
+                                    <tr key={department._id} className="bg-gray-900 bg-opacity-50">
+                                        <td className="border border-gray-700 px-4 py-3 text-center">
+                                            {(currentPage - 1) * itemsPerPage + index + 1}
+                                        </td>
+                                        <td className="border border-gray-700 px-4 py-3">
+                                            {department.departmentName}
+                                        </td>
+                                        <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
+                                            {department.headOfDepartment}
+                                        </td>
+                                        <td className="border border-gray-700 px-4 py-3">
+                                            <div className="flex flex-wrap justify-center gap-2">
+                                                {/* Always visible */}
+                                                <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
+                                                    View
+                                                </button>
+                                                {/* Edit & Delete buttons only visible on large screens */}
+                                                <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
+                                                    Edit
+                                                </button>
+                                                <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
 
-            {filteredDepartments.length > 0 ? (
-                <div className="px-2">
-                    <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead className="bg-gradient-to-l from-gray-900 to-indigo-900 text-white">
-                            <tr>
-                                <th className="border border-gray-100 px-4 py-2">#Id</th>
-                                <th className="border border-gray-300 px-4 py-2">Department Name</th>
-                                <th className="border border-gray-100 px-4 py-2">Head of Department</th>
-                                <th className="border border-gray-100 px-4 py-2">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginatedDepartments.map((department, index) => (
-                                <tr
-                                    key={department._id}
-                                    className="bg-gradient-to-r from-gray-900 to-indigo-900 text-white"
-                                >
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        {(currentPage - 1) * itemsPerPage + index + 1}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        {department.departmentName}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        {department.headOfDepartment}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        <div className="flex gap-2 md:gap-4">
-                                            <button className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
-                                                View
-                                            </button>
-                                            <div className="hidden md:flex gap-2">
-                                                <button className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-                                                    Edit
-                                                </button>
-                                                <button className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div className="text-center text-gray-300 py-4">No departments found.</div>
-            )}
 
+
+            {/* Pagination Section */}
             {filteredDepartments.length > 0 && (
-                <div className="flex justify-center mt-4 gap-2">
-                    <button
-                        onClick={handlePrevPage}
-                        className={`px-3 py-1 rounded ${currentPage === 1 ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"}`}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </button>
-                    {Array.from(
-                        { length: Math.ceil(filteredDepartments.length / itemsPerPage) },
-                        (_, i) => i + 1
-                    ).map((page) => (
+                <div className="px-4 md:px-8 pb-6">
+                    <div className="flex flex-wrap justify-center gap-2">
                         <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={`px-3 py-1 rounded ${page === currentPage ? "bg-indigo-700 text-white" : "bg-blue-500 hover:bg-blue-600"}`}
+                            onClick={handlePrevPage}
+                            className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${currentPage === 1 ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"
+                                }`}
+                            disabled={currentPage === 1}
                         >
-                            {page}
+                            Previous
                         </button>
-                    ))}
-                    <button
-                        onClick={handleNextPage}
-                        className={`px-3 py-1 rounded ${currentPage === Math.ceil(filteredDepartments.length / itemsPerPage) ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"}`}
-                        disabled={currentPage === Math.ceil(filteredDepartments.length / itemsPerPage)}
-                    >
-                        Next
-                    </button>
+                        {Array.from(
+                            { length: Math.ceil(filteredDepartments.length / itemsPerPage) },
+                            (_, i) => i + 1
+                        ).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${page === currentPage
+                                    ? "bg-indigo-700"
+                                    : "bg-blue-500 hover:bg-blue-600"
+                                    }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            onClick={handleNextPage}
+                            className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${currentPage === Math.ceil(filteredDepartments.length / itemsPerPage)
+                                ? "bg-gray-500"
+                                : "bg-blue-500 hover:bg-blue-600"
+                                }`}
+                            disabled={
+                                currentPage === Math.ceil(filteredDepartments.length / itemsPerPage)
+                            }
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

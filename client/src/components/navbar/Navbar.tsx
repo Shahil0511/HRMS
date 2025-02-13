@@ -19,7 +19,7 @@ const Navbar = () => {
     return (
         <nav className="bg-gradient-to-l from-gray-900 to-indigo-900 text-white shadow-lg">
             <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-                <h1 className="text-2xl font-bold">HRMS</h1>
+                <img src="/HRMS-01.png" alt="" className="w-12 " />
                 <button
                     onClick={handleAuthClick}
                     className="bg-indigo-900 px-4 py-2 rounded hover:bg-indigo-700 transition duration-200"

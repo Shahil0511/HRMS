@@ -1,8 +1,8 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode"; // Correct import for jwt-decode
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/employees";
-// const API_URL = "http://localhost:8000/api/employees";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/employees";
+const API_URL = "http://localhost:8000/api/employees";
 
 /**
  * Get authentication token from localStorage

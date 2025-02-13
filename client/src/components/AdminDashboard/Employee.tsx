@@ -83,54 +83,40 @@ const EmployeeDashboard: React.FC = () => {
     const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
 
     return (
-        <div className="w-full min-h-screen h-screen bg-gradient-to-r from-indigo-900 to-blue-900 text-white">
-            <div className="w-full p-8">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                    <button
-                        onClick={handleAddEmployee}
-                        className="bg-blue-500 text-white px-4 py-3 rounded hover:bg-blue-600"
-                    >
-                        Add Employee
+        <div className="min-h-screen bg-gradient-to-r from-indigo-900 to-blue-900 text-white p-6">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <button onClick={handleAddEmployee} className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">
+                    Add Employee
+                </button>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Search employees..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="border border-gray-300 rounded px-3 py-2 w-full md:w-auto"
+                    />
+                    <button onClick={handleSearch} className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">
+                        Search
                     </button>
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <input
-                            type="text"
-                            placeholder="Search employees..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="border border-gray-300 rounded px-3 py-2 w-full md:w-auto"
-                        />
-                        <button
-                            onClick={handleSearch}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        >
-                            Search
-                        </button>
-                    </div>
                 </div>
+            </div>
 
-                {filteredEmployees.length > 0 ? (
-                    <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead className="bg-gradient-to-l from-indigo-800 to-blue-800 text-white">
+            {filteredEmployees.length > 0 ? (
+                <>
+                    <table className="w-full border-collapse border border-gray-300 text-sm ">
+                        <thead className="bg-gray-800 ">
                             <tr>
                                 <th className="border border-gray-100 px-4 py-2">#Id</th>
                                 <th className="border border-gray-300 px-4 py-2">Name</th>
                                 <th className="border border-gray-100 px-4 py-2">Department</th>
-                                <th className="hidden md:table-cell border border-gray-300 px-4 py-2">
-                                    Designation
-                                </th>
-                                <th className="hidden md:table-cell border border-gray-100 px-4 py-2">
-                                    Attendance
-                                </th>
+                                <th className="hidden md:table-cell border border-gray-300 px-4 py-2">Designation</th>
                                 <th className="border border-gray-300 px-4 py-2">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedEmployees.map((employee, index) => (
-                                <tr
-                                    key={`${employee.id || (currentPage - 1) * itemsPerPage + index}`}
-                                    className="bg-gradient-to-r from-gray-900 to-indigo-900 text-white"
-                                >
+                                <tr key={employee.id || `emp-${index}`} className="bg-gray-900 bg-opacity-50">
                                     <td className="border border-gray-300 px-4 py-2">
                                         {(currentPage - 1) * itemsPerPage + index + 1}
                                     </td>
@@ -143,48 +129,37 @@ const EmployeeDashboard: React.FC = () => {
                                     <td className="hidden md:table-cell border border-gray-300 px-4 py-2">
                                         {employee.designation}
                                     </td>
-                                    <td className="hidden md:table-cell border border-gray-300 px-4 py-2">
-                                        Present
-                                    </td>
                                     <td className="border border-gray-300 px-4 py-2">
-                                        <div className="flex gap-2 md:gap-4">
-                                            <button className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
-                                                View
+                                        <div className="flex gap-2">
+                                            <button className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
+                                            <button className="hidden md:block bg-yellow-500 px-2 py-1 rounded hover:bg-yellow-600">
+                                                Edit
                                             </button>
-                                            <div className="hidden md:flex gap-2">
-                                                <button className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-                                                    Edit
-                                                </button>
-                                                <button className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                                                    Delete
-                                                </button>
-                                            </div>
+                                            <button className="hidden md:block bg-red-500 px-2 py-1 rounded hover:bg-red-600">
+                                                Delete
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
-
                     </table>
-                ) : (
-                    <div className="text-center text-gray-300 py-4">No employees found.</div>
-                )}
 
-                {filteredEmployees.length > 0 && (
                     <div className="flex justify-center mt-4 gap-2">
                         {[...Array(totalPages)].map((_, i) => (
                             <button
                                 key={i}
                                 onClick={() => handlePageChange(i + 1)}
-                                className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
-                                    }`}
+                                className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-600"}`}
                             >
                                 {i + 1}
                             </button>
                         ))}
                     </div>
-                )}
-            </div>
+                </>
+            ) : (
+                <div className="text-center text-gray-300 py-4">No employees found.</div>
+            )}
         </div>
     );
 };

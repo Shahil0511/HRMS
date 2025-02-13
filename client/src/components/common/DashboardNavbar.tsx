@@ -38,31 +38,33 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ toggleSidebar }) => {
     }, []);
 
     return (
-        <nav className="bg-indigo-900 text-white h-16 flex items-center justify-between px-4 sm:px-6 shadow-md">
+        <nav className="bg-indigo-900 text-white h-16 w-full flex items-center justify-between px-2 sm:px-6 shadow-md">
             {/* Sidebar Toggle Button for Mobile */}
             <button
-                className="md:hidden p-2 rounded-lg bg-indigo-700 hover:bg-indigo-800 transition"
+                className="md:hidden p-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 transition"
                 onClick={toggleSidebar}
             >
-                <FaBars size={22} className="text-white" />
+                <FaBars size={20} className="text-white" />
             </button>
 
             {/* User Info */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
                 {loading ? (
-                    <span>Loading...</span>
+                    <span className="text-sm">Loading...</span>
                 ) : error ? (
-                    <span>{error}</span>
+                    <span className="text-sm text-red-300">{error}</span>
                 ) : (
                     <>
-                        <span className="font-medium hidden sm:block">{`Welcome, ${userName}`}</span>
-                        <span className="text-sm text-gray-300">{`Role: ${role}`}</span>
+                        <span className="font-medium hidden sm:block truncate">{`Welcome, ${userName}`}</span>
+                        <span className="text-sm text-gray-300 truncate">{`Role: ${role}`}</span>
                     </>
                 )}
             </div>
 
             {/* Logout Button */}
-            <LogoutButton />
+            <div className="flex-shrink-0">
+                <LogoutButton />
+            </div>
         </nav>
     );
 };

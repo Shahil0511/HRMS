@@ -15,7 +15,6 @@ const EmployeeAttendanceList = () => {
     const [userError, setUserError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Fetch user data (used in Navbar as well)
         const getUserData = async () => {
             try {
                 setUserLoading(true);
@@ -33,24 +32,25 @@ const EmployeeAttendanceList = () => {
         };
 
         getUserData();
-    }, []); // Runs once on mount
+    }, []);
 
     useEffect(() => {
-        dispatch(fetchAttendanceRecords()); // Fetch all attendance records
+        dispatch(fetchAttendanceRecords());
     }, [dispatch]);
 
     if (loading || userLoading) return <div className="text-center p-4 text-white">Loading...</div>;
     if (error || userError) return <div className="text-red-500 p-4 text-center">{error || userError}</div>;
 
     return (
-        <div className="min-h-screen bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 text-white p-6">
-            <div className="max-w-6xl mx-auto bg-gradient-to-l from-indigo-900 to-blue-800 text-white p-6 rounded-lg shadow-lg">
+        <div className="min-h-screen bg-gradient-to-r from-gray-900 via-blue-800 to-purple-900 text-white ">
+            <div className="max-w-6xl mx-auto bg-gradient-to-l from-indigo-900 to-blue-800 text-white p-2 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-semibold text-center mb-6">{userName ? `${userName}'s Attendance` : "Attendance"}</h2>
 
                 <div className="overflow-x-auto rounded-sm">
                     <table className="w-full border border-gray-700 rounded-sm">
                         <thead className="bg-blue-700 text-white">
                             <tr>
+                                <th className="border border-gray-200 p-3">ID</th>
                                 <th className="border border-gray-200 p-3">Date</th>
                                 <th className="border border-gray-200 p-3 hidden sm:table-cell">Day</th>
                                 <th className="border border-gray-200 p-3">Check In & Check Out</th>
@@ -61,36 +61,58 @@ const EmployeeAttendanceList = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {records?.map((record) => {
+                            {records?.map((record, index) => {
                                 const checkIns = Array.isArray(record.checkIn) ? record.checkIn : [record.checkIn];
                                 const checkOuts = Array.isArray(record.checkOut) ? record.checkOut : [record.checkOut];
 
                                 return (
-                                    <tr key={record.id} className="text-center hover:bg-blue-800 transition duration-300">
-                                        <td className="border border-gray-200 p-3">{format(new Date(record.date), "yyyy-MM-dd")}</td>
-                                        <td className="border border-gray-200 p-3 hidden sm:table-cell">{format(new Date(record.date), "EEEE")}</td>
+                                    <tr key={record.id || index} className="text-center hover:bg-blue-800 transition duration-300">
+                                        <td className="border border-gray-200 p-3">{index + 1}</td>
+
                                         <td className="border border-gray-200 p-3">
-                                            {checkIns.map((checkIn, index) => (
-                                                <div key={index} className="py-1">
-                                                    {format(new Date(checkIn), "HH:mm:ss")} -{" "}
-                                                    {checkOuts[index] ? format(new Date(checkOuts[index]), "HH:mm:ss") : "N/A"}
+                                            <span className="hidden sm:inline">{format(new Date(record.date), "yyyy-MM-dd")}</span>
+                                            <span className="sm:hidden">{format(new Date(record.date), "dd/MM")}</span>
+                                        </td>
+
+                                        <td className="border border-gray-200 p-3 hidden sm:table-cell">{format(new Date(record.date), "EEEE")}</td>
+
+                                        <td className="border border-gray-200 p-3">
+                                            {checkIns.map((checkIn, idx) => (
+                                                <div key={`${record.id}-checkin-${idx}`} className="py-1">
+                                                    <span className="hidden sm:inline">{format(new Date(checkIn), "HH:mm:ss")}</span>
+                                                    <span className="sm:hidden">{format(new Date(checkIn), "HH:mm")}</span>
+                                                    {" - "}
+                                                    {checkOuts[idx] ? (
+                                                        <>
+                                                            <span className="hidden sm:inline">{format(new Date(checkOuts[idx]), "HH:mm:ss")}</span>
+                                                            <span className="sm:hidden">{format(new Date(checkOuts[idx]), "HH:mm")}</span>
+                                                        </>
+                                                    ) : (
+                                                        "N/A"
+                                                    )}
                                                 </div>
                                             ))}
                                         </td>
+
                                         <td className="border border-gray-200 p-3">
-                                            {checkIns.map((checkIn, index) => {
-                                                const checkOut = checkOuts[index];
+                                            {checkIns.map((checkIn, idx) => {
+                                                const checkOut = checkOuts[idx];
                                                 return (
-                                                    <div key={index} className="py-1">
+                                                    <div key={`${record.id}-worktime-${idx}`} className="py-1">
                                                         {checkOut
-                                                            ? ((new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
-                                                                (1000 * 60 * 60)
-                                                            ).toFixed(2) + " hrs"
+                                                            ? (() => {
+                                                                const totalMinutes = Math.floor((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60));
+                                                                const hours = Math.floor(totalMinutes / 60);
+                                                                const minutes = totalMinutes % 60;
+                                                                return `${hours}h ${minutes}m`;
+                                                            })()
                                                             : "N/A"}
                                                     </div>
                                                 );
+
                                             })}
                                         </td>
+
                                         <td className="border border-gray-200 p-3 sm:hidden">
                                             {record.status === "Present" ? (
                                                 <FaCheckCircle className="text-green-400 text-xl mx-auto" />
@@ -100,6 +122,7 @@ const EmployeeAttendanceList = () => {
                                                 "-"
                                             )}
                                         </td>
+
                                         <td className="border border-gray-200 p-3 hidden sm:table-cell">
                                             {record.status === "Present" ? (
                                                 <FaCheckCircle className="text-green-400 text-xl mx-auto" />
@@ -107,6 +130,7 @@ const EmployeeAttendanceList = () => {
                                                 "-"
                                             )}
                                         </td>
+
                                         <td className="border border-gray-200 p-3 hidden sm:table-cell">
                                             {record.status === "Absent" ? (
                                                 <FaTimesCircle className="text-red-500 text-xl mx-auto" />
