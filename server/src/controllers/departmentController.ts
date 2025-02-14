@@ -77,3 +77,14 @@ export const getDepartments = async (
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const getTotalDepartment = async (req: Request, res: Response) => {
+  try {
+    const totalDepartment = await Department.countDocuments();
+    res.json({ totalDepartment });
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: "Error in Fetching Departments", error: error.message });
+  }
+};

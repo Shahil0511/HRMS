@@ -45,9 +45,9 @@ export const checkOut = async (
 
     // Find the last check-in for the employee that hasn't been checked out
     const attendance = await Attendance.findOne({
-  employeeId,
-  checkOut: null, // Find the last check-in that is still open
-}).sort({ date: -1 }); // Sort by latest check-in
+      employeeId,
+      checkOut: null, // Find the last check-in that is still open
+    }).sort({ date: -1 }); // Sort by latest check-in
 
     if (!attendance) {
       res.status(400).json({ message: "No active check-in found for today." });
@@ -278,5 +278,41 @@ export const getTodayPresentEmployees = async (
     res
       .status(500)
       .json({ message: "Server Error", error: (error as Error).message });
+  }
+};
+
+export const getTodayPresentTotal = async (req: Request, res: Response) => {
+  try {
+    const todayIST = moment().tz("Asia/Kolkata").startOf("day").toDate();
+    const tomorrowIST = moment().tz("Asia/Kolkata").endOf("day").toDate();
+
+    // Aggregate to find unique employees who checked in today
+    const result = await Attendance.aggregate([
+      {
+        $match: {
+          checkIn: { $gte: todayIST, $lt: tomorrowIST },
+          status: "Present", // Ensure the status is "Present"
+        },
+      },
+      {
+        $group: {
+          _id: "$employeeId", // Group by employeeId (to ensure each employee is counted only once)
+        },
+      },
+      {
+        $count: "totalPresentToday", // Count the number of unique employeeIds
+      },
+    ]);
+
+    // If the result is empty, return totalPresentToday as 0
+    const totalPresentToday =
+      result.length > 0 ? result[0].totalPresentToday : 0;
+
+    res.json({ totalPresentToday });
+  } catch (error: any) {
+    res.status(500).json({
+      message: "Error in Fetching Present Employees",
+      error: error.message,
+    });
   }
 };

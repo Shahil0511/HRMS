@@ -1,30 +1,84 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaUsers, FaBuilding, FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaExclamationCircle, FaEllipsisH } from "react-icons/fa";
+import { getTotalDepartment } from "../../services/departmentServices";
+import { getTodayTotalEmployeePresent, getTotalEmployee } from "../../services/employeeServices";
+
 
 const Dashboard = () => {
-    const [data] = useState({
+    const [data, setData] = useState({
         totalDepartments: 0,
         totalEmployees: 0,
-        presentEmployees: 0,
-        absentEmployees: 0,
+        totalPresentToday: 0,
+        totalAbsentToday: 0,
         leavesApplied: 0,
         todaysWorksheet: 0,
         complaints: 0,
         others: 0
     });
 
-    // useEffect(() => {
-    //     fetch("/api/dashboard-stats")
-    //         .then(res => res.json())
-    //         .then(data => setData(data))
-    //         .catch(err => console.error("Error fetching data:", err));
-    // }, []);
+    const [, setLoading] = useState(true)
+
+    useEffect(() => {
+        getTotalDepartment()
+            .then((data) => {
+
+                setData((prevData) => ({
+                    ...prevData,
+                    totalDepartments: data.totalDepartment || 0, // update totalDepartments
+                }));
+
+            }).catch(err => {
+                console.error("Error fetching data:", err);
+                setLoading(false);
+            }).finally(() => {
+                setLoading(false)
+            })
+    }, []);
+    useEffect(() => {
+        getTotalEmployee()
+            .then((data) => {
+
+                setData((prevData) => ({
+                    ...prevData, // retain previous data
+                    totalEmployees: data.totalEmployees || 0,
+                }));
+
+            }).catch(err => {
+                console.error("Error fetching data:", err);
+                setLoading(false);
+            }).finally(() => {
+                setLoading(false)
+            })
+    }, []);
+
+
+
+    useEffect(() => {
+        if (data.totalEmployees > 0) { // Ensure totalEmployees is available
+            getTodayTotalEmployeePresent()
+                .then((data) => {
+                    setData((prevData) => ({
+                        ...prevData,
+                        totalPresentToday: data.totalPresentToday || 0,
+                        totalAbsentToday: prevData.totalEmployees - data.totalPresentToday || 0, // Calculate absent employees
+                    }));
+                })
+                .catch((err) => {
+                    console.error("Error fetching data:", err);
+                    setLoading(false);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [data.totalEmployees]);
+
 
     const stats = [
         { label: "Total Departments", value: data.totalDepartments, icon: <FaBuilding /> },
         { label: "Total Employees", value: data.totalEmployees, icon: <FaUsers /> },
-        { label: "Employees Present", value: data.presentEmployees, icon: <FaUserCheck /> },
-        { label: "Employees Absent", value: data.absentEmployees, icon: <FaUserTimes /> },
+        { label: "Employees Present", value: data.totalPresentToday, icon: <FaUserCheck /> },
+        { label: "Employees Absent", value: data.totalAbsentToday, icon: <FaUserTimes /> },
         { label: "Leaves Applied", value: data.leavesApplied, icon: <FaClipboardList /> },
         { label: "Today's Work Sheet", value: data.todaysWorksheet, icon: <FaCalendarDay /> },
         { label: "Complaints", value: data.complaints, icon: <FaExclamationCircle /> },
@@ -47,3 +101,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+

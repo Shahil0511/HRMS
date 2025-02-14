@@ -3,9 +3,11 @@ import {
   addEmployee,
   getEmployees,
   getUserEmployeeData,
+  getTotalEmployees,
 } from "../controllers/employeeController";
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
+import { getTodayPresentTotal } from "../controllers/attendanceController";
 
 const router = Router();
 
@@ -27,4 +29,7 @@ router.get("/employees", getEmployees);
  */
 router.get("/employees/user", verifyToken, getUserEmployeeData);
 
+router.get("/employees/totalemployees", getTotalEmployees);
+
+router.get("/employees/todaypresent", getTodayPresentTotal);
 export default router;

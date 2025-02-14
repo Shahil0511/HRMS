@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { User } from "../models/UserSchema";
 import { Employee } from "../models/EmployeeSchema";
-import crypto from "crypto";
 
 interface RequestWithUser extends Request {
   user?: any;
@@ -188,3 +187,19 @@ export const getUserEmployeeData = async (
     });
   }
 };
+
+export const getTotalEmployees = async (req: Request, res: Response) => {
+  try {
+    const totalEmployees = await Employee.countDocuments();
+    res.json({ totalEmployees });
+  } catch (error: any) {
+    res.status(500).json({
+      message: "Error in Fetching TotalEmployee",
+      error: error.message,
+    });
+  }
+};
+
+// export const getTodayPresentEmployees = async (req: Request, res: Response) => {
+//   const todayPresent = await Employee.
+// }

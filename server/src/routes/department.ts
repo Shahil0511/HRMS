@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   addDepartment,
   getDepartments,
+  getTotalDepartment,
 } from "../controllers/departmentController";
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
@@ -20,5 +21,6 @@ router.post("/departments", verifyToken, isAdmin, addDepartment);
  * Supports optional search queries.
  */
 router.get("/departments", getDepartments);
+router.get("/totaldepartment", getTotalDepartment);
 
 export default router;

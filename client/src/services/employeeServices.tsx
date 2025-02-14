@@ -104,3 +104,29 @@ export const getUserEmployeeData = async () => {
         throw new Error(error.response?.data?.message || "Failed to fetch employee data");
     }
 };
+
+
+export const getTotalEmployee = async () => {
+    try {
+        const response = await axios.get(
+            "http://localhost:8000/api/employees/totalemployees"
+        );
+
+        return response?.data;
+    } catch (error) {
+        console.error("Error fetching departments:", error);
+        throw error;
+    }
+};
+export const getTodayTotalEmployeePresent = async () => {
+    try {
+        const response = await axios.get(
+            "http://localhost:8000/api/employees/todaypresent"
+        );
+
+        return response?.data;
+    } catch (error) {
+        console.error("Error fetching departments:", error);
+        throw error;
+    }
+};
