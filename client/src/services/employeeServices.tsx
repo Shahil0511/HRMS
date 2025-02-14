@@ -108,9 +108,7 @@ export const getUserEmployeeData = async () => {
 
 export const getTotalEmployee = async () => {
     try {
-        const response = await axios.get(
-            "http://localhost:8000/api/employees/totalemployees"
-        );
+        const response = await axios.get(`${API_URL}/totalemployees`);
 
         return response?.data;
     } catch (error) {
@@ -120,9 +118,7 @@ export const getTotalEmployee = async () => {
 };
 export const getTodayTotalEmployeePresent = async () => {
     try {
-        const response = await axios.get(
-            "http://localhost:8000/api/employees/todaypresent"
-        );
+        const response = await axios.get(`${API_URL}/todaypresent`);
 
         return response?.data;
     } catch (error) {

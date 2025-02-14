@@ -63,9 +63,7 @@ export const getAllDepartments = async () => {
 
 export const getTotalDepartment = async () => {
   try {
-    const response = await axios.get(
-      "http://localhost:8000/api/totaldepartment"
-    );
+    const response = await axios.get(`${API_URL}/totaldepartment`);
 
     return response?.data;
   } catch (error) {

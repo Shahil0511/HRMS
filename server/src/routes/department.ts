@@ -21,6 +21,6 @@ router.post("/departments", verifyToken, isAdmin, addDepartment);
  * Supports optional search queries.
  */
 router.get("/departments", getDepartments);
-router.get("/totaldepartment", getTotalDepartment);
+router.get("/departments/totaldepartment", getTotalDepartment);
 
 export default router;
