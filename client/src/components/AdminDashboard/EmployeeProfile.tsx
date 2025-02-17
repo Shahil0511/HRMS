@@ -1,64 +1,10 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+
 import { motion } from "framer-motion";
 
-interface EmployeeData {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    gender: string;
-    dob: string;
-    phoneNumber: string;
-    email: string;
-    address: string;
-    department: string;
-    designation: string;
-    createdAt: string;
-}
 
-interface LeaveRequest {
-    leaveType: string;
-    startDate: string;
-    endDate: string;
-    amount: number;
-    status: string;
-}
 
 const EmployeeProfile = () => {
-    const [profile, setProfile] = useState<EmployeeData | null>(null);
-    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 
-    useEffect(() => {
-        // Fetch employee profile data
-        axios
-            .get("/api/employee/profile") // Replace with your API endpoint
-            .then((res) => setProfile(res.data))
-            .catch((err) => console.error("Error fetching profile:", err));
-
-        // Fetch leave request data (mock data for now)
-        const mockLeaveRequests: LeaveRequest[] = [
-            {
-                leaveType: "Annual Leave",
-                startDate: "2024-10-31",
-                endDate: "2024-11-02",
-                amount: 3.0,
-                status: "Approved",
-            },
-            {
-                leaveType: "Sick Leave",
-                startDate: "2024-10-22",
-                endDate: "2024-10-23",
-                amount: 1.0,
-                status: "Approved",
-            },
-            // Add more mock leave requests as needed
-        ];
-        setLeaveRequests(mockLeaveRequests);
-    }, []);
-
-    if (!profile) {
-        return <div>Loading...</div>;
-    }
 
     return (
         <motion.div
@@ -79,15 +25,15 @@ const EmployeeProfile = () => {
                     >
                         <div className="flex items-center">
                             <img
-                                src={`https://ui-avatars.com/api/?name=${profile.firstName}+${profile.lastName}&background=4F46E5&color=ffffff&size=64`}
+                                src={"/"}
                                 alt="Profile"
                                 className="w-16 h-16 rounded-full mr-4"
                             />
                             <div>
                                 <h2 className="text-xl font-semibold text-white">
-                                    {profile.firstName} {profile.lastName}
+                                    FirstName LAstName
                                 </h2>
-                                <p className="text-white">{profile.designation}</p>
+                                <p className="text-white">Designation</p>
                                 <p className="text-white">Sunny Jha</p>
                             </div>
                         </div>
@@ -154,14 +100,14 @@ const EmployeeProfile = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {leaveRequests.map((request, index) => (
-                                    <tr key={index} className="border-t">
-                                        <td className="py-2 text-white">{request.leaveType}</td>
-                                        <td className="py-2 text-white">12/02/25</td>
-                                        <td className="py-2 text-white">24/02/25</td>
-                                        <td className="py-2 text-white">{request.status}</td>
-                                    </tr>
-                                ))}
+
+                                <tr className="border-t">
+                                    <td className="py-2 text-white">Medical</td>
+                                    <td className="py-2 text-white">12/02/25</td>
+                                    <td className="py-2 text-white">24/02/25</td>
+                                    <td className="py-2 text-white">Rejected</td>
+                                </tr>
+
                             </tbody>
                         </table>
                     </motion.div>
@@ -184,7 +130,7 @@ const EmployeeProfile = () => {
                     </div>
                     <div className="bg-gradient-to-l from-indigo-900 to-gray-900 rounded-lg shadow-md p-4 mb-4">
                         <h3 className="text-lg font-semibold mb-2 text-white">Details Information</h3>
-                        <p className="text-white">Hired on: {new Date(profile.createdAt).toLocaleDateString()}</p>
+                        <p className="text-white">Hired on:</p>
                         <p className="text-white">Employment type: Part-Time</p>
                         <p className="text-white">Location: London</p>
                     </div>
