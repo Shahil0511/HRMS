@@ -9,7 +9,7 @@ export default function Hero() {
 
             {/* Main Content */}
             <main className="flex-grow flex flex-col justify-between ">
-                <section className="bg-[url('/background-014.png')] bg-cover bg-center text-blue-800 flex-1">
+                <section className="bg-[url('/background.svg')] bg-cover bg-center  text-blue-800 flex-1">
                     <div className="container mx-auto px-4 py-12 text-center">
                         <div className="py-16">
                             <h1 className="text-3xl sm:text-4xl font-bold mb-6">

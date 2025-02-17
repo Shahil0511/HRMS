@@ -13,7 +13,7 @@ const Department: React.FC = () => {
     const [, setDepartments] = useState<Department[]>([]);
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const itemsPerPage = 7;
+    const itemsPerPage = 6;
     const navigate = useNavigate();
 
     const fetchDepartments = async (search: string) => {

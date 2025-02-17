@@ -71,6 +71,10 @@ const EmployeeDashboard: React.FC = () => {
         navigate("/admin/add-employee");
     };
 
+    const viewClickChange = () => {
+        navigate("/admin/employeeprofile")
+    }
+
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
@@ -131,7 +135,7 @@ const EmployeeDashboard: React.FC = () => {
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2">
                                         <div className="flex gap-2">
-                                            <button className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
+                                            <button onClick={viewClickChange} className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
                                             <button className="hidden md:block bg-yellow-500 px-2 py-1 rounded hover:bg-yellow-600">
                                                 Edit
                                             </button>

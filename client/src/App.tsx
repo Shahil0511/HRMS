@@ -28,6 +28,7 @@ import ProtectedRoute from "./ProtectedRoutes/ProtectedRoutes";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import NotFound from "./pages/NotFound";
 import EmployeeAttendanceList from "./components/EmployeeDashboard/attendanceUtils/EmployeeAttendanceList";
+import EmployeeProfile from "./components/AdminDashboard/EmployeeProfile";
 
 
 const App = () => {
@@ -74,6 +75,7 @@ const App = () => {
           <Route path="payroll" element={<Payroll />} />
           <Route path="settings" element={<Setting />} />
           <Route path="add-employee" element={<AddEmployee />} />
+          <Route path="employeeprofile" element={<EmployeeProfile />} />
         </Route>
       </Routes>
 

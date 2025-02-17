@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FaUsers, FaBuilding, FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaExclamationCircle, FaEllipsisH } from "react-icons/fa";
 import { getTotalDepartment } from "../../services/departmentServices";
 import { getTodayTotalEmployeePresent, getTotalEmployee } from "../../services/employeeServices";
-
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
     const [data, setData] = useState({
@@ -16,51 +16,50 @@ const Dashboard = () => {
         others: 0
     });
 
-    const [, setLoading] = useState(true)
+    const [, setLoading] = useState(true);
 
     useEffect(() => {
         getTotalDepartment()
             .then((data) => {
-
                 setData((prevData) => ({
                     ...prevData,
-                    totalDepartments: data.totalDepartment || 0, // update totalDepartments
+                    totalDepartments: data.totalDepartment || 0,
                 }));
-
-            }).catch(err => {
+            })
+            .catch(err => {
                 console.error("Error fetching data:", err);
                 setLoading(false);
-            }).finally(() => {
-                setLoading(false)
             })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
+
     useEffect(() => {
         getTotalEmployee()
             .then((data) => {
-
                 setData((prevData) => ({
-                    ...prevData, // retain previous data
+                    ...prevData,
                     totalEmployees: data.totalEmployees || 0,
                 }));
-
-            }).catch(err => {
+            })
+            .catch(err => {
                 console.error("Error fetching data:", err);
                 setLoading(false);
-            }).finally(() => {
-                setLoading(false)
             })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
 
-
-
     useEffect(() => {
-        if (data.totalEmployees > 0) { // Ensure totalEmployees is available
+        if (data.totalEmployees > 0) {
             getTodayTotalEmployeePresent()
                 .then((data) => {
                     setData((prevData) => ({
                         ...prevData,
                         totalPresentToday: data.totalPresentToday || 0,
-                        totalAbsentToday: prevData.totalEmployees - data.totalPresentToday || 0, // Calculate absent employees
+                        totalAbsentToday: prevData.totalEmployees - data.totalPresentToday || 0,
                     }));
                 })
                 .catch((err) => {
@@ -72,7 +71,6 @@ const Dashboard = () => {
                 });
         }
     }, [data.totalEmployees]);
-
 
     const stats = [
         { label: "Total Departments", value: data.totalDepartments, icon: <FaBuilding /> },
@@ -86,14 +84,20 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 p-6 flex justify-center items-center">
+        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 p-6 flex justify-center items-center">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-full px-4 md:px-8">
                 {stats.map((stat, index) => (
-                    <div key={index} className="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center text-white text-center transform transition-transform duration-300 hover:scale-105">
-                        <div className="text-5xl text-indigo-400 mb-3">{stat.icon}</div>
+                    <motion.div
+                        key={index}
+                        className="bg-gradient-to-l from-indigo-900 to-gray-900  p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center text-white text-center transform transition-transform duration-300 hover:scale-105"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: index * 0.1 }}
+                    >
+                        <div className="text-5xl text-white mb-3">{stat.icon}</div>
                         <div className="text-3xl font-bold">{stat.value}</div>
                         <div className="text-lg font-medium">{stat.label}</div>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
         </div>
@@ -101,5 +105,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
