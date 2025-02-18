@@ -1,10 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User, IUser } from "../models/UserSchema";
+import { User } from "../models/UserSchema";
 import { Request, Response } from "express";
-import mongoose from "mongoose";
 
-// Custom error class for better error tracking
 class AuthError extends Error {
   statusCode: number;
 
@@ -48,13 +46,18 @@ export const loginUser = async (
       throw new AuthError("Email and password are required", 400);
     }
 
-    // Find the user by email and select relevant fields
-    const user = await User.findOne({ email }).select(
-      "password role employeeId"
-    );
+    // Find the user by email (consider lean() for faster response)
+    const user = await User.findOne({ email })
+      .select("password role employeeId isActive")
+      .lean(); // `.lean()` makes the query faster and returns a plain JavaScript object
 
     if (!user) {
       throw new AuthError("Invalid credentials", 401);
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      throw new AuthError("Account is deactivated", 403);
     }
 
     // Compare password with hashed password
@@ -81,7 +84,7 @@ export const authErrorHandler = (
   req: Request,
   res: Response
 ): void => {
-  const status = err.statusCode || 500; // Use the status code from AuthError or fallback to 500
-  const message = err.message || "Internal Server Error"; // Error message from AuthError or default
+  const status = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
   res.status(status).json({ success: false, message });
 };

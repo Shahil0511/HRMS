@@ -37,13 +37,4 @@ export const loginUser = async (data: { email: string; password: string }) => {
     }
 };
 
-// Signup user
-export const signupUser = async (data: { name: string; email: string; password: string }) => {
-    try {
-        const response = await axios.post(`${API_BASE_URL}/signup`, data);
-        return response.data;
-    } catch (error) {
-        console.error("Signup failed:", error);
-        throw error; // Rethrow the error to handle it in the calling code
-    }
-};
+
