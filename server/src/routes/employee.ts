@@ -4,6 +4,7 @@ import {
   getEmployees,
   getUserEmployeeData,
   getTotalEmployees,
+  getEmployeeById,
 } from "../controllers/employeeController";
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
@@ -29,7 +30,18 @@ router.get("/employees", getEmployees);
  */
 router.get("/employees/user", verifyToken, getUserEmployeeData);
 
-router.get("/employees/totalemployees", getTotalEmployees);
+router.get(
+  "/employees/totalemployees",
 
-router.get("/employees/todaypresent", getTodayPresentTotal);
+  getTotalEmployees
+);
+
+router.get(
+  "/employees/todaypresent",
+
+  getTodayPresentTotal
+);
+
+router.get("/employees/:id", getEmployeeById);
+
 export default router;

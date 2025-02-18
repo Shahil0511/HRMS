@@ -4,7 +4,7 @@ import { getAllEmployees } from "../../services/employeeServices";
 import { getDepartments } from "../../services/departmentServices";
 
 interface Employee {
-    id: number;
+    _id: string;
     firstName: string;
     lastName: string;
     gender: string;
@@ -36,9 +36,9 @@ const EmployeeDashboard: React.FC = () => {
             }
         };
 
-        const fetchDepartments = async (searchQuery: string) => {
+        const fetchDepartments = async () => {
             try {
-                const data = await getDepartments(searchQuery);
+                const data = await getDepartments("");
                 const departmentMap = data.departments.reduce(
                     (acc: { [key: string]: string }, department: { _id: string; departmentName: string }) => {
                         acc[department._id] = department.departmentName;
@@ -53,7 +53,7 @@ const EmployeeDashboard: React.FC = () => {
         };
 
         fetchEmployees();
-        fetchDepartments("");
+        fetchDepartments();
     }, []);
 
     const handleSearch = () => {
@@ -67,13 +67,14 @@ const EmployeeDashboard: React.FC = () => {
         setCurrentPage(1);
     };
 
+    // ✅ Handle View Click
+    const handleViewEmployee = (employeeId: string) => {
+        navigate(`/admin/employee/${employeeId}`);
+    };
+
     const handleAddEmployee = () => {
         navigate("/admin/add-employee");
     };
-
-    const viewClickChange = () => {
-        navigate("/admin/employeeprofile")
-    }
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -108,8 +109,8 @@ const EmployeeDashboard: React.FC = () => {
 
             {filteredEmployees.length > 0 ? (
                 <>
-                    <table className="w-full border-collapse border border-gray-300 text-sm ">
-                        <thead className="bg-gray-800 ">
+                    <table className="w-full border-collapse border border-gray-300 text-sm">
+                        <thead className="bg-gray-800">
                             <tr>
                                 <th className="border border-gray-100 px-4 py-2">#Id</th>
                                 <th className="border border-gray-300 px-4 py-2">Name</th>
@@ -120,7 +121,7 @@ const EmployeeDashboard: React.FC = () => {
                         </thead>
                         <tbody>
                             {paginatedEmployees.map((employee, index) => (
-                                <tr key={employee.id || `emp-${index}`} className="bg-gray-900 bg-opacity-50">
+                                <tr key={employee._id || `emp-${index}`} className="bg-gray-900 bg-opacity-50">
                                     <td className="border border-gray-300 px-4 py-2">
                                         {(currentPage - 1) * itemsPerPage + index + 1}
                                     </td>
@@ -135,7 +136,12 @@ const EmployeeDashboard: React.FC = () => {
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2">
                                         <div className="flex gap-2">
-                                            <button onClick={viewClickChange} className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
+                                            <button
+                                                onClick={() => handleViewEmployee(employee._id)}
+                                                className="bg-green-500 px-2 py-1 rounded hover:bg-green-600"
+                                            >
+                                                View
+                                            </button>
                                             <button className="hidden md:block bg-yellow-500 px-2 py-1 rounded hover:bg-yellow-600">
                                                 Edit
                                             </button>

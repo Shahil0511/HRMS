@@ -126,3 +126,19 @@ export const getTodayTotalEmployeePresent = async () => {
         throw error;
     }
 };
+
+export const getEmployeeById = async (employeeId: string) => {
+    try {
+        const response = await axios.get(`${API_URL}/${employeeId}`);
+
+        if (response.data.success) {
+            return response.data.data;
+        } else {
+
+            throw new Error("Employee not found");
+        }
+    } catch (error: any) {
+        console.error("Error fetching employee:", error.response?.data?.message || error.message);
+        throw new Error(error.response?.data?.message || "Failed to fetch employee");
+    }
+};

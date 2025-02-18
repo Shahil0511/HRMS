@@ -71,3 +71,16 @@ export const getTotalDepartment = async () => {
     throw error;
   }
 };
+
+// export const getDepartmentById = async (departmentId: string) => {
+//   try {
+//     const response = await axios.get(`${API_URL}/${departmentId}`);
+//     return response.data;
+//   } catch (error: any) {
+//     console.error(
+//       "Error fetching department:",
+//       error.response?.data?.message || error.message
+//     );
+//     throw new Error(error.response?.data?.message || "Failed to fetch");
+//   }
+// };

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { User } from "../models/UserSchema";
 import { Employee } from "../models/EmployeeSchema";
+import mongoose from "mongoose";
 
 interface RequestWithUser extends Request {
   user?: any;
@@ -200,6 +201,40 @@ export const getTotalEmployees = async (req: Request, res: Response) => {
   }
 };
 
-// export const getTodayPresentEmployees = async (req: Request, res: Response) => {
-//   const todayPresent = await Employee.
-// }
+/**
+ * @desc    Get Employee by ID
+ * @route   GET /api/employees/:id
+ * @access  Private (Depends on authentication middleware)
+ */
+export const getEmployeeById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // ✅ Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, message: "Invalid Employee ID" });
+    }
+
+    // ✅ Fetch employee data (excluding sensitive fields if needed)
+    const employee = await Employee.findById(id)
+      .populate("department", "departmentName headOfDepartment")
+      .lean(); // Using `.lean()` for better performance
+
+    // ✅ If employee not found
+    if (!employee) {
+      res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    // ✅ Return Employee Data
+    res.status(200).json({
+      success: true,
+      data: employee,
+    });
+  } catch (error) {
+    console.error("🔴 Error fetching employee:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

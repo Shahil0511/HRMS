@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Department } from "../models/DepartmentSchema";
+import mongoose from "mongoose";
 
 /**
  * Controller to create a new department.
@@ -88,3 +89,38 @@ export const getTotalDepartment = async (req: Request, res: Response) => {
       .json({ message: "Error in Fetching Departments", error: error.message });
   }
 };
+
+// export const getDepartmentById = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   try {
+//     const { id } = req.params;
+
+//     // ✅ Validate MongoDB ObjectId
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       res
+//         .status(400)
+//         .json({ success: false, message: "Invalid Department ID" });
+//       return;
+//     }
+
+//     // ✅ Fetch department data
+//     const department = await Department.findById(id).lean(); // Using `.lean()` for better performance
+
+//     // ✅ If department not found
+//     if (!department) {
+//       res.status(404).json({ success: false, message: "Department not found" });
+//       return;
+//     }
+
+//     // ✅ Return Department Data
+//     res.status(200).json({
+//       success: true, // Added success field for consistency
+//       data: department,
+//     });
+//   } catch (error) {
+//     console.error("🔴 Error fetching department:", error);
+//     res.status(500).json({ success: false, message: "Server Error" });
+//   }
+// };
