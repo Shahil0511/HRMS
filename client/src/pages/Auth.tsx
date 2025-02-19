@@ -144,7 +144,7 @@ const Auth: React.FC = () => {
                                 initial={{ backgroundColor: "rgb(59, 130, 246)" }} // bg-blue-500
                                 animate={isLoading ? { backgroundColor: "rgb(153, 255, 153)" } : { backgroundColor: "rgb(59, 130, 246)" }} // bg-gray-500 when loading
                                 whileHover={!isLoading ? { backgroundColor: "rgb(37, 99, 255)" } : {}} // hover:bg-blue-600
-                                transition={{ duration: 0.3 }}
+                                transition={{ duration: 0.9 }}
                             >
                                 <motion.div
                                     initial={{ width: "0%" }}

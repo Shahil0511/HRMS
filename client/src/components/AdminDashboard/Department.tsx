@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDepartments } from "../../services/departmentServices";
+import ContentLoader from "react-content-loader";
 
 interface Department {
     _id: string;
@@ -13,10 +14,13 @@ const Department: React.FC = () => {
     const [, setDepartments] = useState<Department[]>([]);
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [loading, setLoading] = useState<boolean>(true);
+
     const itemsPerPage = 6;
     const navigate = useNavigate();
 
     const fetchDepartments = async (search: string) => {
+        setLoading(true);
         try {
             const fetchedDepartments = await getDepartments(search);
             if (fetchedDepartments && Array.isArray(fetchedDepartments.departments)) {
@@ -28,6 +32,7 @@ const Department: React.FC = () => {
         } catch (error) {
             setFilteredDepartments([]);
         }
+        setLoading(false);
     };
 
     useEffect(() => {
@@ -94,8 +99,6 @@ const Department: React.FC = () => {
             </div>
 
             {/* Table Section */}
-
-            {/* Table Section */}
             <div className="flex-1 px-4 md:px-8 pb-6">
                 <div className="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 rounded-2xl shadow-xl overflow-hidden">
                     {/* Scrollable container */}
@@ -112,42 +115,48 @@ const Department: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginatedDepartments.map((department, index) => (
-                                    <tr key={department._id} className="bg-gray-900 bg-opacity-50">
-                                        <td className="border border-gray-700 px-4 py-3 text-center">
-                                            {(currentPage - 1) * itemsPerPage + index + 1}
-                                        </td>
-                                        <td className="border border-gray-700 px-4 py-3">
-                                            {department.departmentName}
-                                        </td>
-                                        <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
-                                            {department.headOfDepartment}
-                                        </td>
-                                        <td className="border border-gray-700 px-4 py-3">
-                                            <div className="flex flex-wrap justify-center gap-2">
-                                                {/* Always visible */}
-                                                <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
-                                                    View
-                                                </button>
-                                                {/* Edit & Delete buttons only visible on large screens */}
-                                                <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
-                                                    Edit
-                                                </button>
-                                                <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {loading
+                                    ? Array.from({ length: itemsPerPage }).map((_, index) => (
+                                        <tr key={index} className="bg-gray-900 bg-opacity-50">
+                                            <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                            <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                            <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell"><SkeletonLoader /></td>
+                                            <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                        </tr>
+                                    ))
+                                    : paginatedDepartments.map((department, index) => (
+                                        <tr key={department._id} className="bg-gray-900 bg-opacity-50">
+                                            <td className="border border-gray-700 px-4 py-3 text-center">
+                                                {(currentPage - 1) * itemsPerPage + index + 1}
+                                            </td>
+                                            <td className="border border-gray-700 px-4 py-3">
+                                                {department.departmentName}
+                                            </td>
+                                            <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
+                                                {department.headOfDepartment}
+                                            </td>
+                                            <td className="border border-gray-700 px-4 py-3">
+                                                <div className="flex flex-wrap justify-center gap-2">
+                                                    {/* Always visible */}
+                                                    <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
+                                                        View
+                                                    </button>
+                                                    {/* Edit & Delete buttons only visible on large screens */}
+                                                    <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
+                                                        Edit
+                                                    </button>
+                                                    <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-
-
 
             {/* Pagination Section */}
             {filteredDepartments.length > 0 && (
@@ -194,5 +203,19 @@ const Department: React.FC = () => {
         </div>
     );
 };
+
+// Skeleton Loader Component
+const SkeletonLoader = () => (
+    <ContentLoader
+        speed={2}
+        width="100%"
+        height={20}
+        viewBox="0 0 100 20"
+        backgroundColor="#374151"
+        foregroundColor="#4b5563"
+    >
+        <rect x="0" y="0" rx="3" ry="3" width="100" height="20" />
+    </ContentLoader>
+);
 
 export default Department;
