@@ -142,8 +142,8 @@ const EmployeeDashboard: React.FC = () => {
                                 <tr>
                                     <th className="border border-gray-700 px-4 py-3 text-sm font-medium">#Id</th>
                                     <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Name</th>
-                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Department</th>
-                                    <th className="hidden md:table-cell border border-gray-700 px-4 py-3 text-sm font-medium">Designation</th>
+                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium hidden sm:table-cell">Department</th>
+                                    <th className="border border-gray-700 px-4 py-3 text-sm font-medium hidden sm:table-cell">Designation</th>
                                     <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Actions</th>
                                 </tr>
                             </thead>
@@ -153,6 +153,7 @@ const EmployeeDashboard: React.FC = () => {
                                         <tr key={index} className="bg-gray-900 bg-opacity-50">
                                             <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
                                             <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                            <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell"><SkeletonLoader /></td>
                                             <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell"><SkeletonLoader /></td>
                                             <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
                                         </tr>
@@ -165,10 +166,10 @@ const EmployeeDashboard: React.FC = () => {
                                             <td className="border border-gray-700 px-4 py-3">
                                                 {employee.firstName} {employee.lastName}
                                             </td>
-                                            <td className="border border-gray-700 px-4 py-3">
+                                            <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
                                                 {departments[employee.department] || "Unknown"}
                                             </td>
-                                            <td className="hidden md:table-cell border border-gray-700 px-4 py-3">
+                                            <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
                                                 {employee.designation}
                                             </td>
                                             <td className="border border-gray-700 px-4 py-3">
@@ -196,6 +197,7 @@ const EmployeeDashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
 
             {/* Pagination Section */}
             {filteredEmployees.length > 0 && (
