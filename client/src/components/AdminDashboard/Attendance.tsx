@@ -2,16 +2,21 @@ import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadAdminAttendance } from "../../store/slices/attendanceSlice";
 import { RootState, AppDispatch } from "../../store/store";
+import ContentLoader from "react-content-loader";
 
 const AdminAttendance = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { adminRecords } = useSelector((state: RootState) => state.attendance);
 
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const itemsPerPage = 10;
+    const [loading, setLoading] = useState<boolean>(true);  // Loading state
+    const itemsPerPage = 6;
 
     const fetchAttendance = useCallback(() => {
-        dispatch(loadAdminAttendance());
+        setLoading(true); // Set loading to true before dispatch
+        dispatch(loadAdminAttendance()).finally(() => {
+            setLoading(false); // Set loading to false once the data is fetched
+        });
     }, [dispatch]);
 
     useEffect(() => {
@@ -36,43 +41,65 @@ const AdminAttendance = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gradient-to-r from-indigo-900 to-blue-900 text-white p-6">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-2xl font-semibold">Today's Present Employees (Admin View)</h2>
+        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 text-white p-6">
+            <div className="p-6 w-full max-w-full px-4 md:px-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-2xl font-semibold">Today's Present Employees (Admin View)</h2>
+                </div>
             </div>
 
-            {paginatedRecords.length > 0 ? (
+            {adminRecords.length === 0 || paginatedRecords.length === 0 ? (
+                <div className="text-center text-gray-300 py-4">No employees checked in today.</div>
+            ) : (
                 <>
-                    <table className="w-full border-collapse border border-gray-300 text-sm">
-                        <thead className="bg-gray-800">
-                            <tr>
-                                <th className="border border-gray-100 px-4 py-2 hidden sm:table-cell">#Id</th>
-                                <th className="border border-gray-300 px-4 py-2">Name</th>
-                                <th className="border border-gray-100 px-4 py-2 hidden sm:table-cell">Email</th>
-                                <th className="border border-gray-300 px-4 py-2">Check-in Time</th>
-                                <th className="border border-gray-300 px-4 py-2">Check-out Time</th>
-                                <th className="border border-gray-300 px-4 py-2">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginatedRecords.map((record, index) => (
-                                <tr key={record.id || `attendance-${index}`} className="bg-gray-900 bg-opacity-50">
-                                    <td className="border border-gray-300 px-4 py-2 hidden sm:table-cell">
-                                        {(currentPage - 1) * itemsPerPage + index + 1}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2">{record.employeeName || "N/A"}</td>
-                                    <td className="border border-gray-300 px-4 py-2 hidden sm:table-cell">{record.email || "N/A"}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{record.checkIn || "N/A"}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{record.checkOut || "N/A"}</td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        <div className="flex gap-2">
-                                            <button className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <div className="flex-1 px-4 md:px-8 pb-6">
+                        <div className="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 rounded-2xl shadow-xl overflow-hidden">
+                            {/* Scrollable container */}
+                            <div className="overflow-x-auto w-full">
+                                <table className="w-full border-collapse text-white min-w-max">
+                                    <thead className="bg-gray-800">
+                                        <tr>
+                                            <th className="border border-gray-700 px-4 py-3 text-sm font-medium hidden sm:table-cell">#Id</th>
+                                            <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Name</th>
+                                            <th className="border border-gray-700 px-4 py-3 text-sm font-medium hidden sm:table-cell">Email</th>
+                                            <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Check-in Time</th>
+                                            <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Check-out Time</th>
+                                            <th className="border border-gray-700 px-4 py-3 text-sm font-medium">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {loading
+                                            ? Array.from({ length: itemsPerPage }).map((_, index) => (
+                                                <tr key={index} className="bg-gray-900 bg-opacity-50">
+                                                    <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
+                                                </tr>
+                                            ))
+                                            : paginatedRecords.map((record, index) => (
+                                                <tr key={record.id || `attendance-${index}`} className="bg-gray-900 bg-opacity-50">
+                                                    <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
+                                                        {(currentPage - 1) * itemsPerPage + index + 1}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-3">{record.employeeName || "N/A"}</td>
+                                                    <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">{record.email || "N/A"}</td>
+                                                    <td className="border border-gray-700 px-4 py-3">{record.checkIn || "N/A"}</td>
+                                                    <td className="border border-gray-700 px-4 py-3">{record.checkOut || "N/A"}</td>
+                                                    <td className="border border-gray-700 px-4 py-3">
+                                                        <div className="flex gap-2">
+                                                            <button className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
                     {/* PAGINATION BUTTONS */}
                     <div className="flex justify-center mt-4 gap-2 pb-6">
@@ -104,14 +131,23 @@ const AdminAttendance = () => {
                         </button>
                     </div>
                 </>
-            ) : (
-                <div className="text-center text-gray-300 py-4">No employees checked in today.</div>
             )}
         </div>
     );
-
-
-
 };
+
+// Skeleton Loader Component for Loading State
+const SkeletonLoader = () => (
+    <ContentLoader
+        speed={2}
+        width="100%"
+        height={20}
+        viewBox="0 0 100 20"
+        backgroundColor="#374151"
+        foregroundColor="#4b5563"
+    >
+        <rect x="0" y="0" rx="3" ry="3" width="100" height="20" />
+    </ContentLoader>
+);
 
 export default AdminAttendance;
