@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authServices";
 import { RootState } from "../store/store";
 import { loginFailure, loginStart, loginSuccess } from "../store/slices/authSlice";
-import { motion } from "framer-motion"; // Importing framer-motion
+import { motion } from "framer-motion";
 
 // ✅ Define TypeScript types
 type LoginFormValues = {
@@ -29,7 +29,7 @@ const storeUserData = (token: string, role: string, user: object) => {
     localStorage.setItem("user", JSON.stringify(user));
 };
 
-// ✅ Reusable Input Component
+// ✅ Animated Input Field Component
 const InputField: React.FC<{
     name: keyof LoginFormValues;
     type: string;
@@ -37,25 +37,31 @@ const InputField: React.FC<{
     control: any;
     errors: any;
 }> = ({ name, type, label, control, errors }) => (
-    <div>
+    <motion.div
+        className="relative"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+    >
         <label htmlFor={name} className="block text-sm font-medium text-white">{label}</label>
         <Controller
             name={name}
             control={control}
             render={({ field }) => (
-                <input
+                <motion.input
                     {...field}
                     id={name}
                     type={type}
                     className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    whileFocus={{ scale: 1.02 }}
                 />
             )}
         />
         {errors[name] && <p className="text-red-500 text-sm">{errors[name]?.message}</p>}
-    </div>
+    </motion.div>
 );
 
-// ✅ Authentication Component with Framer Motion
+// ✅ Authentication Component
 const Auth: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -116,9 +122,9 @@ const Auth: React.FC = () => {
             <div className="flex-grow flex justify-center items-center py-6 px-4 md:px-8">
                 <motion.div
                     className="bg-gradient-to-l from-gray-900 to-indigo-900 text-white shadow-lg p-8 rounded-lg max-w-lg w-full"
-                    initial={{ opacity: 0, y: 50 }} // Initial state: invisible and shifted
-                    animate={{ opacity: 1, y: 0 }} // Animate to visible and original position
-                    transition={{ duration: 0.5 }} // 0.5s duration
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                 >
                     <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
                     <form onSubmit={handleSubmit(handleLogin)}>
@@ -131,13 +137,23 @@ const Auth: React.FC = () => {
                             ), [control, errors])}
                         </div>
                         <div className="mb-6">
-                            <button
+                            <motion.button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full py-2 rounded-lg ${isLoading ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"} text-white focus:outline-none`}
+                                className="w-full py-2 rounded-lg text-white focus:outline-none relative overflow-hidden"
+                                initial={{ backgroundColor: "rgb(59, 130, 246)" }} // bg-blue-500
+                                animate={isLoading ? { backgroundColor: "rgb(153, 255, 153)" } : { backgroundColor: "rgb(59, 130, 246)" }} // bg-gray-500 when loading
+                                whileHover={!isLoading ? { backgroundColor: "rgb(37, 99, 255)" } : {}} // hover:bg-blue-600
+                                transition={{ duration: 0.3 }}
                             >
-                                {isLoading ? "Processing..." : "Login"}
-                            </button>
+                                <motion.div
+                                    initial={{ width: "0%" }}
+                                    animate={isLoading ? { width: "100%" } : { width: "0%" }}
+                                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                                    className="absolute inset-0 bg-green-500"
+                                />
+                                <span className="relative z-10">{isLoading ? "Processing..." : "Login"}</span>
+                            </motion.button>
                         </div>
                     </form>
                 </motion.div>
