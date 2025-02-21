@@ -1,13 +1,15 @@
+
+
+// EmployeeDashboard.tsx
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion } from "framer-motion";
 import { FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaUser, FaMoneyBillWave, FaExclamationCircle, FaEllipsisH } from "react-icons/fa";
 import moment from 'moment';
+import attendanceService from "../../services/attendanceServices";
 
 interface AttendanceItem {
     status: string;
     date: string;
-    // Add other properties if necessary (like checkIn, checkOut, etc.)
 }
 
 const EmployeeDashboard = () => {
@@ -21,45 +23,25 @@ const EmployeeDashboard = () => {
     useEffect(() => {
         const fetchAttendanceData = async () => {
             try {
-                const token = localStorage.getItem('token'); // Retrieve token from localStorage or Redux
-                if (!token) {
-                    console.error("No token found. User is not authenticated.");
-                    return;
-                }
-
-                // Fetch attendance data from the API with token in headers
-                const response = await axios.get('http://localhost:8000/api/attendance/total-attendance', {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-                    }
-                });
-
-                const data = response.data as AttendanceItem[]; // Assert that the response data is of type AttendanceItem[]
+                const data = await attendanceService.getEmployeeAttendance();
                 console.log(data);
 
-                // Group the data by date and count attendance as 1 per day
                 const groupedByDate = data.reduce((acc: Record<string, AttendanceItem>, curr: AttendanceItem) => {
-                    const date = moment(curr.date).format("YYYY-MM-DD"); // Format the date to ignore time
+                    const date = moment(curr.date).format("YYYY-MM-DD");
                     if (!acc[date]) {
-                        acc[date] = { ...curr, status: curr.status }; // Take the first status of the day
+                        acc[date] = { ...curr, status: curr.status };
                     }
                     return acc;
                 }, {});
 
-                const uniqueAttendance = Object.values(groupedByDate); // Extract unique attendance
+                const uniqueAttendance = Object.values(groupedByDate) as AttendanceItem[];
 
-                // Calculate attendance statistics
-                const totalAttendance = uniqueAttendance.filter((item: AttendanceItem) => item.status === 'Present').length;
-                const totalAbsent = uniqueAttendance.filter((item: AttendanceItem) => item.status === 'Absent').length;
-                const leavesTaken = uniqueAttendance.filter((item: AttendanceItem) => item.status === 'Leave').length;  // Assuming 'Leave' as a status for leaves taken
-                const complaints = 0;  // Placeholder, you can fetch complaints data similarly
+                const totalAttendance = uniqueAttendance.filter((item) => item.status === 'Present').length;
+                const totalAbsent = uniqueAttendance.filter((item) => item.status === 'Absent').length;
+                const leavesTaken = uniqueAttendance.filter((item) => item.status === 'Leave').length;
 
-                setAttendanceData({
-                    totalAttendance,
-                    totalAbsent,
-                    leavesTaken,
-                    complaints,
-                });
+
+                setAttendanceData({ totalAttendance, totalAbsent, leavesTaken, complaints: 0 });
             } catch (error) {
                 console.error("Error fetching attendance data", error);
             }

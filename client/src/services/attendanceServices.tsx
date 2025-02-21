@@ -10,7 +10,7 @@ const API_URL = "  https://hrms-backend-7176.onrender.com/api/attendance";
  */
 const getAuthToken = (): string | null => localStorage.getItem("token");
 
-/**
+/** 
  * Makes an authenticated API request.
  * @param {string} endpoint - The API endpoint to call.
  * @param {"GET" | "POST"} method - The HTTP method (default is "GET").
