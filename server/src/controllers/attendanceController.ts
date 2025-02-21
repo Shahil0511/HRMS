@@ -157,71 +157,6 @@ export const getAllAttendanceRecords = async (
   }
 };
 
-// export const getTodayPresentEmployees = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   try {
-//     const today = new Date();
-//     today.setHours(0, 0, 0, 0);
-//     const tomorrow = new Date(today);
-//     tomorrow.setDate(today.getDate() + 1);
-
-//     // Fetch today's attendance records
-//     const attendanceRecords = await Attendance.find(
-//       { checkIn: { $gte: today, $lt: tomorrow }, status: "Present" },
-//       { employeeId: 1, checkIn: 1, checkOut: 1 }
-//     ).lean();
-
-//     if (!attendanceRecords.length) {
-//       res.status(200).json([]);
-//       return;
-//     }
-
-//     // Extract unique User IDs from attendance records
-//     const userIds = attendanceRecords.map((record) =>
-//       record.employeeId.toString()
-//     );
-
-//     // Fetch user details without including employeeId
-//     const users = await User.find(
-//       { _id: { $in: userIds } },
-//       { _id: 1, name: 1, email: 1 }
-//     ).lean();
-
-//     if (!users.length) {
-//       res.status(200).json([]);
-//       return;
-//     }
-
-//     // Create a lookup map for user details
-//     const userMap = new Map(users.map((user) => [user._id.toString(), user]));
-
-//     // Format the response data
-//     const formattedEmployees = attendanceRecords.map((record) => {
-//       const user = userMap.get(record.employeeId.toString());
-
-//       return {
-//         id: record._id,
-//         userId: record.employeeId.toString(),
-//         employeeName: user ? user.name : "Unknown",
-//         email: user ? user.email : "No Email",
-//         checkIn: record.checkIn
-//           ? new Date(record.checkIn).toLocaleTimeString()
-//           : "N/A",
-//         checkOut: record.checkOut
-//           ? new Date(record.checkOut).toLocaleTimeString()
-//           : "N/A",
-//       };
-//     });
-
-//     res.status(200).json(formattedEmployees);
-//   } catch (error) {
-//     res
-//       .status(500)
-//       .json({ message: "Server Error", error: (error as Error).message });
-//   }
-// };
 export const getTodayPresentEmployees = async (
   req: Request,
   res: Response
@@ -314,5 +249,49 @@ export const getTodayPresentTotal = async (req: Request, res: Response) => {
       message: "Error in Fetching Present Employees",
       error: error.message,
     });
+  }
+};
+
+export const getEmployeeAttendanceThisMonth = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id: employeeId } = req.user!;
+
+    // Get the start and end of the current month in IST
+    const startOfMonthIST = moment()
+      .tz("Asia/Kolkata")
+      .startOf("month")
+      .toDate();
+    const endOfMonthIST = moment().tz("Asia/Kolkata").endOf("month").toDate();
+
+    // Fetch the attendance records for the employee for this month
+    const attendanceRecords = await Attendance.find({
+      employeeId,
+      date: { $gte: startOfMonthIST, $lte: endOfMonthIST },
+    })
+      .sort({ date: -1 }) // Sort by the latest date first
+      .lean();
+
+    // Format check-in and check-out times to IST
+    const formattedRecords = attendanceRecords.map((record) => ({
+      ...record,
+      checkIn: record.checkIn
+        ? moment(record.checkIn)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD HH:mm:ss")
+        : null,
+      checkOut: record.checkOut
+        ? moment(record.checkOut)
+            .tz("Asia/Kolkata")
+            .format("YYYY-MM-DD HH:mm:ss")
+        : null,
+    }));
+
+    res.status(200).json(formattedRecords);
+  } catch (error) {
+    console.error("Error fetching employee attendance for this month:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 };

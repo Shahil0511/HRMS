@@ -4,6 +4,7 @@ import {
   checkOut,
   getEmployeeAttendanceList,
   getTodayPresentEmployees,
+  getEmployeeAttendanceThisMonth,
 } from "../controllers/attendanceController";
 import { verifyToken } from "../middlewares/verifyToken";
 import { isAdmin } from "../middlewares/verifyAdmin";
@@ -33,5 +34,7 @@ router.get("/employee", verifyToken, getEmployeeAttendanceList);
  * Protected: Requires authentication and admin privileges.
  */
 router.get("/today", verifyToken, isAdmin, getTodayPresentEmployees);
+
+router.get("/total-attendance", verifyToken, getEmployeeAttendanceThisMonth);
 
 export default router;
