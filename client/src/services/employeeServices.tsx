@@ -52,15 +52,13 @@ const handleTokenValidation = () => {
 export const addEmployee = async (employeeData: any) => {
     try {
         const token = handleTokenValidation();
-        console.log("Stored Token:", localStorage.getItem("token"));
+
 
         const response = await axios.post(API_URL, employeeData, {
             headers: setAuthHeader(token),
         });
 
-        // Log the response to see both employee and user data
-        console.log(response.data.employee); // Employee Data
-        console.log(response.data.user); // User Data (if necessary)
+
 
         return response.data;
     } catch (error: any) {
@@ -140,5 +138,21 @@ export const getEmployeeById = async (employeeId: string) => {
     } catch (error: any) {
         console.error("Error fetching employee:", error.response?.data?.message || error.message);
         throw new Error(error.response?.data?.message || "Failed to fetch employee");
+    }
+};
+
+
+export const getEmployeeProfile = async () => {
+    try {
+        const token = handleTokenValidation(); // Validate the token first
+
+        const response = await axios.get(`${API_URL}/profile/myprofile`, {
+            headers: setAuthHeader(token), // Set authorization header with the token
+        });
+
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching employee profile:", error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || "Failed to fetch employee profile");
     }
 };

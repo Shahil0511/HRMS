@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { User } from "../models/UserSchema";
+import { IUser, User } from "../models/UserSchema";
 import { Employee } from "../models/EmployeeSchema";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
 interface RequestWithUser extends Request {
   user?: any;
@@ -216,6 +217,7 @@ export const getEmployeeById = async (
     // ✅ Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ success: false, message: "Invalid Employee ID" });
+      return;
     }
 
     // ✅ Fetch employee data (excluding sensitive fields if needed)
@@ -226,6 +228,7 @@ export const getEmployeeById = async (
     // ✅ If employee not found
     if (!employee) {
       res.status(404).json({ success: false, message: "Employee not found" });
+      return;
     }
 
     // ✅ Return Employee Data
@@ -235,6 +238,71 @@ export const getEmployeeById = async (
     });
   } catch (error) {
     console.error("🔴 Error fetching employee:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+    return;
+  }
+};
+
+export const getEmployeeProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized - Token is required",
+      });
+      return;
+    }
+
+    // Manually decode the token here
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as IUser;
+
+    if (!decoded || !decoded.id || !decoded.role) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized - Invalid token structure",
+      });
+      return;
+    }
+
+    const userId = decoded.id; // Using decoded.id from the token
+
+    // Find user based on userId and get employeeId from the user
+    const user = await User.findOne({
+      _id: new mongoose.Types.ObjectId(userId),
+    });
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    const employeeId = user.employeeId; // Get employeeId from the user document
+
+    // Fetch employee data based on the employeeId
+    const employee = await Employee.findOne({
+      _id: new mongoose.Types.ObjectId(employeeId),
+    })
+      .populate("department", "departmentName headOfDepartment")
+      .lean(); // Using lean for performance
+
+    if (!employee) {
+      res.status(404).json({ success: false, message: "Employee not found" });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: employee,
+    });
+  } catch (error: any) {
+    console.error("🔴 Error fetching employee profile:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getEmployeeById } from "../../services/employeeServices";
 import { motion } from "framer-motion";
+import { getEmployeeProfile } from "../../services/employeeServices";
 
-interface Employee {
-    _id: string;
+interface Profile {
     firstName: string;
     lastName: string;
     gender: string;
@@ -21,38 +19,33 @@ interface Employee {
     updatedAt: string;
 }
 
-const EmployeeProfile: React.FC = () => {
-    const { id } = useParams();
-    const [employee, setEmployee] = useState<Employee | null>(null);
+const MyProfile: React.FC = () => {
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
 
-    // Fetch employee data on component mount
     useEffect(() => {
-        const fetchEmployee = async () => {
+        const fetchProfile = async () => {
             try {
-                const response = await getEmployeeById(id!);
-                setEmployee(response);
-            } catch (err: any) {
-                setError("Failed to fetch employee details.");
+                const profileData = await getEmployeeProfile();
+                setProfile(profileData.data);
+            } catch (err) {
+                setError("Failed to load profile.");
             } finally {
                 setLoading(false);
             }
         };
+        fetchProfile();
+    }, []);
 
-        fetchEmployee();
-    }, [id]);
-
-    // Format the date (e.g., "1 January 2025")
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).format(date);
     };
 
-    // Handle loading state
     if (loading) return <div className="text-center text-white">Loading...</div>;
     if (error) return <div className="text-center text-red-500">{error}</div>;
-    if (!employee) return <div className="text-center text-gray-300">Employee not found.</div>;
+    if (!profile) return <div className="text-center text-gray-300">Profile not found.</div>;
 
     return (
         <motion.div
@@ -62,9 +55,8 @@ const EmployeeProfile: React.FC = () => {
             transition={{ duration: 0.5 }}
         >
             <div className="flex flex-col md:flex-row w-full max-w-7xl bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 rounded-lg shadow-lg">
-                {/* Main Content */}
+                {/* Left Content */}
                 <div className="flex-1 p-4">
-                    {/* Profile Header */}
                     <motion.div
                         className="bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 rounded-lg shadow-md p-4 mb-4"
                         initial={{ opacity: 0, y: -30 }}
@@ -79,14 +71,31 @@ const EmployeeProfile: React.FC = () => {
                             />
                             <div>
                                 <h2 className="text-xl font-semibold text-white">
-                                    {employee.firstName} {employee.lastName}
+                                    {profile.firstName} {profile.lastName}
                                 </h2>
-                                <p className="text-white">{employee.designation}</p>
-                                {/* Display department name */}
-                                <p className="text-white">{employee.department.departmentName}</p>
+                                <p className="text-white">{profile.designation}</p>
+                                <p className="text-white">{profile.department.departmentName}</p>
                             </div>
                         </div>
                     </motion.div>
+
+                    {/* Profile Details Section */}
+                    {/* <motion.div
+                        className="bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 rounded-lg shadow-md p-4"
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <h3 className="text-lg font-semibold text-white">Basic Information</h3>
+                        <p className="text-white"><strong>Email:</strong> {profile.email}</p>
+                        <p className="text-white"><strong>Phone:</strong> {profile.phoneNumber}</p>
+                        <p className="text-white"><strong>Address:</strong> {profile.address}</p>
+                        <p className="text-white"><strong>Department:</strong> {profile.department.departmentName}</p>
+                        <p className="text-white"><strong>Manager:</strong> {profile.department.headOfDepartment}</p>
+                        <p className="text-white"><strong>Designation:</strong> {profile.designation}</p>
+                        <p className="text-white"><strong>Gender:</strong> {profile.gender}</p>
+                        <p className="text-white"><strong>Hired On:</strong> {formatDate(profile.createdAt)}</p>
+                    </motion.div> */}
 
                     {/* Time Off Section */}
                     <motion.div
@@ -136,7 +145,6 @@ const EmployeeProfile: React.FC = () => {
                                 View Attendance
                             </button>
                         </motion.div>
-
                     </motion.div>
 
                     {/* Leave Requests Table */}
@@ -183,25 +191,23 @@ const EmployeeProfile: React.FC = () => {
                 >
                     <div className="bg-gradient-to-l from-indigo-900 to-gray-900 rounded-lg shadow-md p-4 mb-4">
                         <h3 className="text-lg font-semibold mb-2 text-white">Basic Information</h3>
-                        <p className="text-white"><strong>Name:</strong> {employee.firstName} {employee.lastName}</p>
-                        <p className="text-white"><strong>Department:</strong> {employee.department.departmentName}</p>
-                        <p className="text-white"><strong>Manager:</strong> {employee.department.headOfDepartment}</p>
+                        <p className="text-white"><strong>Name:</strong> {profile.firstName} {profile.lastName}</p>
+                        <p className="text-white"><strong>Department:</strong> {profile.department.departmentName}</p>
+                        <p className="text-white"><strong>Manager:</strong> {profile.department.headOfDepartment}</p>
 
-                        <p className="text-white"><strong>Designation:</strong> {employee.designation}</p>
-                        <p className="text-white"><strong>Gender:</strong> {employee.gender}</p>
+                        <p className="text-white"><strong>Designation:</strong> {profile.designation}</p>
+                        <p className="text-white"><strong>Gender:</strong> {profile.gender}</p>
                     </div>
                     <div className="bg-gradient-to-l from-indigo-900 to-gray-900 rounded-lg shadow-md p-4 mb-4">
                         <h3 className="text-lg font-semibold mb-2 text-white">Details Information</h3>
-                        <p className="text-white"><strong>Hired On:</strong> {formatDate(employee.createdAt)}</p>
+                        <p className="text-white"><strong>Hired On:</strong> {formatDate(profile.createdAt)}</p>
                         <p className="text-white">Employment type: Full Time</p>
                         <p className="text-white">Location: Noida</p>
                     </div>
                     <div className="bg-gradient-to-l from-indigo-900 to-gray-900 rounded-lg shadow-md p-4">
-                        <h3 className="text-lg font-semibold mb-2 text-white">Contact Information</h3>
-                        <p className="text-white"><strong>Phone</strong> {employee.phoneNumber}</p>
-                        <p className="text-white"><strong>Email</strong> {employee.email}</p>
-                        <p className="text-white"><strong>Address</strong> {employee.address}</p>
-                        <p className="text-white">Emergency Contact : N/A</p>
+                        <button className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
+                            Update Profile
+                        </button>
                     </div>
                 </motion.div>
             </div>
@@ -209,4 +215,4 @@ const EmployeeProfile: React.FC = () => {
     );
 };
 
-export default EmployeeProfile;
+export default MyProfile;

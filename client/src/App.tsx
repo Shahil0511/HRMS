@@ -22,6 +22,7 @@ import EmployeeLeaves from "./components/EmployeeDashboard/Leaves";
 import EmployeeAttendance from "./components/EmployeeDashboard/Attendance";
 import EmployeeSettings from "./components/EmployeeDashboard/Settings";
 import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
+import MyProfile from "./components/EmployeeDashboard/MyProfile"
 
 // Protected Route Component
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoutes";
@@ -54,6 +55,7 @@ const App = () => {
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="attendance-list" element={<EmployeeAttendanceList />} />
           <Route path="settings" element={<EmployeeSettings />} />
+          <Route path="profile/:id" element={<MyProfile />} />
 
         </Route>
 
