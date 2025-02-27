@@ -32,6 +32,8 @@ import EmployeeAttendanceList from "./components/EmployeeDashboard/attendanceUti
 import EmployeeProfile from "./components/AdminDashboard/EmployeeProfile";
 
 
+import ManagerDashboard from "./pages/ManagerDashboard";
+
 const App = () => {
   return (
     <Router>
@@ -78,6 +80,16 @@ const App = () => {
           <Route path="settings" element={<Setting />} />
           <Route path="add-employee" element={<AddEmployee />} />
           <Route path="employee/:id" element={<EmployeeProfile />} />
+        </Route>
+        <Route
+          path="/manager"
+          element={
+            <ProtectedRoute requiredRole="manager">
+              <ManagerDashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<ManagerDashboard />} />
         </Route>
       </Routes>
 

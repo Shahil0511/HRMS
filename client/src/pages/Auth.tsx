@@ -85,7 +85,13 @@ const Auth: React.FC = () => {
         if (token && role && user) {
             try {
                 dispatch(loginSuccess({ token, role, user: JSON.parse(user) }));
-                navigate(role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
+                if (role === "admin") {
+                    navigate("/admin/dashboard", { replace: true });
+                } else if (role === "manager") {
+                    navigate("/manager/dashboard", { replace: true });
+                } else {
+                    navigate("/employee/dashboard", { replace: true });
+                }
             } catch (error) {
                 console.error("🔴 Error parsing user data:", error);
             }
@@ -109,7 +115,14 @@ const Auth: React.FC = () => {
             storeUserData(token, role, user);
 
             dispatch(loginSuccess({ token, role, user }));
-            navigate(role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
+
+            if (role === "admin") {
+                navigate("/admin/dashboard", { replace: true });
+            } else if (role === "manager") {
+                navigate("/manager/dashboard", { replace: true });
+            } else {
+                navigate("/employee/dashboard", { replace: true });
+            }
         } catch (error: any) {
             console.error("🔴 Login Error:", error);
             toast.error(error.response?.data?.message || "Login failed.");
