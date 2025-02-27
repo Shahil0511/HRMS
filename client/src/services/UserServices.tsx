@@ -7,24 +7,28 @@ export const fetchUserName = async () => {
         const token = localStorage.getItem("token");
 
         if (!token) {
-            console.error("No token found, user might not be logged in.");
-            throw new Error("No token found, user might not be logged in.");
+            const errorMessage = "No token found in localStorage. User might not be logged in.";
+            console.error(errorMessage);
+            throw new Error(errorMessage);
         }
+
         const response = await axios.get(API_URL, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         });
 
-        // Check if response data contains 'user' object
-        if (response && response.data && response.data.user) {
+        // Ensure response contains user data
+        if (response?.data?.user) {
             return response.data.user;
-        } else {
-            console.error("User data not found in response:", response); // Debugging log
-            throw new Error("User data not found in response.");
         }
+
+        const errorMessage = "User data not found in response.";
+        console.error(errorMessage, response);
+        throw new Error(errorMessage);
+
     } catch (error) {
-        console.error("Error fetching user info:", error); // Debugging log
-        throw new Error("Failed to fetch user info");
+        console.error("Error fetching user info:", error);
+        throw new Error("Failed to fetch user info due to an error.");
     }
 };

@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
 import { Department } from "../models/DepartmentSchema";
-import mongoose from "mongoose";
+
+/**
+ * Helper function to handle duplicate department check
+ */
+const checkDuplicateDepartment = async (departmentName: string) => {
+  return Department.findOne({ departmentName });
+};
 
 /**
  * Controller to create a new department.
@@ -13,8 +19,8 @@ export const addDepartment = async (
   try {
     const { departmentName, description, headOfDepartment } = req.body;
 
-    // Check if the department already exists
-    const existingDepartment = await Department.findOne({ departmentName });
+    // Check if the department already exists (avoiding duplication)
+    const existingDepartment = await checkDuplicateDepartment(departmentName);
     if (existingDepartment) {
       res.status(400).json({ message: "Department already exists" });
       return;
@@ -38,8 +44,7 @@ export const addDepartment = async (
 };
 
 /**
- * Controller to retrieve all departments.
- * Supports optional search queries and pagination.
+ * Controller to retrieve all departments with optional search and pagination.
  */
 export const getDepartments = async (
   req: Request,
@@ -54,17 +59,17 @@ export const getDepartments = async (
       : {};
 
     // Convert page and limit to numbers
-    const pageNumber = Number(page);
-    const limitNumber = Number(limit);
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
 
     // Fetch departments with pagination
-    const departments = await Department.find(filter)
-      .skip((pageNumber - 1) * limitNumber)
-      .limit(limitNumber)
-      .lean();
-
-    // Get the total count of departments matching the filter
-    const totalDepartments = await Department.countDocuments(filter);
+    const [departments, totalDepartments] = await Promise.all([
+      Department.find(filter)
+        .skip((pageNumber - 1) * limitNumber)
+        .limit(limitNumber)
+        .lean(),
+      Department.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       message: "Departments retrieved successfully",
@@ -79,48 +84,21 @@ export const getDepartments = async (
   }
 };
 
-export const getTotalDepartment = async (req: Request, res: Response) => {
+/**
+ * Controller to retrieve the total number of departments.
+ */
+export const getTotalDepartment = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const totalDepartment = await Department.countDocuments();
     res.json({ totalDepartment });
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: "Error in Fetching Departments", error: error.message });
+  } catch (error) {
+    console.error("Error fetching total departments:", error);
+    res.status(500).json({
+      message: "Error fetching total departments",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 };
-
-// export const getDepartmentById = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   try {
-//     const { id } = req.params;
-
-//     // ✅ Validate MongoDB ObjectId
-//     if (!mongoose.Types.ObjectId.isValid(id)) {
-//       res
-//         .status(400)
-//         .json({ success: false, message: "Invalid Department ID" });
-//       return;
-//     }
-
-//     // ✅ Fetch department data
-//     const department = await Department.findById(id).lean(); // Using `.lean()` for better performance
-
-//     // ✅ If department not found
-//     if (!department) {
-//       res.status(404).json({ success: false, message: "Department not found" });
-//       return;
-//     }
-
-//     // ✅ Return Department Data
-//     res.status(200).json({
-//       success: true, // Added success field for consistency
-//       data: department,
-//     });
-//   } catch (error) {
-//     console.error("🔴 Error fetching department:", error);
-//     res.status(500).json({ success: false, message: "Server Error" });
-//   }
-// };
