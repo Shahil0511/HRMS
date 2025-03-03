@@ -10,6 +10,10 @@ import {
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
 import { getTodayPresentTotal } from "../controllers/attendanceController";
+import {
+  // getTodayTotalDepartmentPresent,
+  getTotalDepartmentEmployees,
+} from "../controllers/departmentController";
 
 const router = Router();
 
@@ -49,5 +53,9 @@ router.get(
 
   getEmployeeProfile
 );
+
+router.get("/department/totalEmployees", getTotalDepartmentEmployees);
+
+// router.get("/todayPresent", getTodayTotalDepartmentPresent);
 
 export default router;

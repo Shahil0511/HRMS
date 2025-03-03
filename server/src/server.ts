@@ -27,7 +27,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
+app.use(express.urlencoded({ extended: true }));
 app.use(upload.none());
 
 // Routes
