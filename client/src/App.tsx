@@ -22,7 +22,7 @@ import EmployeeLeaves from "./components/EmployeeDashboard/Leaves";
 import EmployeeAttendance from "./components/EmployeeDashboard/Attendance";
 import EmployeeSettings from "./components/EmployeeDashboard/Settings";
 import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
-import MyProfile from "./components/EmployeeDashboard/MyProfile"
+import MyProfile from "./components/EmployeeDashboard/MyProfile";
 
 // Protected Route Component
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoutes";
@@ -31,8 +31,22 @@ import NotFound from "./pages/NotFound";
 import EmployeeAttendanceList from "./components/EmployeeDashboard/attendanceUtils/EmployeeAttendanceList";
 import EmployeeProfile from "./components/AdminDashboard/EmployeeProfile";
 
-
+// Manager Pages
 import ManagerDashboard from "./pages/ManagerDashboard";
+import DashboardManager from "./components/ManagerDashboard/DashboardManager";
+import ManagerLeaves from "./components/ManagerDashboard/ManagerLeaves";
+import ManagerAttendance from "./components/ManagerDashboard/AttendanceM";
+import ManagerPayroll from "./components/ManagerDashboard/PayrollM";
+import ManagerSetting from "./components/ManagerDashboard/ManagerSetting";
+import EmployeeM from "./components/ManagerDashboard/EmployeProfileM";
+import DepartmentM from "./components/ManagerDashboard/DepartmentM";
+import EmployeProfileM from "./components/ManagerDashboard/EmployeProfileM";
+import MyProfileM from "./components/ManagerDashboard/MyProfileM";
+import WorkReportM from "./components/ManagerDashboard/WorkReportM";
+import WorkReports from "./components/AdminDashboard/WorkReports";
+import WorkReportE from "./components/EmployeeDashboard/WorkReportE";
+import Payrole from "./components/EmployeeDashboard/Payroll";
+
 
 const App = () => {
   return (
@@ -42,6 +56,7 @@ const App = () => {
         <Route path="/" element={<Hero />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/404" element={<NotFound />} />
+
         {/* Protected Employee Routes */}
         <Route
           path="/employee"
@@ -57,8 +72,9 @@ const App = () => {
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="attendance-list" element={<EmployeeAttendanceList />} />
           <Route path="settings" element={<EmployeeSettings />} />
+          <Route path="payroll" element={<Payrole />} />
+          <Route path="workreports" element={<WorkReportE />} />
           <Route path="profile/:id" element={<MyProfile />} />
-
         </Route>
 
         {/* Protected Admin Routes */}
@@ -77,10 +93,13 @@ const App = () => {
           <Route path="leaves" element={<Leaves />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="payroll" element={<Payroll />} />
+          <Route path="workreports" element={<WorkReports />} />
           <Route path="settings" element={<Setting />} />
           <Route path="add-employee" element={<AddEmployee />} />
           <Route path="employee/:id" element={<EmployeeProfile />} />
         </Route>
+
+        {/* Protected Manager Routes */}
         <Route
           path="/manager"
           element={
@@ -89,7 +108,16 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<ManagerDashboard />} />
+          <Route path="dashboard" element={<DashboardManager />} />
+          <Route path="department" element={<DepartmentM />} />
+          <Route path="employee" element={<EmployeeM />} />
+          <Route path="employeeprofile" element={<EmployeProfileM />} />
+          <Route path="myprofile" element={<MyProfileM />} />
+          <Route path="leaves" element={<ManagerLeaves />} />
+          <Route path="attendance" element={<ManagerAttendance />} />
+          <Route path="payroll" element={<ManagerPayroll />} />
+          <Route path="settings" element={<ManagerSetting />} />
+          <Route path="workreports" element={<WorkReportM />} />
         </Route>
       </Routes>
 
