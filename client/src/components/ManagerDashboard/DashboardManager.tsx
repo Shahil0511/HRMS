@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaUsers, FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaExclamationCircle, FaEllipsisH, FaUser } from "react-icons/fa";
+import { FaUsers, FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaExclamationCircle, FaUser } from "react-icons/fa";
 import { getDepartmentEmployees, getTodayTotalDepartmentPresent } from "../../services/managerdashboard";
+import attendanceService from "../../services/attendanceServices";
+import moment from "moment";
+
+interface AttendanceItem {
+    status: string;
+    date: string;
+}
 
 const DashboardManager = () => {
     const [data, setData] = useState({
@@ -11,7 +18,7 @@ const DashboardManager = () => {
         leavesApplied: 0,
         todaysWorksheet: 0,
         complaints: 0,
-        others: 0
+        totalPresentThisMonth: 0,
     });
 
     const [loading, setLoading] = useState(true);
@@ -24,16 +31,12 @@ const DashboardManager = () => {
                     getTodayTotalDepartmentPresent(),
                 ]);
 
-                setData({
+                setData((prevState) => ({
+                    ...prevState,
                     totalEmployees: employeesResponse?.totalEmployees || 0,
                     totalPresentToday: attendanceResponse?.totalPresent || 0,
                     totalAbsentToday: (employeesResponse?.totalEmployees || 0) - (attendanceResponse?.totalPresent || 0),
-                    leavesApplied: 0,
-                    todaysWorksheet: 0,
-                    complaints: 0,
-                    others: 0,
-                });
-
+                }));
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             } finally {
@@ -42,17 +45,48 @@ const DashboardManager = () => {
         };
 
         fetchDashboardData();
-    }, []);
+    }, []); // Only run once after component mounts
+
+    useEffect(() => {
+        const fetchAttendanceThisMonth = async () => {
+            try {
+                const data = await attendanceService.getEmployeeAttendance();
+
+                const groupedByDate = data.reduce((acc: Record<string, AttendanceItem>, curr: AttendanceItem) => {
+                    const date = moment(curr.date).format("YYYY-MM-DD");
+                    if (!acc[date]) {
+                        acc[date] = { ...curr, status: curr.status };
+                    }
+                    return acc;
+                }, {});
+
+                const uniqueAttendance = Object.values(groupedByDate) as AttendanceItem[];
+
+                const totalPresentThisMonth = uniqueAttendance.filter((item) => item.status === 'Present').length;
+
+
+
+                setData((prevState) => ({
+                    ...prevState,
+                    totalPresentThisMonth,
+                }));
+            } catch (error) {
+                console.error("Error fetching attendance data", error);
+            }
+        };
+
+        fetchAttendanceThisMonth();
+    }, []); // Only run once after component mounts
 
     const stats = [
         { label: "Total Employees", value: data.totalEmployees, icon: <FaUsers /> },
-        { label: "Employees Present", value: data.totalPresentToday, icon: <FaUserCheck /> },
-        { label: "Employees Absent", value: data.totalAbsentToday, icon: <FaUserTimes /> },
+        { label: "Employees Present Today", value: data.totalPresentToday, icon: <FaUserCheck /> },
+        { label: "Employees Absent Today", value: data.totalAbsentToday, icon: <FaUserTimes /> },
         { label: "Leaves Applied", value: data.leavesApplied, icon: <FaClipboardList /> },
         { label: "Today's Work Sheet", value: data.todaysWorksheet, icon: <FaCalendarDay /> },
         { label: "Profile", value: "View", icon: <FaUser /> },
         { label: "Complaints", value: data.complaints, icon: <FaExclamationCircle /> },
-        { label: "Others", value: data.others, icon: <FaEllipsisH /> }
+        { label: "My Total Attendance ", value: data.totalPresentThisMonth, icon: <FaUserCheck /> },
     ];
 
     return (
@@ -67,7 +101,7 @@ const DashboardManager = () => {
                         transition={{ duration: 0.6, delay: index * 0.1 }}
                     >
                         <div className="text-5xl text-white mb-3">{stat.icon}</div>
-                        <div className="text-3xl font-bold">{loading ? 0 : stat.value}</div> {/* Show 0 until data is fetched */}
+                        <div className="text-3xl font-bold">{loading ? 0 : stat.value}</div>
                         <div className="text-lg font-medium">{stat.label}</div>
                     </motion.div>
                 ))}

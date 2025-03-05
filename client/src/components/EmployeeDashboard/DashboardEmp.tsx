@@ -51,7 +51,7 @@ const EmployeeDashboard = () => {
     }, []);
 
     const stats = [
-        { label: "Total Attendance This Month", value: attendanceData.totalAttendance, icon: <FaUserCheck /> },
+        { label: "Total Attendance", value: attendanceData.totalAttendance, icon: <FaUserCheck /> },
         { label: "Total Absent This Month", value: attendanceData.totalAbsent, icon: <FaUserTimes /> },
         { label: "Leaves Taken", value: attendanceData.leavesTaken, icon: <FaClipboardList /> },
         { label: "Work Reports", value: 0, icon: <FaCalendarDay /> },
