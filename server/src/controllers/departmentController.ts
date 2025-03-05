@@ -10,17 +10,17 @@ interface IUser {
   employeeId: string;
 }
 
-interface IEmployee {
-  department: string;
-  _id: string;
-}
+// interface IEmployee {
+//   department: string;
+//   _id: string;
+// }
 
-interface IAttendance {
-  employeeId: IUser;
-  checkIn: Date;
-  checkOut: Date;
-  status: string;
-}
+// interface IAttendance {
+//   employeeId: IUser;
+//   checkIn: Date;
+//   checkOut: Date;
+//   status: string;
+// }
 
 /**
  * Helper function to handle duplicate department check
@@ -268,26 +268,26 @@ export const getTodayTotalDepartmentPresent = async (
     ]);
 
     // Fetch full user details for unique present users
-    const presentUsersDetails = await User.populate(uniquePresentUsers, {
-      path: "_id",
-      populate: {
-        path: "employeeId",
-        model: "Employee",
-      },
-    });
+    // const presentUsersDetails = await User.populate(uniquePresentUsers, {
+    //   path: "_id",
+    //   populate: {
+    //     path: "employeeId",
+    //     model: "Employee",
+    //   },
+    // });
 
     // Respond with department details and present users
     res.status(200).json({
-      departmentId,
+      // departmentId,
       totalPresent: uniquePresentUsers.length,
-      presentUsers: presentUsersDetails.map((user) => {
-        const employeeDetails = user._id as unknown as IUser;
-        return {
-          userId: employeeDetails._id,
-          userName: employeeDetails.name,
-          employeeDetails: employeeDetails.employeeId,
-        };
-      }),
+      // presentUsers: presentUsersDetails.map((user) => {
+      //   const employeeDetails = user._id as unknown as IUser;
+      //   return {
+      //     userId: employeeDetails._id,
+      //     userName: employeeDetails.name,
+      //     employeeDetails: employeeDetails.employeeId,
+      //   };
+      // }),
     });
   } catch (error) {
     console.error("Error fetching today's department attendance:", error);
