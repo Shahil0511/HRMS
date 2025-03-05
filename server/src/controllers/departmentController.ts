@@ -4,6 +4,24 @@ import { Employee } from "../models/EmployeeSchema";
 import Attendance from "../models/AttendanceSchema";
 import { User } from "../models/UserSchema";
 
+interface IUser {
+  _id: string;
+  name: string;
+  employeeId: string;
+}
+
+interface IEmployee {
+  department: string;
+  _id: string;
+}
+
+interface IAttendance {
+  employeeId: IUser;
+  checkIn: Date;
+  checkOut: Date;
+  status: string;
+}
+
 /**
  * Helper function to handle duplicate department check
  */
@@ -179,46 +197,100 @@ export const getTotalDepartmentEmployees = async (
   }
 };
 
-// export const getTodayTotalDepartmentPresent = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   try {
-//     const today = new Date();
-//     today.setHours(0, 0, 0, 0);
+export const getTodayTotalDepartmentPresent = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    // Extract userId from the request body
+    const { userId } = req.body;
 
-//     // Fetch today's attendance where check-in exists
-//     const todayAttendance = await Attendance.find({
-//       date: today,
-//       checkIn: { $exists: true },
-//     }).populate("employeeId", "department");
+    // Validate userId
+    if (!userId) {
+      console.log("User ID is missing from the request body.");
+      res.status(400).json({ message: "User ID is required" });
+      return;
+    }
 
-//     if (!todayAttendance.length) {
-//       res.status(200).json({
-//         message: "No employees present today",
-//         departmentAttendance: {},
-//       });
-//       return;
-//     }
+    // Find the user details using userId
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log("User not found for ID:", userId);
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
 
-//     // Count employees present in each department
-//     const departmentAttendance: Record<string, number> = {};
-//     for (const attendance of todayAttendance) {
-//       const employee = await Employee.findById(attendance.employeeId).select(
-//         "department"
-//       );
-//       if (employee) {
-//         const departmentId = employee.department.toString();
-//         departmentAttendance[departmentId] =
-//           (departmentAttendance[departmentId] || 0) + 1;
-//       }
-//     }
+    const employee = await Employee.findById(user.employeeId);
+    if (!employee) {
+      res.status(404).json({ message: "Employee record not found" });
+      return;
+    }
 
-//     res.status(200).json({ departmentAttendance });
-//     return;
-//   } catch (error) {
-//     console.error("Error fetching today's department attendance:", error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//     return;
-//   }
-// };
+    // Extract department ID
+    const departmentId = employee.department;
+    if (!departmentId) {
+      res.status(400).json({ message: "Department not assigned" });
+      return;
+    }
+
+    // Find all users in the same department
+    const departmentUsers = await User.find({
+      employeeId: {
+        $in: await Employee.find({ department: departmentId }).distinct("_id"),
+      },
+    });
+
+    // Get today's date with time set to start of day
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Find unique present users for the day
+    const uniquePresentUsers = await Attendance.aggregate([
+      {
+        $match: {
+          employeeId: { $in: departmentUsers.map((u) => u._id) },
+          date: {
+            $gte: today,
+            $lt: tomorrow,
+          },
+          status: "Present",
+        },
+      },
+      {
+        $group: {
+          _id: "$employeeId",
+          checkIns: { $push: "$checkIn" },
+          checkOuts: { $push: "$checkOut" },
+        },
+      },
+    ]);
+
+    // Fetch full user details for unique present users
+    const presentUsersDetails = await User.populate(uniquePresentUsers, {
+      path: "_id",
+      populate: {
+        path: "employeeId",
+        model: "Employee",
+      },
+    });
+
+    // Respond with department details and present users
+    res.status(200).json({
+      departmentId,
+      totalPresent: uniquePresentUsers.length,
+      presentUsers: presentUsersDetails.map((user) => {
+        const employeeDetails = user._id as unknown as IUser;
+        return {
+          userId: employeeDetails._id,
+          userName: employeeDetails.name,
+          employeeDetails: employeeDetails.employeeId,
+        };
+      }),
+    });
+  } catch (error) {
+    console.error("Error fetching today's department attendance:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

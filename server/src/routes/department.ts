@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   addDepartment,
   getDepartments,
+  getTodayTotalDepartmentPresent,
   getTotalDepartment,
 } from "../controllers/departmentController";
 import { isAdmin } from "../middlewares/verifyAdmin";
@@ -22,5 +23,6 @@ router.post("/departments", verifyToken, isAdmin, addDepartment);
  */
 router.get("/departments", getDepartments);
 router.get("/departments/totaldepartment", getTotalDepartment);
+router.post("/department/todayPresent", getTodayTotalDepartmentPresent);
 
 export default router;

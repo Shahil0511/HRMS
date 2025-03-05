@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaUsers, FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaExclamationCircle, FaEllipsisH } from "react-icons/fa";
-import { getDepartmentEmployees } from "../../services/managerdashboard";
+import { getDepartmentEmployees, getTodayTotalDepartmentPresent } from "../../services/managerdashboard";
 import { motion } from "framer-motion";
 
 interface ManagerDashboardData {
@@ -24,51 +24,50 @@ const DashboardManager = () => {
         others: 0
     });
 
-    const [, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getDepartmentEmployees()
-            .then((response: { totalEmployees: any; }) => {
-                setData((prevData) => ({
-                    ...prevData,
-                    totalEmployees: response.totalEmployees || 0,
-                }));
-            })
-            .catch((err: any) => {
-                console.error("Error fetching department employees:", err);
-                setLoading(false);
-            })
-            .finally(() => setLoading(false));
-    }, []);
+        // Combine both API calls in a single useEffect
+        const fetchDashboardData = async () => {
+            try {
+                // First, fetch department employees
+                const employeesResponse = await getDepartmentEmployees();
 
-    // useEffect(() => {
-    //     if (data.totalEmployees > 0) {
-    //         getTodayTotalDepartmentPresent()
-    //             .then((response: { totalPresentToday: number; }) => {
-    //                 setData((prevData) => ({
-    //                     ...prevData,
-    //                     totalPresentToday: response.totalPresentToday || 0,
-    //                     totalAbsentToday: prevData.totalEmployees - response.totalPresentToday || 0,
-    //                 }));
-    //             })
-    //             .catch((err: any) => {
-    //                 console.error("Error fetching today's department attendance:", err);
-    //                 setLoading(false);
-    //             })
-    //             .finally(() => setLoading(false));
-    //     }
-    // }, [data.totalEmployees]);
+                // Then, fetch today's attendance
+                const attendanceResponse = await getTodayTotalDepartmentPresent();
+
+                // Update state with both results
+                setData(prevData => ({
+                    ...prevData,
+                    totalEmployees: employeesResponse.totalEmployees || 0,
+                    totalPresentToday: attendanceResponse.totalPresent || 0,
+                    totalAbsentToday: employeesResponse.totalEmployees - (attendanceResponse.totalPresent || 0)
+                }));
+
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []); // Empty dependency array to run only once
 
     const stats = [
         { label: "Total Employees", value: data.totalEmployees, icon: <FaUsers /> },
-        { label: "Employees Present", value: 0, icon: <FaUserCheck /> },
-        { label: "Employees Absent", value: 0, icon: <FaUserTimes /> },
+        { label: "Employees Present", value: data.totalPresentToday, icon: <FaUserCheck /> },
+        { label: "Employees Absent", value: data.totalAbsentToday, icon: <FaUserTimes /> },
         { label: "Leaves Applied", value: 0, icon: <FaClipboardList /> },
         { label: "My Profile", value: 0, icon: <FaClipboardList /> },
         { label: "Today's Work Sheet", value: 0, icon: <FaCalendarDay /> },
         { label: "Complaints", value: 0, icon: <FaExclamationCircle /> },
         { label: "Others", value: 0, icon: <FaEllipsisH /> }
     ];
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 p-6 flex justify-center items-center">

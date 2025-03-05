@@ -1,16 +1,17 @@
 import axios from "axios";
 
 const BASE_URL = "https://hrms-backend-7176.onrender.com/api";
-// const BASE_URL = "http://localhost:8000/api"; // Replace with your actual API endpoint
+// const BASE_URL = "http://localhost:8000/api";
 
 // Define the types for the responses
 interface DepartmentEmployeesResponse {
   totalEmployees: number;
 }
 
-// interface TodayDepartmentAttendanceResponse {
-//   totalPresentToday: number;
-// }
+interface TodayDepartmentAttendanceResponse {
+  totalPresent: number;
+  totalPresentToday: number;
+}
 
 // interface LeavesAppliedResponse {
 //   leavesApplied: number;
@@ -80,71 +81,45 @@ export const getDepartmentEmployees =
   };
 
 // Service to get today's total department present
-// export const getTodayTotalDepartmentPresent =
-//   async (): Promise<TodayDepartmentAttendanceResponse> => {
-//     try {
-//       // Get user data from localStorage
-//       const userData = localStorage.getItem("user");
-//       if (!userData) throw new Error("User data not found in localStorage");
+export const getTodayTotalDepartmentPresent =
+  async (): Promise<TodayDepartmentAttendanceResponse> => {
+    try {
+      // Get user data from localStorage
+      const userData = localStorage.getItem("user");
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
 
-//       // Parse stored user data
-//       const user = JSON.parse(userData);
+      if (!userData || !token || !role) {
+        throw new Error("User data, token, or role not found in localStorage");
+      }
 
-//       // Extract departmentId
-//       const departmentId = user?.employee?.department;
-//       if (!departmentId) throw new Error("Department ID is required");
+      // Parse stored user data
+      const user = JSON.parse(userData);
 
-//       const response = await axios.get(
-//         `${BASE_URL}/api/department/todayPresent/${departmentId}`
-//       );
-//       return response.data;
-//     } catch (error) {
-//       console.error("Error fetching today's department attendance:", error);
-//       throw error;
-//     }
-//   };
+      // Extract user details from the session
+      const userId = user?.id;
+      if (!userId) throw new Error("User ID is required");
 
-// Service to get leaves applied
-// export const getLeavesApplied = async (): Promise<LeavesAppliedResponse> => {
-//   try {
-//     const response = await axios.get(`${BASE_URL}/api/leaves/applied`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching leaves applied:", error);
-//     throw error;
-//   }
-// };
+      // Set Authorization header with token
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
 
-// // Service to get today's worksheet count
-// export const getTodaysWorksheet =
-//   async (): Promise<TodaysWorksheetResponse> => {
-//     try {
-//       const response = await axios.get(`${BASE_URL}/api/worksheet/today`);
-//       return response.data;
-//     } catch (error) {
-//       console.error("Error fetching today's worksheet:", error);
-//       throw error;
-//     }
-//   };
+      // Send role, userId, and other user data in request body
+      const response = await axios.post(
+        `${BASE_URL}/department/todayPresent`,
+        {
+          role,
+          userId,
+          email: user?.email,
+          employeeId: user?.employeeId,
+        },
+        { headers }
+      );
 
-// // Service to get complaints
-// export const getComplaints = async (): Promise<ComplaintsResponse> => {
-//   try {
-//     const response = await axios.get(`${BASE_URL}/api/complaints`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching complaints:", error);
-//     throw error;
-//   }
-// };
-
-// // Service to get other stats
-// export const getOthersStats = async (): Promise<OthersResponse> => {
-//   try {
-//     const response = await axios.get(`${BASE_URL}/api/others`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching other stats:", error);
-//     throw error;
-//   }
-// };
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching today's department attendance:", error);
+      throw error;
+    }
+  };
