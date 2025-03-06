@@ -1,6 +1,6 @@
 import axios from "axios";
-const API_URL = "https://hrms-backend-7176.onrender.com/api/employees/user";
-// const API_URL = "http://localhost:8000/api/employees/user";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/employees/user";
+const API_URL = "http://localhost:8000/api/employees/user";
 
 export const fetchUserName = async () => {
     try {

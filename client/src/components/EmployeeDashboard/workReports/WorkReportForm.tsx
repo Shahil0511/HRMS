@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { getEmployeeDetails } from '../../../services/workreportService'; // Import service function
+import { getEmployeeDetails, submitWorkReport } from '../../../services/workreportService';
 
 interface FormData {
     employeeName: string;
@@ -63,7 +62,15 @@ function EmployeeForm() {
         e.preventDefault();
 
         try {
-            await axios.post('/api/reports', formData);
+            await submitWorkReport({
+                employeeName: formData.employeeName,
+                department: formData.department,
+                designation: formData.designation,
+                date: formData.date,
+                completedTasks: formData.completedTasks,
+                ongoingTasks: formData.ongoingTasks,
+            });
+
             alert('Form submitted successfully!');
         } catch (error) {
             console.error('Error submitting form:', error);
