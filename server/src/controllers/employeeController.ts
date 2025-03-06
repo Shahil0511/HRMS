@@ -306,3 +306,41 @@ export const getEmployeeProfile = async (
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+export const getEmployeeDetails = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { employeeId } = req.body;
+
+    if (!employeeId) {
+      res.status(400).json({ message: "Employee ID is required" });
+      return;
+    }
+
+    // Fetch employee details and populate department name
+    const employee = await Employee.findOne({ _id: employeeId }).populate<{
+      department: { departmentName: string };
+    }>("department", "departmentName");
+
+    if (!employee) {
+      res.status(404).json({ message: "Employee not found" });
+      return;
+    }
+
+    const department = employee.department;
+    const designation = employee.designation;
+
+    const departmentName = department.departmentName;
+
+    // Send only department and designation
+    res.status(200).json({
+      departmentName,
+      designation,
+    });
+  } catch (error) {
+    console.error("Error fetching employee details:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

@@ -47,6 +47,7 @@ import WorkReports from "./components/AdminDashboard/WorkReports";
 import WorkReportE from "./components/EmployeeDashboard/WorkReportE";
 import Payrole from "./components/EmployeeDashboard/Payroll";
 import ManagerAttendanceList from "./components/ManagerDashboard/attendanceUtils/ManagerAttendanceList";
+import WorkReportForm from "./components/EmployeeDashboard/workReports/WorkReportForm";
 
 
 
@@ -76,6 +77,7 @@ const App = () => {
           <Route path="settings" element={<EmployeeSettings />} />
           <Route path="payroll" element={<Payrole />} />
           <Route path="workreports" element={<WorkReportE />} />
+          <Route path="workreports/add-work-report" element={<WorkReportForm />} />
           <Route path="profile/:id" element={<MyProfile />} />
         </Route>
 

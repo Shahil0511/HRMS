@@ -95,7 +95,7 @@ export const getUserEmployeeData = async () => {
         const response = await axios.get(`${API_URL}/user`, {
             headers: setAuthHeader(token),
         });
-
+        console.log(response.data)
         return response.data;
     } catch (error: any) {
         console.error("Error fetching employee data:", error.response?.data || error.message);
