@@ -1,6 +1,6 @@
 import axios from "axios";
-// const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
-const API_URL = "http://localhost:8000/api/workreports"; // Backend URL
+const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
+// const API_URL = "http://localhost:8000/api/workreports"; // Backend URL
 
 export const getEmployeeDetails = async () => {
   try {
