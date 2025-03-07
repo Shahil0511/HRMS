@@ -159,3 +159,32 @@ export const getWorkReportsForManager = async (
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getWorkReportById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { reportId } = req.params; // Get report ID from URL
+
+    if (!reportId) {
+      console.error("Error: Work report ID is missing in the request params");
+      res.status(400).json({ message: "Work report ID is required" });
+      return;
+    }
+
+    // Find the work report directly by its ID
+    const workReport = await WorkReport.findById(reportId);
+
+    if (!workReport) {
+      console.error(`Error: Work report with ID ${reportId} not found`);
+      res.status(404).json({ message: "Work report not found" });
+      return;
+    }
+
+    res.status(200).json(workReport); // Send the work report data
+  } catch (error) {
+    console.error("Error fetching work report details:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
