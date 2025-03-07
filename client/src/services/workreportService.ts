@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
-// const API_URL = "http://localhost:8000/api/workreports"; // Backend URL
+// const API_URL = "http://localhost:8000/api/workreports";
 
 export interface WorkReport {
   _id: string;
@@ -95,6 +95,33 @@ export const fetchWorkReports = async (): Promise<WorkReport[]> => {
         },
       }
     );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching work reports:", error);
+    return [];
+  }
+};
+
+export const fetchWorkReportManager = async (): Promise<WorkReport[]> => {
+  try {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!token || !user?.employeeId) {
+      throw new Error("Token or Employee ID not found in storage");
+    }
+
+    const response = await axios.post<WorkReport[]>(
+      `${API_URL}/manager/history`,
+      { employeeId: user.employeeId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
     return response.data;
   } catch (error) {
     console.error("Error fetching work reports:", error);

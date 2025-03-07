@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { Employee } from "../models/EmployeeSchema";
 import { WorkReport } from "../models/WorkReportSchema";
 import mongoose from "mongoose";
+import { Department } from "../models/DepartmentSchema";
 
 export const submitWorkReport = async (
   req: Request,
@@ -101,6 +102,60 @@ export const getWorkReports = async (
     res.status(200).json(workReports);
   } catch (error) {
     console.error("Error fetching work reports:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getWorkReportsForManager = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { employeeId } = req.body;
+
+    if (!employeeId) {
+      console.error("Error: Employee ID is missing in the request body");
+      res.status(400).json({ message: "Employee ID is required" });
+      return;
+    }
+
+    // Find the manager's employee record
+    const manager = await Employee.findById(employeeId);
+    if (!manager) {
+      console.error(`Error: Manager with ID ${employeeId} not found`);
+      res.status(404).json({ message: "Manager not found" });
+      return;
+    }
+
+    // Get the manager's department
+    const department = await Department.findById(manager.department);
+    if (!department) {
+      console.error(
+        `Error: Department with ID ${manager.department} not found`
+      );
+      res.status(404).json({ message: "Department not found" });
+      return;
+    }
+
+    // Find all employees in the same department
+    const employees = await Employee.find({
+      department: department._id,
+    }).populate("workReports");
+
+    if (employees.length === 0) {
+      console.log(
+        `No employees found in department: ${department.departmentName}`
+      );
+      res.status(200).json([]);
+      return;
+    }
+
+    // Extract all work reports
+    const workReports = employees.flatMap((emp) => emp.workReports);
+
+    res.status(200).json(workReports);
+  } catch (error) {
+    console.error("Error fetching work reports for manager:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
