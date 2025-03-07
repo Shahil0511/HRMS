@@ -74,3 +74,33 @@ export const submitWorkReport = async (
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getWorkReports = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { employeeId } = req.body;
+
+    if (!employeeId) {
+      res.status(400).json({ message: "Employee ID is required" });
+      return;
+    }
+
+    const employee = await Employee.findById(employeeId).populate(
+      "workReports"
+    );
+
+    if (!employee) {
+      res.status(404).json({ message: "Employee not found" });
+      return;
+    }
+
+    const workReports = employee.workReports;
+
+    res.status(200).json(workReports);
+  } catch (error) {
+    console.error("Error fetching work reports:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
