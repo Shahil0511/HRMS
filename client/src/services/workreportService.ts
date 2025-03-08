@@ -157,3 +157,56 @@ export const fetchWorkReportById = async (
     return null;
   }
 };
+
+export const approveWorkReport = async (id: string): Promise<boolean> => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("Error: Token not found in localStorage");
+      throw new Error("Token not found in storage");
+    }
+
+    await axios.put(
+      `${API_URL}/${id}/approve`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`Error approving work report with ID: ${id}`, error);
+    return false;
+  }
+};
+
+// Reject Work Report
+export const rejectWorkReport = async (id: string): Promise<boolean> => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("Error: Token not found in localStorage");
+      throw new Error("Token not found in storage");
+    }
+
+    await axios.put(
+      `${API_URL}/${id}/reject`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`Error rejecting work report with ID: ${id}`, error);
+    return false;
+  }
+};

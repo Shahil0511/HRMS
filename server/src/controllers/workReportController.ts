@@ -188,3 +188,62 @@ export const getWorkReportById = async (
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const approveWorkReport = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const workReport = await WorkReport.findById(id);
+    if (!workReport) {
+      res
+        .status(404)
+        .json({ success: false, message: "Work report not found" });
+      return;
+    }
+
+    workReport.status = "Approved";
+    await workReport.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Work report approved successfully",
+      data: workReport,
+    });
+  } catch (error) {
+    console.error("Error approving work report:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// Reject Work Report
+export const rejectWorkReport = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const workReport = await WorkReport.findById(id);
+    if (!workReport) {
+      res
+        .status(404)
+        .json({ success: false, message: "Work report not found" });
+      return;
+    }
+
+    workReport.status = "Rejected";
+    await workReport.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Work report rejected successfully",
+      data: workReport,
+    });
+  } catch (error) {
+    console.error("Error rejecting work report:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

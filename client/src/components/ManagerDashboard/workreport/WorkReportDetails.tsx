@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchWorkReportById, WorkReport } from "../../../services/workreportService";
+import { fetchWorkReportById, WorkReport, approveWorkReport, rejectWorkReport } from "../../../services/workreportService";
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -21,12 +21,10 @@ function WorkReportDetail() {
 
             setLoading(true);
             try {
-
                 const data = await fetchWorkReportById(id);
 
                 if (data) {
                     setFormData(data);
-
                 } else {
                     setError("Work report not found");
                 }
@@ -45,11 +43,18 @@ function WorkReportDetail() {
     if (error) return <p className="text-center text-red-400">{error}</p>;
 
     const handleApprove = async () => {
+        if (!id) return;
+
         setIsSubmitting(true);
         try {
-            // Call your API to approve the report
-            toast.success("Work report approved successfully!");
-            navigate("/manager/workreports"); // Redirect after approval
+            const success = await approveWorkReport(id);
+
+            if (success) {
+                toast.success("Work report approved successfully!");
+                navigate("/manager/workreports"); // Redirect after approval
+            } else {
+                toast.error("Error approving work report");
+            }
         } catch (error) {
             toast.error("Error approving work report");
         } finally {
@@ -58,11 +63,18 @@ function WorkReportDetail() {
     };
 
     const handleReject = async () => {
+        if (!id) return;
+
         setIsSubmitting(true);
         try {
-            // Call your API to reject the report
-            toast.success("Work report rejected successfully!");
-            navigate("/manager/workreports"); // Redirect after rejection
+            const success = await rejectWorkReport(id);
+
+            if (success) {
+                toast.success("Work report rejected successfully!");
+                navigate("/manager/workreports"); // Redirect after rejection
+            } else {
+                toast.error("Error rejecting work report");
+            }
         } catch (error) {
             toast.error("Error rejecting work report");
         } finally {

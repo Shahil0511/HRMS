@@ -29,7 +29,7 @@ const WorkReportM = () => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 px-3 py-4">
+        <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 p-6 ">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold text-white text-center sm:text-left">Department Work Reports</h1>
             </div>
@@ -39,7 +39,7 @@ const WorkReportM = () => {
             ) : error ? (
                 <p className="text-center text-red-400">{error}</p>
             ) : (
-                <div className="bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 text-white py-4 px-2 rounded-lg shadow-md">
+                <div className="bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 text-white lg:px-6 md:px-6 sm:px-1 py-6 rounded-lg shadow-md">
                     <h2 className="text-xl font-semibold mb-4 text-center sm:text-left">Department Work Reports</h2>
 
                     <div className="overflow-x-auto">
