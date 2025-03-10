@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { IUser, User } from "../models/UserSchema";
-import { Employee } from "../models/EmployeeSchema";
+import { Employee, IEmployee } from "../models/EmployeeSchema";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
@@ -342,5 +342,43 @@ export const getEmployeeDetails = async (
   } catch (error) {
     console.error("Error fetching employee details:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getEmployeesByDepartment = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { role, userId, email, employeeId } = req.body;
+
+    if (!role || !userId || !email || !employeeId) {
+      console.error("Missing required fields in request body.");
+      res.status(400).json({ message: "Missing required fields" });
+      return;
+    }
+
+    // Convert employeeId to ObjectId if necessary
+    const employee = await Employee.findById(
+      new mongoose.Types.ObjectId(employeeId)
+    );
+
+    if (!employee) {
+      console.error(`Employee with _id ${employeeId} not found.`);
+      res.status(404).json({ message: "Employee not found" });
+      return;
+    }
+    if (!employee.department) {
+      console.error(`Employee ${employeeId} has no department assigned.`);
+      res.status(400).json({ message: "Employee has no department assigned" });
+      return;
+    }
+
+    const employees = await Employee.find({ department: employee.department });
+
+    res.status(200).json({ employees });
+  } catch (error) {
+    console.error("Error fetching employees by department:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

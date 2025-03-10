@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, toggleSidebar }) => {
         : role === "manager"
             ? [
                 { to: "/manager/dashboard", icon: <FaTachometerAlt size={22} />, text: "Dashboard" },
-                { to: "/manager/department", icon: <FaLayerGroup size={22} />, text: "Department" },
+
                 { to: "/manager/employee", icon: <FaUsers size={22} />, text: "Employees" },
                 { to: "/manager/leaves", icon: <FaCalendarAlt size={22} />, text: "Leaves" },
                 { to: "/manager/attendance", icon: <FaClipboardList size={22} />, text: "Attendance" },

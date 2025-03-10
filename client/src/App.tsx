@@ -38,7 +38,7 @@ import ManagerLeaves from "./components/ManagerDashboard/ManagerLeaves";
 import ManagerAttendance from "./components/ManagerDashboard/AttendanceM";
 import ManagerPayroll from "./components/ManagerDashboard/PayrollM";
 import ManagerSetting from "./components/ManagerDashboard/ManagerSetting";
-import EmployeeM from "./components/ManagerDashboard/EmployeProfileM";
+import EmployeeM from "./components/ManagerDashboard/EmployeeM";
 import DepartmentM from "./components/ManagerDashboard/DepartmentM";
 import EmployeProfileM from "./components/ManagerDashboard/EmployeProfileM";
 import MyProfileM from "./components/ManagerDashboard/MyProfileM";
@@ -125,6 +125,7 @@ const App = () => {
           <Route path="settings" element={<ManagerSetting />} />
           <Route path="workreports" element={<WorkReportM />} />
           <Route path="/manager/workreports/:id" element={<WorkReportDetail />} />
+          <Route path="employee/:id" element={<EmployeeProfile />} />
         </Route>
       </Routes>
 

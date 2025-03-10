@@ -6,6 +6,7 @@ import {
   getTotalEmployees,
   getEmployeeById,
   getEmployeeProfile,
+  getEmployeesByDepartment,
 } from "../controllers/employeeController";
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
@@ -56,6 +57,6 @@ router.get(
 
 router.get("/department/totalEmployees", getTotalDepartmentEmployees);
 
-// router.get("/todayPresent", getTodayTotalDepartmentPresent);
+router.post("/employees/department_employee", getEmployeesByDepartment);
 
 export default router;

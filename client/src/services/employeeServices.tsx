@@ -86,6 +86,7 @@ export const getAllEmployees = async (search?: string) => {
     }
 };
 
+
 /**
  * Get the current authenticated user's employee data
  */
@@ -154,5 +155,49 @@ export const getEmployeeProfile = async () => {
     } catch (error: any) {
         console.error("Error fetching employee profile:", error.response?.data || error.message);
         throw new Error(error.response?.data?.message || "Failed to fetch employee profile");
+    }
+};
+
+
+
+export const getEmployeesByDepartment = async () => {
+    try {
+        // Get user data from localStorage
+        const userData = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
+
+        if (!userData || !token || !role) {
+            throw new Error("User data, token, or role not found in localStorage");
+        }
+
+        // Parse stored user data
+        const user = JSON.parse(userData);
+
+        // Extract user details from the session
+        const userId = user?.id;
+        if (!userId) throw new Error("User ID is required");
+
+        // Set Authorization header with token
+        const headers = {
+            Authorization: `Bearer ${token}`,
+        };
+
+        // Send role, userId, and other user data in request body
+        const response = await axios.post(
+            `${API_URL}/department_employee`,
+            {
+                role,
+                userId,
+                email: user?.email,
+                employeeId: user?.employeeId,
+            },
+            { headers }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching employees by department:", error);
+        throw error;
     }
 };
