@@ -1,7 +1,48 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/departments";
-// const API_URL = "http://localhost:8000/api/departments";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/departments";
+const API_URL = "http://localhost:8000/api/departments";
+
+const handleApiError = (error: any): { success: boolean; message: string } => {
+  console.error("API Error:", error);
+  return {
+    success: false,
+    message: error?.response?.data?.message || "An unexpected error occurred.",
+  };
+};
+
+const getAuthHeaders = (token: string) => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`,
+});
+
+const postRequest = async (
+  url: string,
+  formData: object,
+  token: string
+): Promise<{ success: boolean; message: string; data?: any }> => {
+  try {
+    const response: AxiosResponse = await axios.post(url, formData, {
+      headers: getAuthHeaders(token),
+    });
+    return {
+      success: true,
+      message: response?.data?.message || "Operation successful!",
+      data: response?.data,
+    };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+const getRequest = async (url: string, params?: object): Promise<any> => {
+  try {
+    const response: AxiosResponse = await axios.get(url, { params });
+    return response?.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
 
 // Add department function using axios
 export const addDepartment = async (
@@ -12,75 +53,18 @@ export const addDepartment = async (
   },
   token: string
 ) => {
-  try {
-    const response = await axios.post(API_URL, formData, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    // Handle the response and return it
-    return {
-      success: true,
-      message: response?.data?.message || "Department added successfully!",
-      data: response?.data, // You can return the actual response data if needed
-    };
-  } catch (error: any) {
-    console.error("Error adding department:", error);
-
-    return {
-      success: false,
-      message: error?.response?.data?.message || "Failed to add department",
-    };
-  }
+  return postRequest(API_URL, formData, token);
 };
-
-// Fetch departments with search query
 export const getDepartments = async (searchQuery: string) => {
-  try {
-    const response = await axios.get(`${API_URL}`, {
-      params: { search: searchQuery }, // Add search query as query parameter
-    });
-
-    // You can return the response data directly here
-    return response?.data; // Assuming response.data contains the department list
-  } catch (error) {
-    console.error("Error fetching departments:", error);
-    throw error;
-  }
+  return getRequest(API_URL, { search: searchQuery });
 };
+
+// Fetch all departments
 export const getAllDepartments = async () => {
-  try {
-    const response = await axios.get(API_URL); // No parameters are passed
-
-    return response?.data; // Assuming response.data contains the department list
-  } catch (error) {
-    console.error("Error fetching departments:", error);
-    throw error;
-  }
+  return getRequest(API_URL);
 };
 
+// Fetch total department count
 export const getTotalDepartment = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/totaldepartment`);
-
-    return response?.data;
-  } catch (error) {
-    console.error("Error fetching departments:", error);
-    throw error;
-  }
+  return getRequest(`${API_URL}/totaldepartment`);
 };
-
-// export const getDepartmentById = async (departmentId: string) => {
-//   try {
-//     const response = await axios.get(`${API_URL}/${departmentId}`);
-//     return response.data;
-//   } catch (error: any) {
-//     console.error(
-//       "Error fetching department:",
-//       error.response?.data?.message || error.message
-//     );
-//     throw new Error(error.response?.data?.message || "Failed to fetch");
-//   }
-// };

@@ -27,7 +27,7 @@ interface TokenPayload {
  * @returns Signed JWT token
  */
 const generateToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1h" });
+  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "7d" });
 };
 
 /**

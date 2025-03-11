@@ -1,8 +1,8 @@
 import axios from "axios";
 import { ReactNode } from "react";
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
-// const API_URL = "http://localhost:8000/api/workreports";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
+const API_URL = "http://localhost:8000/api/workreports";
 
 export interface WorkReport {
   details: ReactNode;
@@ -18,25 +18,32 @@ export interface WorkReport {
   updatedAt: string;
 }
 
+// Helper function to get token and user data
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}") || {};
+
+  if (!token || !user?.employeeId) {
+    throw new Error("Authorization token or Employee ID not found");
+  }
+
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    employeeId: user.employeeId,
+  };
+};
+
 export const getEmployeeDetails = async () => {
   try {
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (!token || !user?.employeeId) {
-      throw new Error("Token or Employee ID not found in storage");
-    }
-
+    const { headers, employeeId } = getAuthHeaders();
     const response = await axios.post(
       `${API_URL}/employeedetails`,
-      { employeeId: user.employeeId }, // Send employeeId instead of userId
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { employeeId },
+      { headers }
     );
-
     return response.data;
   } catch (error) {
     console.error("Error fetching employee details:", error);
@@ -44,34 +51,16 @@ export const getEmployeeDetails = async () => {
   }
 };
 
-export const submitWorkReport = async (formData: {
-  employeeName: string;
-  department: string;
-  designation: string;
-  date: string;
-  completedTasks: string;
-  ongoingTasks: string;
-}) => {
+export const submitWorkReport = async (
+  formData: Omit<WorkReport, "_id" | "status" | "createdAt" | "updatedAt">
+) => {
   try {
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const userId = user?.employeeId;
-
-    if (!token || !userId) {
-      throw new Error("Authorization token or User ID not found");
-    }
-
+    const { headers, employeeId } = getAuthHeaders();
     const response = await axios.post(
       `${API_URL}/submit`,
-      { userId, ...formData },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+      { userId: employeeId, ...formData },
+      { headers }
     );
-
     return response.data;
   } catch (error) {
     console.error("Error submitting work report:", error);
@@ -81,21 +70,11 @@ export const submitWorkReport = async (formData: {
 
 export const fetchWorkReports = async (): Promise<WorkReport[]> => {
   try {
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (!token || !user?.employeeId) {
-      throw new Error("Token or Employee ID not found in storage");
-    }
-
+    const { headers, employeeId } = getAuthHeaders();
     const response = await axios.post<WorkReport[]>(
       `${API_URL}/history`,
-      { employeeId: user.employeeId },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { employeeId },
+      { headers }
     );
     return response.data;
   } catch (error) {
@@ -106,27 +85,15 @@ export const fetchWorkReports = async (): Promise<WorkReport[]> => {
 
 export const fetchWorkReportManager = async (): Promise<WorkReport[]> => {
   try {
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (!token || !user?.employeeId) {
-      throw new Error("Token or Employee ID not found in storage");
-    }
-
+    const { headers, employeeId } = getAuthHeaders();
     const response = await axios.post<WorkReport[]>(
       `${API_URL}/manager/history`,
-      { employeeId: user.employeeId },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+      { employeeId },
+      { headers }
     );
-
     return response.data;
   } catch (error) {
-    console.error("Error fetching work reports:", error);
+    console.error("Error fetching work reports for manager:", error);
     return [];
   }
 };
@@ -135,22 +102,11 @@ export const fetchWorkReportById = async (
   reportId: string
 ): Promise<WorkReport | null> => {
   try {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("Error: Token not found in localStorage");
-      throw new Error("Token not found in storage");
-    }
-
+    const { headers } = getAuthHeaders();
     const response = await axios.get<WorkReport>(
       `${API_URL}/manager/workreport/${reportId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { headers }
     );
-
     return response.data;
   } catch (error) {
     console.error(`Error fetching work report with ID: ${reportId}`, error);
@@ -158,55 +114,21 @@ export const fetchWorkReportById = async (
   }
 };
 
-export const approveWorkReport = async (id: string): Promise<boolean> => {
+const updateWorkReportStatus = async (
+  id: string,
+  action: "approve" | "reject"
+): Promise<boolean> => {
   try {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("Error: Token not found in localStorage");
-      throw new Error("Token not found in storage");
-    }
-
-    await axios.put(
-      `${API_URL}/${id}/approve`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
+    const { headers } = getAuthHeaders();
+    await axios.put(`${API_URL}/${id}/${action}`, {}, { headers });
     return true;
   } catch (error) {
-    console.error(`Error approving work report with ID: ${id}`, error);
+    console.error(`Error ${action}ing work report with ID: ${id}`, error);
     return false;
   }
 };
 
-// Reject Work Report
-export const rejectWorkReport = async (id: string): Promise<boolean> => {
-  try {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("Error: Token not found in localStorage");
-      throw new Error("Token not found in storage");
-    }
-
-    await axios.put(
-      `${API_URL}/${id}/reject`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return true;
-  } catch (error) {
-    console.error(`Error rejecting work report with ID: ${id}`, error);
-    return false;
-  }
-};
+export const approveWorkReport = (id: string) =>
+  updateWorkReportStatus(id, "approve");
+export const rejectWorkReport = (id: string) =>
+  updateWorkReportStatus(id, "reject");

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "https://hrms-backend-7176.onrender.com/api";
-// const BASE_URL = "http://localhost:8000/api";
+// const BASE_URL = "https://hrms-backend-7176.onrender.com/api";
+const BASE_URL = "http://localhost:8000/api";
 
 // Define the types for the responses
 interface DepartmentEmployeesResponse {
@@ -13,40 +13,25 @@ interface TodayDepartmentAttendanceResponse {
   totalPresentToday: number;
 }
 
-// interface LeavesAppliedResponse {
-//   leavesApplied: number;
-// }
+// Helper function to get token and user data from localStorage
+const getAuthData = () => {
+  const token = localStorage.getItem("token");
+  const userData = localStorage.getItem("user");
 
-// interface TodaysWorksheetResponse {
-//   todaysWorksheet: number;
-// }
+  if (!token) throw new Error("Authorization token is missing");
+  if (!userData) throw new Error("User data not found in localStorage");
 
-// interface ComplaintsResponse {
-//   complaints: number;
-// }
-
-// interface OthersResponse {
-//   others: number;
-// }
+  return { token, userData: JSON.parse(userData) };
+};
 
 // Service to get total department employees
-
 export const getDepartmentEmployees =
   async (): Promise<DepartmentEmployeesResponse> => {
     try {
-      // Retrieve token and user data from localStorage
-      const token = localStorage.getItem("token");
-      const userData = localStorage.getItem("user");
+      const { token, userData } = getAuthData();
 
-      // Check if token and user data exist
-      if (!token) throw new Error("Authorization token is missing");
-      if (!userData) throw new Error("User data not found in localStorage");
-
-      // Parse user data from localStorage
-      const user = JSON.parse(userData);
-      const userId = user?.id;
-
-      // Check if userId is available
+      // Get userId from the parsed user data
+      const userId = userData?.id;
       if (!userId) throw new Error("User ID is missing");
 
       // Set headers for the request
@@ -66,7 +51,7 @@ export const getDepartmentEmployees =
     } catch (error: any) {
       console.error("Error fetching department employees:", error);
 
-      // Error handling: distinguish between different types of errors
+      // Handle error based on type
       if (axios.isAxiosError(error)) {
         console.error("Axios error:", error.message);
         if (error.response) {
@@ -84,21 +69,14 @@ export const getDepartmentEmployees =
 export const getTodayTotalDepartmentPresent =
   async (): Promise<TodayDepartmentAttendanceResponse> => {
     try {
-      // Get user data from localStorage
-      const userData = localStorage.getItem("user");
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
+      const { token, userData } = getAuthData();
 
-      if (!userData || !token || !role) {
-        throw new Error("User data, token, or role not found in localStorage");
-      }
-
-      // Parse stored user data
-      const user = JSON.parse(userData);
-
-      // Extract user details from the session
-      const userId = user?.id;
+      // Get userId from the parsed user data
+      const userId = userData?.id;
       if (!userId) throw new Error("User ID is required");
+
+      const role = localStorage.getItem("role");
+      if (!role) throw new Error("Role is missing");
 
       // Set Authorization header with token
       const headers = {
@@ -111,14 +89,14 @@ export const getTodayTotalDepartmentPresent =
         {
           role,
           userId,
-          email: user?.email,
-          employeeId: user?.employeeId,
+          email: userData?.email,
+          employeeId: userData?.employeeId,
         },
         { headers }
       );
 
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching today's department attendance:", error);
       throw error;
     }

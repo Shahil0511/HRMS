@@ -1,8 +1,7 @@
 import axios from "axios";
 
-const API_URL = "  https://hrms-backend-7176.onrender.com/api/attendance";
-// const API_URL = "http://localhost:8000/api/attendance";
-
+// const API_URL = "  https://hrms-backend-7176.onrender.com/api/attendance";
+const API_URL = "http://localhost:8000/api/attendance";
 
 /**
  * Retrieves the authentication token from local storage.
@@ -10,7 +9,7 @@ const API_URL = "  https://hrms-backend-7176.onrender.com/api/attendance";
  */
 const getAuthToken = (): string | null => localStorage.getItem("token");
 
-/** 
+/**
  * Makes an authenticated API request.
  * @param {string} endpoint - The API endpoint to call.
  * @param {"GET" | "POST"} method - The HTTP method (default is "GET").
@@ -18,23 +17,25 @@ const getAuthToken = (): string | null => localStorage.getItem("token");
  * @throws {Error} Throws an error if authentication fails or request errors occur.
  */
 const apiRequest = async (endpoint: string, method: "GET" | "POST" = "GET") => {
-    try {
-        const token = getAuthToken();
-        if (!token) throw new Error("Unauthorized: No token found. Please log in.");
+  try {
+    const token = getAuthToken();
+    if (!token) throw new Error("Unauthorized: No token found. Please log in.");
 
-        const headers = { Authorization: `Bearer ${token}` };
+    const headers = { Authorization: `Bearer ${token}` };
 
-        let response;
-        if (method === "GET") {
-            response = await axios.get(`${API_URL}/${endpoint}`, { headers });
-        } else {
-            response = await axios.post(`${API_URL}/${endpoint}`, {}, { headers });
-        }
-
-        return response.data;
-    } catch (error: any) {
-        throw new Error(error?.response?.data?.message || "An unexpected error occurred.");
+    let response;
+    if (method === "GET") {
+      response = await axios.get(`${API_URL}/${endpoint}`, { headers });
+    } else {
+      response = await axios.post(`${API_URL}/${endpoint}`, {}, { headers });
     }
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error?.response?.data?.message || "An unexpected error occurred."
+    );
+  }
 };
 
 /**
@@ -63,5 +64,11 @@ export const getEmployeeAttendance = async () => apiRequest("employee", "GET");
 export const getTodayPresentEmployees = async () => apiRequest("today", "GET");
 
 // Exporting all attendance-related functions as a service
-const attendanceService = { checkIn, checkOut, getAttendanceRecords, getEmployeeAttendance, getTodayPresentEmployees };
+const attendanceService = {
+  checkIn,
+  checkOut,
+  getAttendanceRecords,
+  getEmployeeAttendance,
+  getTodayPresentEmployees,
+};
 export default attendanceService;

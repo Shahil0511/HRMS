@@ -1,8 +1,8 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/employees";
-// const API_URL = "http://localhost:8000/api/employees";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/employees";
+const API_URL = "http://localhost:8000/api/employees";
 
 /**
  * Get authentication token from localStorage
@@ -47,122 +47,122 @@ const handleTokenValidation = () => {
 };
 
 /**
- * Add a new employee
+ * Handle API errors and structure them in a common format
  */
-export const addEmployee = async (employeeData: any) => {
+const handleApiError = (error: any): { success: boolean; message: string } => {
+    console.error("API Error:", error);
+    return {
+        success: false,
+        message: error?.response?.data?.message || "An unexpected error occurred.",
+    };
+};
+
+/**
+ * Make POST request to the API
+ */
+const postRequest = async (
+    url: string,
+    data: object,
+    token: string
+): Promise<{ success: boolean; message: string; data?: any }> => {
     try {
-        const token = handleTokenValidation();
-
-
-        const response = await axios.post(API_URL, employeeData, {
+        const response = await axios.post(url, data, {
             headers: setAuthHeader(token),
         });
 
-
-
-        return response.data;
-    } catch (error: any) {
-        console.error("Error adding employee:", error.response?.data || error.message);
-        throw new Error(error.response?.data?.message || "Failed to add employee");
+        return {
+            success: true,
+            message: response?.data?.message || "Operation successful!",
+            data: response?.data,
+        };
+    } catch (error) {
+        return handleApiError(error);
     }
 };
 
 /**
- * Get all employees
+ * Make GET request to the API
  */
-export const getAllEmployees = async (search?: string) => {
+const getRequest = async (url: string, params?: object): Promise<any> => {
     try {
         const token = handleTokenValidation();
-
-        const response = await axios.get(API_URL, {
+        const response = await axios.get(url, {
             headers: setAuthHeader(token),
-            params: search ? { search } : {},
+            params,
         });
 
-        return response.data;
-    } catch (error: any) {
-        console.error("Error fetching employees:", error.response?.data || error.message);
-        throw new Error(error.response?.data?.message || "Failed to fetch employees");
+        return response?.data;
+    } catch (error) {
+        throw handleApiError(error);
     }
 };
 
+/**
+ * Add a new employee
+ */
+export const addEmployee = async (employeeData: any) => {
+    const token = handleTokenValidation();
+    return postRequest(API_URL, employeeData, token);
+};
+
+/**
+ * Get all employees with optional search
+ */
+export const getAllEmployees = async (search?: string) => {
+    return getRequest(API_URL, { search });
+};
 
 /**
  * Get the current authenticated user's employee data
  */
 export const getUserEmployeeData = async () => {
-    try {
-        const token = handleTokenValidation();
-        const response = await axios.get(`${API_URL}/user`, {
-            headers: setAuthHeader(token),
-        });
-        console.log(response.data)
-        return response.data;
-    } catch (error: any) {
-        console.error("Error fetching employee data:", error.response?.data || error.message);
-        throw new Error(error.response?.data?.message || "Failed to fetch employee data");
-    }
+    const token = handleTokenValidation();
+    return getRequest(`${API_URL}/user`, { token });
 };
 
-
+/**
+ * Get the total number of employees
+ */
 export const getTotalEmployee = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/totalemployees`);
-
-        return response?.data;
-    } catch (error) {
-        console.error("Error fetching departments:", error);
-        throw error;
-    }
+    return getRequest(`${API_URL}/totalemployees`);
 };
+
+/**
+ * Get total employees present today
+ */
 export const getTodayTotalEmployeePresent = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/todaypresent`);
-
-        return response?.data;
-    } catch (error) {
-        console.error("Error fetching departments:", error);
-        throw error;
-    }
+    return getRequest(`${API_URL}/todaypresent`);
 };
 
+/**
+ * Get employee by ID
+ */
 export const getEmployeeById = async (employeeId: string) => {
     try {
         const response = await axios.get(`${API_URL}/${employeeId}`);
-
         if (response.data.success) {
             return response.data.data;
         } else {
-
             throw new Error("Employee not found");
         }
     } catch (error: any) {
-        console.error("Error fetching employee:", error.response?.data?.message || error.message);
-        throw new Error(error.response?.data?.message || "Failed to fetch employee");
+        return handleApiError(error);
     }
 };
 
-
+/**
+ * Get the profile of the current authenticated employee
+ */
 export const getEmployeeProfile = async () => {
-    try {
-        const token = handleTokenValidation(); // Validate the token first
-
-        const response = await axios.get(`${API_URL}/profile/myprofile`, {
-            headers: setAuthHeader(token), // Set authorization header with the token
-        });
-
-        return response.data;
-    } catch (error: any) {
-        console.error("Error fetching employee profile:", error.response?.data || error.message);
-        throw new Error(error.response?.data?.message || "Failed to fetch employee profile");
-    }
+    const token = handleTokenValidation();
+    return getRequest(`${API_URL}/profile/myprofile`, { token });
 };
 
-
-
+/**
+ * Get employees by department
+ */
 export const getEmployeesByDepartment = async () => {
     try {
-        // Get user data from localStorage
         const userData = localStorage.getItem("user");
         const token = localStorage.getItem("token");
         const role = localStorage.getItem("role");
