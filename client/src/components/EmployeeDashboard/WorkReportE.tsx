@@ -15,10 +15,16 @@ const WorkReportE = () => {
             try {
                 setIsLoading(true);
                 const data = await fetchWorkReports();
-                setReportHistory(data);
+                if (Array.isArray(data)) {
+                    setReportHistory(data); // Ensure only arrays are set
+                } else {
+                    setReportHistory([]); // Prevent errors if response is unexpected
+                    console.error("Unexpected API response format:", data);
+                }
                 setError(null);
             } catch (err) {
                 setError("Failed to load reports. Please try again later.");
+                setReportHistory([]); // Prevent slice() errors
                 console.error(err);
             } finally {
                 setIsLoading(false);
@@ -101,10 +107,10 @@ const WorkReportE = () => {
                                             <td className="px-4 py-3">{formatDate(report.createdAt)}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`px-2 py-1 rounded text-xs font-medium ${report.status === 'Approved'
-                                                        ? "bg-green-900 text-green-300"
-                                                        : report.status === 'Rejected'
-                                                            ? "bg-red-900 text-red-300"
-                                                            : "bg-yellow-900 text-yellow-300"
+                                                    ? "bg-green-900 text-green-300"
+                                                    : report.status === 'Rejected'
+                                                        ? "bg-red-900 text-red-300"
+                                                        : "bg-yellow-900 text-yellow-300"
                                                     }`}>
                                                     {report.status}
                                                 </span>
@@ -121,8 +127,8 @@ const WorkReportE = () => {
                                 <button
                                     onClick={handlePrevPage}
                                     className={`px-3 py-1 rounded text-white transition-all ${currentPage === 1
-                                            ? "bg-gray-700 cursor-not-allowed"
-                                            : "bg-blue-600 hover:bg-blue-700 hover:scale-105"
+                                        ? "bg-gray-700 cursor-not-allowed"
+                                        : "bg-blue-600 hover:bg-blue-700 hover:scale-105"
                                         }`}
                                     disabled={currentPage === 1}
                                 >
@@ -134,8 +140,8 @@ const WorkReportE = () => {
                                         key={page}
                                         onClick={() => handlePageChange(page)}
                                         className={`px-3 py-1 rounded text-white transition-all hover:scale-105 ${page === currentPage
-                                                ? "bg-indigo-700"
-                                                : "bg-blue-600 hover:bg-blue-700"
+                                            ? "bg-indigo-700"
+                                            : "bg-blue-600 hover:bg-blue-700"
                                             }`}
                                     >
                                         {page}
@@ -145,8 +151,8 @@ const WorkReportE = () => {
                                 <button
                                     onClick={handleNextPage}
                                     className={`px-3 py-1 rounded text-white transition-all ${currentPage === Math.ceil(reportHistory.length / itemsPerPage)
-                                            ? "bg-gray-700 cursor-not-allowed"
-                                            : "bg-blue-600 hover:bg-blue-700 hover:scale-105"
+                                        ? "bg-gray-700 cursor-not-allowed"
+                                        : "bg-blue-600 hover:bg-blue-700 hover:scale-105"
                                         }`}
                                     disabled={currentPage === Math.ceil(reportHistory.length / itemsPerPage)}
                                 >

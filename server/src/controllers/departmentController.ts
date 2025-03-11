@@ -3,24 +3,54 @@ import { Department } from "../models/DepartmentSchema";
 import { Employee } from "../models/EmployeeSchema";
 import Attendance from "../models/AttendanceSchema";
 import { User } from "../models/UserSchema";
+import { Types } from "mongoose";
 
+// Types
 interface IUser {
   _id: string;
   name: string;
   employeeId: string;
 }
 
-// interface IEmployee {
-//   department: string;
-//   _id: string;
-// }
+// Constants
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
 
-// interface IAttendance {
-//   employeeId: IUser;
-//   checkIn: Date;
-//   checkOut: Date;
-//   status: string;
-// }
+// Utility functions
+const handleError = (
+  res: Response,
+  error: any,
+  message = "Server Error",
+  statusCode = 500
+) => {
+  console.error(`Error in department controller: ${message}`, error);
+
+  // Handle specific error types
+  if (error?.code === "ECONNRESET") {
+    return res
+      .status(503)
+      .json({ message: "Service unavailable. Please try again later." });
+  }
+
+  if (error?.name === "MongoNetworkError") {
+    return res
+      .status(500)
+      .json({ message: "Database connection error. Please try again later." });
+  }
+
+  res.status(statusCode).json({
+    message,
+    error: error instanceof Error ? error.message : "Unknown error",
+  });
+};
+
+const getTodayDateRange = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  return { today, tomorrow };
+};
 
 /**
  * Helper function to handle duplicate department check
@@ -39,6 +69,11 @@ export const addDepartment = async (
 ): Promise<void> => {
   try {
     const { departmentName, description, headOfDepartment } = req.body;
+
+    if (!departmentName) {
+      res.status(400).json({ message: "Department name is required" });
+      return;
+    }
 
     // Check if the department already exists (avoiding duplication)
     const existingDepartment = await checkDuplicateDepartment(departmentName);
@@ -59,8 +94,7 @@ export const addDepartment = async (
       department: newDepartment,
     });
   } catch (error) {
-    console.error("Error creating department:", error);
-    res.status(500).json({ message: "Server Error" });
+    handleError(res, error, "Error creating department");
   }
 };
 
@@ -72,7 +106,7 @@ export const getDepartments = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { search, page = 1, limit = 10 } = req.query; // Default pagination settings
+    const { search, page = DEFAULT_PAGE, limit = DEFAULT_LIMIT } = req.query;
 
     // Apply search filter if provided
     const filter = search
@@ -82,13 +116,11 @@ export const getDepartments = async (
     // Convert page and limit to numbers
     const pageNumber = Math.max(Number(page), 1);
     const limitNumber = Math.max(Number(limit), 1);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    // Fetch departments with pagination
+    // Fetch departments with pagination - run in parallel
     const [departments, totalDepartments] = await Promise.all([
-      Department.find(filter)
-        .skip((pageNumber - 1) * limitNumber)
-        .limit(limitNumber)
-        .lean(),
+      Department.find(filter).skip(skip).limit(limitNumber).lean(),
       Department.countDocuments(filter),
     ]);
 
@@ -100,8 +132,7 @@ export const getDepartments = async (
       currentPage: pageNumber,
     });
   } catch (error) {
-    console.error("Error fetching departments:", error);
-    res.status(500).json({ message: "Server Error" });
+    handleError(res, error, "Error fetching departments");
   }
 };
 
@@ -114,14 +145,31 @@ export const getTotalDepartment = async (
 ): Promise<void> => {
   try {
     const totalDepartment = await Department.countDocuments();
-    res.json({ totalDepartment });
+    res.status(200).json({ totalDepartment });
   } catch (error) {
-    console.error("Error fetching total departments:", error);
-    res.status(500).json({
-      message: "Error fetching total departments",
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    handleError(res, error, "Error fetching total departments");
   }
+};
+
+/**
+ * Retrieves employee from user ID
+ */
+const getUserEmployee = async (userId: string) => {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID format");
+  }
+
+  const user = await User.findById(userId);
+  if (!user || !user.employeeId) {
+    throw new Error("User or employee ID not found");
+  }
+
+  const employee = await Employee.findById(user.employeeId);
+  if (!employee || !employee.department) {
+    throw new Error("Employee or department not found");
+  }
+
+  return { user, employee };
 };
 
 export const getTotalDepartmentEmployees = async (
@@ -130,70 +178,30 @@ export const getTotalDepartmentEmployees = async (
 ): Promise<void> => {
   try {
     // Retrieve user ID from headers
-    const userId = req.headers["x-user-id"];
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       res.status(400).json({ message: "User ID is required" });
       return;
     }
 
-    // Find user by ID
-    const user = await User.findById(userId);
-    if (!user) {
-      res.status(404).json({ message: "Employee not found" });
-      return;
-    }
+    try {
+      const { employee } = await getUserEmployee(userId);
 
-    // Extract the employeeId from the user
-    const employeeId = user?.employeeId;
-    if (!employeeId) {
-      res.status(400).json({ message: "Employee ID is missing" });
-      return;
-    }
-
-    // Find employee to get department info
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
-      res.status(404).json({ message: "Employee data not found" });
-      return;
-    }
-
-    const departmentId = employee.department;
-    if (!departmentId) {
-      res.status(400).json({ message: "Department ID is missing" });
-      return;
-    }
-
-    // Count employees in the department
-    const totalEmployees = await Employee.countDocuments({
-      department: departmentId,
-    });
-
-    // Respond with the total employees in the department
-    res.status(200).json({ totalEmployees });
-    return;
-  } catch (error: any) {
-    // Handle different types of errors without using a logger
-    if (error.code === "ECONNRESET") {
-      res.status(503).json({
-        message: "Service unavailable. Please try again later.",
+      // Count employees in the department
+      const totalEmployees = await Employee.countDocuments({
+        department: employee.department,
       });
-      return;
-    }
 
-    // Handle database connection errors
-    if (error.name === "MongoNetworkError") {
-      res.status(500).json({
-        message: "Database connection error. Please try again later.",
-      });
-      return;
+      // Respond with the total employees in the department
+      res.status(200).json({ totalEmployees });
+    } catch (userError) {
+      const message =
+        userError instanceof Error ? userError.message : "User retrieval error";
+      res.status(404).json({ message });
     }
-
-    // Generic error handling for other cases
-    res.status(500).json({
-      message: "Internal Server Error. Please try again later.",
-    });
-    return;
+  } catch (error) {
+    handleError(res, error, "Error counting department employees");
   }
 };
 
@@ -207,90 +215,62 @@ export const getTodayTotalDepartmentPresent = async (
 
     // Validate userId
     if (!userId) {
-      console.log("User ID is missing from the request body.");
       res.status(400).json({ message: "User ID is required" });
       return;
     }
 
-    // Find the user details using userId
-    const user = await User.findById(userId);
-    if (!user) {
-      console.log("User not found for ID:", userId);
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+    try {
+      const { employee } = await getUserEmployee(userId);
+      const departmentId = employee.department;
 
-    const employee = await Employee.findById(user.employeeId);
-    if (!employee) {
-      res.status(404).json({ message: "Employee record not found" });
-      return;
-    }
+      // Find all users in the same department - query optimization
+      const departmentEmployeeIds = await Employee.find({
+        department: departmentId,
+      }).distinct("_id");
 
-    // Extract department ID
-    const departmentId = employee.department;
-    if (!departmentId) {
-      res.status(400).json({ message: "Department not assigned" });
-      return;
-    }
+      const departmentUserIds = await User.find({
+        employeeId: { $in: departmentEmployeeIds },
+      }).distinct("_id");
 
-    // Find all users in the same department
-    const departmentUsers = await User.find({
-      employeeId: {
-        $in: await Employee.find({ department: departmentId }).distinct("_id"),
-      },
-    });
+      // Get today's date range
+      const { today, tomorrow } = getTodayDateRange();
 
-    // Get today's date with time set to start of day
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    // Find unique present users for the day
-    const uniquePresentUsers = await Attendance.aggregate([
-      {
-        $match: {
-          employeeId: { $in: departmentUsers.map((u) => u._id) },
-          date: {
-            $gte: today,
-            $lt: tomorrow,
+      // Find unique present users for the day - optimized aggregation
+      const uniquePresentUsers = await Attendance.aggregate([
+        {
+          $match: {
+            employeeId: {
+              $in: departmentUserIds.map((id) =>
+                typeof id === "string" ? new Types.ObjectId(id) : id
+              ),
+            },
+            date: { $gte: today, $lt: tomorrow },
+            status: "Present",
           },
-          status: "Present",
         },
-      },
-      {
-        $group: {
-          _id: "$employeeId",
-          checkIns: { $push: "$checkIn" },
-          checkOuts: { $push: "$checkOut" },
+        {
+          $group: {
+            _id: "$employeeId",
+          },
         },
-      },
-    ]);
+        {
+          $count: "totalPresent",
+        },
+      ]);
 
-    // Fetch full user details for unique present users
-    // const presentUsersDetails = await User.populate(uniquePresentUsers, {
-    //   path: "_id",
-    //   populate: {
-    //     path: "employeeId",
-    //     model: "Employee",
-    //   },
-    // });
-
-    // Respond with department details and present users
-    res.status(200).json({
-      // departmentId,
-      totalPresent: uniquePresentUsers.length,
-      // presentUsers: presentUsersDetails.map((user) => {
-      //   const employeeDetails = user._id as unknown as IUser;
-      //   return {
-      //     userId: employeeDetails._id,
-      //     userName: employeeDetails.name,
-      //     employeeDetails: employeeDetails.employeeId,
-      //   };
-      // }),
-    });
+      // Respond with department details and present users
+      res.status(200).json({
+        totalPresent:
+          uniquePresentUsers.length > 0
+            ? uniquePresentUsers[0].totalPresent
+            : 0,
+      });
+    } catch (userError) {
+      const message =
+        userError instanceof Error ? userError.message : "User retrieval error";
+      res.status(404).json({ message });
+    }
   } catch (error) {
-    console.error("Error fetching today's department attendance:", error);
-    res.status(500).json({ message: "Internal server error" });
+    handleError(res, error, "Error fetching today's department attendance");
   }
 };

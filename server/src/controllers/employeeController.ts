@@ -49,55 +49,99 @@ export const addEmployee = async (
       return;
     }
 
-    // Generate a default password based on the employee's first name and phone number
-    const generatePassword = (
-      firstName: string,
-      phoneNumber: string
-    ): string => {
-      const last4Digits = phoneNumber.slice(-4); // Extract last 4 digits of phone number
-      return `${firstName}@${last4Digits}`; // Format: firstName@last4digits
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+      return;
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(409).json({
+        success: false,
+        message: "Email already registered",
+      });
+      return;
+    }
+
+    // Generate a more secure password with additional entropy
+    const generatePassword = (): string => {
+      const randomString = Math.random().toString(36).substring(2, 10);
+      return `${firstName.substring(0, 3)}${randomString}${phoneNumber.slice(
+        -2
+      )}`;
     };
 
-    const rawPassword = generatePassword(firstName, phoneNumber);
+    const rawPassword = generatePassword();
 
-    // Hash the generated password
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    // Hash the generated password with higher complexity
+    const salt = await bcrypt.genSalt(12); // Increased from 10 to 12
+    const hashedPassword = await bcrypt.hash(rawPassword, salt);
 
     // Create a new employee instance
     const newEmployee = new Employee({
-      firstName,
-      lastName,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       gender,
       dob,
       phoneNumber,
-      email,
+      email: email.toLowerCase().trim(),
       address,
       department,
       designation,
     });
 
-    // Save the employee record to the database
-    const savedEmployee = await newEmployee.save();
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Create a new user instance linked to the employee
-    const newUser = new User({
-      name: `${firstName} ${lastName}`, // Full name
-      email,
-      password: hashedPassword, // Store hashed password
-      role: "employee", // Default role
-      isActive: true, // User is active by default
-      employeeId: savedEmployee._id, // Link employee record
-    });
+    try {
+      // Save the employee record to the database
+      const savedEmployee = await newEmployee.save({ session });
 
-    // Save the user record to the database
-    await newUser.save();
+      // Create a new user instance linked to the employee
+      const newUser = new User({
+        name: `${firstName.trim()} ${lastName.trim()}`, // Full name
+        email: email.toLowerCase().trim(),
+        password: hashedPassword, // Store hashed password
+        role: "employee", // Default role
+        isActive: true, // User is active by default
+        employeeId: savedEmployee._id, // Link employee record
+      });
 
-    res.status(201).json({
-      success: true,
-      message: "Employee and user added successfully",
-      employee: savedEmployee,
-      user: newUser,
-    });
+      // Save the user record to the database
+      await newUser.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      // Don't return the password in the response
+      const userResponse = {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      };
+
+      res.status(201).json({
+        success: true,
+        message: "Employee and user added successfully",
+        employee: savedEmployee,
+        user: userResponse,
+        tempPassword: rawPassword, // Include the temporary password in the response so it can be shared with the employee
+      });
+    } catch (error) {
+      // Abort transaction on error
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   } catch (error: unknown) {
     if (error instanceof Error) {
       res.status(500).json({
@@ -123,11 +167,12 @@ export const getEmployees = async (
   res: Response
 ): Promise<void> => {
   try {
-    // Retrieve all employees from the database
-    const employees = await Employee.find();
+    // Use projection to exclude unnecessary fields
+    const employees = await Employee.find().select("-__v").lean();
 
     res.status(200).json({
       success: true,
+      count: employees.length,
       employees,
     });
   } catch (error: unknown) {
@@ -157,12 +202,17 @@ export const getUserEmployeeData = async (
   try {
     // Ensure the request contains a valid authenticated user
     if (!req.user || !req.user.id) {
-      res.status(403).json({ message: "Access denied. User not found." });
+      res.status(403).json({
+        success: false,
+        message: "Access denied. User not found.",
+      });
       return;
     }
 
-    // Fetch user details
-    const user = await User.findById(req.user.id).select("name email role");
+    // Fetch user details with projection to limit returned fields
+    const user = await User.findById(req.user.id)
+      .select("name email role")
+      .lean();
 
     if (!user) {
       res.status(404).json({
@@ -175,27 +225,31 @@ export const getUserEmployeeData = async (
     // Respond with the user details
     res.status(200).json({
       success: true,
-      user: {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Failed to fetch user",
-      error: "An unknown error occurred",
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
     });
   }
 };
 
-export const getTotalEmployees = async (req: Request, res: Response) => {
+export const getTotalEmployees = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const totalEmployees = await Employee.countDocuments();
-    res.json({ totalEmployees });
+    res.status(200).json({
+      success: true,
+      totalEmployees,
+    });
   } catch (error: any) {
     res.status(500).json({
+      success: false,
       message: "Error in Fetching TotalEmployee",
       error: error.message,
     });
@@ -220,9 +274,10 @@ export const getEmployeeById = async (
       return;
     }
 
-    // ✅ Fetch employee data (excluding sensitive fields if needed)
+    // ✅ Fetch employee data with proper projection
     const employee = await Employee.findById(id)
-      .populate("department", "departmentName headOfDepartment")
+      .select("-__v")
+      .populate("department", "departmentName headOfDepartment -_id")
       .lean(); // Using `.lean()` for better performance
 
     // ✅ If employee not found
@@ -238,13 +293,16 @@ export const getEmployeeById = async (
     });
   } catch (error) {
     console.error("🔴 Error fetching employee:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
-    return;
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 };
 
 export const getEmployeeProfile = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
@@ -258,11 +316,17 @@ export const getEmployeeProfile = async (
       return;
     }
 
-    // Manually decode the token here
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as IUser;
+    // Use try-catch specifically for token verification
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET as string) as IUser;
+    } catch (jwtError) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized - Invalid token",
+      });
+      return;
+    }
 
     if (!decoded || !decoded.id || !decoded.role) {
       res.status(401).json({
@@ -272,25 +336,23 @@ export const getEmployeeProfile = async (
       return;
     }
 
-    const userId = decoded.id; // Using decoded.id from the token
+    const userId = decoded.id;
 
-    // Find user based on userId and get employeeId from the user
-    const user = await User.findOne({
-      _id: new mongoose.Types.ObjectId(userId),
-    });
+    // Use projection to limit returned fields
+    const user = await User.findById(userId).select("employeeId").lean();
+
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
       return;
     }
 
-    const employeeId = user.employeeId; // Get employeeId from the user document
+    const employeeId = user.employeeId;
 
-    // Fetch employee data based on the employeeId
-    const employee = await Employee.findOne({
-      _id: new mongoose.Types.ObjectId(employeeId),
-    })
-      .populate("department", "departmentName headOfDepartment")
-      .lean(); // Using lean for performance
+    // Fetch employee data with proper projection
+    const employee = await Employee.findById(employeeId)
+      .select("-__v")
+      .populate("department", "departmentName headOfDepartment -_id")
+      .lean();
 
     if (!employee) {
       res.status(404).json({ success: false, message: "Employee not found" });
@@ -303,7 +365,11 @@ export const getEmployeeProfile = async (
     });
   } catch (error: any) {
     console.error("🔴 Error fetching employee profile:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
 
@@ -354,31 +420,61 @@ export const getEmployeesByDepartment = async (
 
     if (!role || !userId || !email || !employeeId) {
       console.error("Missing required fields in request body.");
-      res.status(400).json({ message: "Missing required fields" });
+      res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
       return;
     }
 
-    // Convert employeeId to ObjectId if necessary
-    const employee = await Employee.findById(
-      new mongoose.Types.ObjectId(employeeId)
-    );
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid Employee ID format",
+      });
+      return;
+    }
+
+    // Fetch only the department field
+    const employee = await Employee.findById(employeeId)
+      .select("department")
+      .lean();
 
     if (!employee) {
       console.error(`Employee with _id ${employeeId} not found.`);
-      res.status(404).json({ message: "Employee not found" });
+      res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
       return;
     }
+
     if (!employee.department) {
       console.error(`Employee ${employeeId} has no department assigned.`);
-      res.status(400).json({ message: "Employee has no department assigned" });
+      res.status(400).json({
+        success: false,
+        message: "Employee has no department assigned",
+      });
       return;
     }
 
-    const employees = await Employee.find({ department: employee.department });
+    // Fetch employees with projection to limit returned fields
+    const employees = await Employee.find({ department: employee.department })
+      .select("firstName lastName email designation")
+      .lean();
 
-    res.status(200).json({ employees });
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      employees,
+    });
   } catch (error) {
     console.error("Error fetching employees by department:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 };
