@@ -54,10 +54,12 @@ const apiRequest = async <T>(
 // Function to fetch user data (username)
 export const fetchUserName = async () => {
   try {
-    const response = await apiRequest<{ user: { name: string } }>(
-      API_URL,
-      "GET"
-    );
+    const response = await apiRequest<{
+      user: {
+        role: string;
+        name: string;
+      };
+    }>(API_URL, "GET");
 
     if (response?.user) {
       return response.user;
