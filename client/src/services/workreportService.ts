@@ -1,8 +1,8 @@
 import axios from "axios";
 import { ReactNode } from "react";
 
-// const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
-const API_URL = "http://localhost:8000/api/workreports";
+const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
+// const API_URL = "http://localhost:8000/api/workreports";
 
 export interface WorkReport {
   details: ReactNode;

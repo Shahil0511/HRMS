@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const BASE_URL = "https://hrms-backend-7176.onrender.com/api";
-const BASE_URL = "http://localhost:8000/api";
+const BASE_URL = "https://hrms-backend-7176.onrender.com/api";
+// const BASE_URL = "http://localhost:8000/api";
 
 // Define the types for the responses
 interface DepartmentEmployeesResponse {
