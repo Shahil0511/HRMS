@@ -72,6 +72,7 @@ function EmployeeForm() {
                 date: formData.date,
                 completedTasks: formData.completedTasks,
                 ongoingTasks: formData.ongoingTasks,
+                details: undefined
             });
 
 
