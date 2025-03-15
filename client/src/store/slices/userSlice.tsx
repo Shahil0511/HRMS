@@ -27,6 +27,11 @@ const userSlice = createSlice({
             state.role = action.payload.role;
             state.employeeId = action.payload.employeeId || null;
         },
+        // Add setUserProfile action for compatibility
+        setUserProfile: (state, action: PayloadAction<{ name: string, role: string }>) => {
+            state.name = action.payload.name;
+            state.role = action.payload.role;
+        },
         // Clear user details
         clearUser: (state) => {
             state.name = null;
@@ -37,5 +42,5 @@ const userSlice = createSlice({
     },
 });
 
-export const { setUser, clearUser } = userSlice.actions;
+export const { setUser, setUserProfile, clearUser } = userSlice.actions;
 export default userSlice.reducer;
