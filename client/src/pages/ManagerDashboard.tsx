@@ -11,7 +11,7 @@ const ManagerDashboard = () => {
 
             <Sidebar role="manager" isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
             <div className="flex-1 flex flex-col">
-                <DashboardNavbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <DashboardNavbar />
                 <div className="flex-1 overflow-auto">
                     <Outlet />
                 </div>

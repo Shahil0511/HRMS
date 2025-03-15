@@ -14,7 +14,7 @@ const AdminDashboard = () => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Navbar with Sidebar Toggle */}
-                <DashboardNavbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <DashboardNavbar />
 
                 {/* Page Content */}
                 <div className="flex-1  overflow-auto">
