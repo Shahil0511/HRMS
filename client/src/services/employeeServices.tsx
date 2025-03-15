@@ -139,7 +139,13 @@ export const getTodayTotalEmployeePresent = async () => {
  */
 export const getEmployeeById = async (employeeId: string) => {
     try {
-        const response = await axios.get(`${API_URL}/${employeeId}`);
+        const token = handleTokenValidation();
+        const response = await axios.get(`${API_URL}/${employeeId}`, {
+            headers: {
+                Authorization: `Bearer ${token}` // Proper way to send the token
+            }
+        });
+
         if (response.data.success) {
             return response.data.data;
         } else {

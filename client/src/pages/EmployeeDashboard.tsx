@@ -14,7 +14,7 @@ const EmployeeDashboard = () => {
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Navbar with Sidebar Toggle */}
-                <DashboardNavbar />
+                <DashboardNavbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
                 {/* Page Content */}
                 <div className="flex-1 overflow-auto">

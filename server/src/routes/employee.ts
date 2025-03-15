@@ -11,10 +11,8 @@ import {
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
 import { getTodayPresentTotal } from "../controllers/attendanceController";
-import {
-  // getTodayTotalDepartmentPresent,
-  getTotalDepartmentEmployees,
-} from "../controllers/departmentController";
+import { getTotalDepartmentEmployees } from "../controllers/departmentController";
+import { isManager } from "../middlewares/isManager";
 
 const router = Router();
 
@@ -28,7 +26,7 @@ router.post("/employees", verifyToken, isAdmin, addEmployee);
  * Route to get all employees.
  * Public: Can be accessed without authentication.
  */
-router.get("/employees", getEmployees);
+router.get("/employees", verifyToken, isAdmin, getEmployees);
 
 /**
  * Route to get the currently authenticated user's employee data.
@@ -38,25 +36,33 @@ router.get("/employees/user", verifyToken, getUserEmployeeData);
 
 router.get(
   "/employees/totalemployees",
-
+  verifyToken,
+  isAdmin,
   getTotalEmployees
 );
 
 router.get(
   "/employees/todaypresent",
-
+  verifyToken,
+  isAdmin,
   getTodayPresentTotal
 );
 
-router.get("/employees/:id", getEmployeeById);
-router.get(
-  "/employees/profile/myprofile",
+router.get("/employees/:id", verifyToken, getEmployeeById);
 
-  getEmployeeProfile
+router.get("/employees/profile/myprofile", verifyToken, getEmployeeProfile);
+
+router.get(
+  "/department/totalEmployees",
+  verifyToken,
+  isManager,
+  getTotalDepartmentEmployees
 );
 
-router.get("/department/totalEmployees", getTotalDepartmentEmployees);
-
-router.post("/employees/department_employee", getEmployeesByDepartment);
+router.post(
+  "/employees/department_employee",
+  verifyToken,
+  getEmployeesByDepartment
+);
 
 export default router;

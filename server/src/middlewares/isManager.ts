@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import mongoose from "mongoose";
-import { IUser, User } from "../models/UserSchema";
+import { User } from "../models/UserSchema";
 import { RequestWithUser } from "./verifyAdmin";
 
 export const isManager = async (
@@ -15,7 +15,7 @@ export const isManager = async (
       return;
     }
 
-    const userId = req.user.id; // Use id from JWT payload
+    const userId = req.user.id;
 
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(userId)) {

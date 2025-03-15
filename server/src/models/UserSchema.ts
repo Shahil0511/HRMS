@@ -9,7 +9,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: "employee" | "admin";
+  role: "employee" | "admin" | "manager";
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
