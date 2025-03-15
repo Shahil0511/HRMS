@@ -1,175 +1,287 @@
-import { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authServices";
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
 import { RootState } from "../store/store";
-import { loginFailure, loginStart, loginSuccess } from "../store/slices/authSlice";
-import { motion } from "framer-motion";
+import { loginUser } from "../services/authServices";
+import { loginStart, loginSuccess, loginFailure } from "../store/slices/authSlice";
 
-// ✅ Define TypeScript types
-type LoginFormValues = {
+// Define types
+export type LoginFormValues = {
     email: string;
     password: string;
 };
 
-// ✅ Zod schema for form validation
+// Zod schema for form validation
 const loginSchema = z.object({
-    email: z.string().email("Invalid email address"),
+    email: z.string().email("Please enter a valid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-// ✅ Utility function for storing user data
-const storeUserData = (token: string, role: string, user: object) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", role);
-    localStorage.setItem("user", JSON.stringify(user));
+// Animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            when: "beforeChildren",
+            staggerChildren: 0.1,
+            duration: 0.5
+        }
+    },
+    exit: {
+        opacity: 0,
+        transition: { duration: 0.3 }
+    }
 };
 
-// ✅ Animated Input Field Component
-const InputField: React.FC<{
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+// Memoized Input Field component
+const InputField = memo(({
+    name,
+    type,
+    label,
+    control,
+    errors
+}: {
     name: keyof LoginFormValues;
     type: string;
     label: string;
     control: any;
     errors: any;
-}> = ({ name, type, label, control, errors }) => (
+}) => (
     <motion.div
-        className="relative"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        className="relative mb-4"
+        variants={itemVariants}
     >
-        <label htmlFor={name} className="block text-sm font-medium text-white">{label}</label>
+        <label htmlFor={name} className="block text-sm font-medium text-white mb-2">
+            {label}
+        </label>
         <Controller
             name={name}
             control={control}
             render={({ field }) => (
-                <motion.input
+                <input
                     {...field}
                     id={name}
                     type={type}
-                    className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    whileFocus={{ scale: 1.02 }}
+                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all duration-200"
+                    aria-invalid={errors[name] ? "true" : "false"}
+                    data-testid={`input-${name}`}
                 />
             )}
         />
-        {errors[name] && <p className="text-red-500 text-sm">{errors[name]?.message}</p>}
+        {errors[name] && (
+            <p className="text-red-400 text-xs mt-1" data-testid={`error-${name}`}>
+                {errors[name]?.message as string}
+            </p>
+        )}
     </motion.div>
-);
+));
 
-// ✅ Authentication Component
+InputField.displayName = "InputField";
+
+// Memoized Button component
+const SubmitButton = memo(({ isLoading }: { isLoading: boolean }) => (
+    <motion.button
+        type="submit"
+        disabled={isLoading}
+        className={`w-full py-3 rounded-lg text-white focus:outline-none relative overflow-hidden ${isLoading ? "bg-blue-700" : "bg-blue-600 hover:bg-blue-800"
+            } transition-colors duration-300 disabled:opacity-70`}
+        whileHover={!isLoading ? { scale: 1.02 } : {}}
+        whileTap={!isLoading ? { scale: 0.98 } : {}}
+        variants={itemVariants}
+        data-testid="submit-button"
+    >
+        {isLoading ? (
+            <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Signing in...</span>
+            </div>
+        ) : (
+            "Sign In"
+        )}
+    </motion.button>
+));
+
+SubmitButton.displayName = "SubmitButton";
+
+// Main Auth component
 const Auth: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isLoading } = useSelector((state: RootState) => state.auth);
+    const { isLoading, isLoggedIn, role } = useSelector((state: RootState) => state.auth);
+    const [formError, setFormError] = useState<string | null>(null);
 
+    // Setup form with validation
     const {
         control,
         handleSubmit,
         formState: { errors },
+
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: { email: "", password: "" },
+        mode: "onBlur",
     });
 
-    // ✅ Redirect if already logged in
+    // Check for existing session
     useEffect(() => {
         const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
+        const storedRole = localStorage.getItem("role");
         const user = localStorage.getItem("user");
 
-        if (token && role && user) {
+        if (token && storedRole && user) {
             try {
-                dispatch(loginSuccess({ token, role, user: JSON.parse(user) }));
-                if (role === "admin") {
-                    navigate("/admin/dashboard", { replace: true });
-                } else if (role === "manager") {
-                    navigate("/manager/dashboard", { replace: true });
-                } else {
-                    navigate("/employee/dashboard", { replace: true });
-                }
+                const parsedUser = JSON.parse(user);
+                dispatch(loginSuccess({ token, role: storedRole, user: parsedUser }));
+                redirectBasedOnRole(storedRole);
             } catch (error) {
-                console.error("🔴 Error parsing user data:", error);
+                console.error("Error parsing stored user data:", error);
+                // Clear invalid data
+                localStorage.removeItem("token");
+                localStorage.removeItem("role");
+                localStorage.removeItem("user");
             }
         }
     }, [dispatch, navigate]);
 
-    // ✅ Handle Login Submission
+    // Redirect if already logged in
+    useEffect(() => {
+        if (isLoggedIn && role) {
+            redirectBasedOnRole(role);
+        }
+    }, [isLoggedIn, role, navigate]);
+
+    // Handle redirection based on user role
+    const redirectBasedOnRole = useCallback((userRole: string) => {
+        switch (userRole) {
+            case "admin":
+                navigate("/admin/dashboard", { replace: true });
+                break;
+            case "manager":
+                navigate("/manager/dashboard", { replace: true });
+                break;
+            case "employee":
+                navigate("/employee/dashboard", { replace: true });
+                break;
+            default:
+                navigate("/login", { replace: true });
+        }
+    }, [navigate]);
+
+    // Handle login submission
     const handleLogin = useCallback(async (data: LoginFormValues) => {
+        setFormError(null);
         dispatch(loginStart());
+
         try {
             const response = await loginUser(data);
 
-            if (!response?.token) {
-                console.error("❌ Response does not contain a token:", response);
-                throw new Error("Invalid response format: Missing token");
+            if (!response?.token || !response?.user || !response?.role) {
+                throw new Error("Invalid response format");
             }
 
             const { token, role, user } = response;
 
-            toast.success("🎉 Login successful!");
-            storeUserData(token, role, user);
-
             dispatch(loginSuccess({ token, role, user }));
+            toast.success("Login successful! Redirecting...");
 
-            if (role === "admin") {
-                navigate("/admin/dashboard", { replace: true });
-            } else if (role === "manager") {
-                navigate("/manager/dashboard", { replace: true });
-            } else {
-                navigate("/employee/dashboard", { replace: true });
-            }
+            // Redirect based on role
+            redirectBasedOnRole(role);
+
         } catch (error: any) {
-            console.error("🔴 Login Error:", error);
-            toast.error(error.response?.data?.message || "Login failed.");
+            let errorMessage = "Login failed. Please try again.";
+
+            if (error.response?.status === 401) {
+                errorMessage = "Invalid email or password";
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            setFormError(errorMessage);
+            toast.error(errorMessage);
             dispatch(loginFailure());
+
         }
-    }, [dispatch, navigate]);
+    }, [dispatch, navigate, redirectBasedOnRole]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-r from-gray-900 to-indigo-900 text-white">
-            <div className="flex-grow flex justify-center items-center py-6 px-4 md:px-8">
-                <motion.div
-                    className="bg-gradient-to-l from-gray-900 to-indigo-900 text-white shadow-lg p-8 rounded-lg max-w-lg w-full"
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
-                    <form onSubmit={handleSubmit(handleLogin)}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            {useMemo(() => (
-                                <>
-                                    <InputField name="email" type="email" label="Email" control={control} errors={errors} />
-                                    <InputField name="password" type="password" label="Password" control={control} errors={errors} />
-                                </>
-                            ), [control, errors])}
-                        </div>
-                        <div className="mb-6">
-                            <motion.button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full py-2 rounded-lg text-white focus:outline-none relative overflow-hidden"
-                                initial={{ backgroundColor: "rgb(59, 130, 246)" }} // bg-blue-500
-                                animate={isLoading ? { backgroundColor: "rgb(153, 255, 153)" } : { backgroundColor: "rgb(59, 130, 246)" }} // bg-gray-500 when loading
-                                whileHover={!isLoading ? { backgroundColor: "rgb(37, 99, 255)" } : {}} // hover:bg-blue-600
-                                transition={{ duration: 0.9 }}
-                            >
+        <div className="flex flex-col min-h-screen bg-slate-900">
+            <div className="flex flex-grow items-center justify-center px-6 py-12 sm:px-6 lg:px-8">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        className="w-full max-w-md"
+                        key="login-form"
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        variants={containerVariants}
+                    >
+                        <motion.div
+                            className="bg-indigo-950 rounded-xl shadow-xl overflow-hidden p-8 space-y-8"
+                            variants={itemVariants}
+                        >
+                            <motion.div variants={itemVariants}>
+                                <h2 className="text-center text-3xl font-extrabold text-white">
+                                    Sign in to your account
+                                </h2>
+                                <p className="mt-2 text-center text-sm text-gray-400">
+                                    Enter your credentials to access your dashboard
+                                </p>
+                            </motion.div>
+
+                            {formError && (
                                 <motion.div
-                                    initial={{ width: "0%" }}
-                                    animate={isLoading ? { width: "100%" } : { width: "0%" }}
-                                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                                    className="absolute inset-0 bg-green-500"
+                                    className="bg-red-900/30 border border-red-800 text-red-300 p-4 rounded-lg"
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    data-testid="form-error"
+                                >
+                                    {formError}
+                                </motion.div>
+                            )}
+
+                            <motion.form
+                                className="space-y-6"
+                                onSubmit={handleSubmit(handleLogin)}
+                                variants={itemVariants}
+                            >
+                                <InputField
+                                    name="email"
+                                    type="email"
+                                    label="Email Address"
+                                    control={control}
+                                    errors={errors}
                                 />
-                                <span className="relative z-10">{isLoading ? "Processing..." : "Login"}</span>
-                            </motion.button>
-                        </div>
-                    </form>
-                </motion.div>
+
+                                <InputField
+                                    name="password"
+                                    type="password"
+                                    label="Password"
+                                    control={control}
+                                    errors={errors}
+                                />
+
+                                <SubmitButton isLoading={isLoading} />
+                            </motion.form>
+                        </motion.div>
+                    </motion.div>
+                </AnimatePresence>
             </div>
         </div>
     );
