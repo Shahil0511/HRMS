@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDepartments } from "../../services/departmentServices";
 import ContentLoader from "react-content-loader";
@@ -11,6 +11,7 @@ interface Department {
 }
 
 const Department: React.FC = () => {
+    console.log("redeered")
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [, setDepartments] = useState<Department[]>([]);
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
@@ -20,6 +21,7 @@ const Department: React.FC = () => {
     const itemsPerPage = 6;
     const navigate = useNavigate();
 
+    // Fetch departments from the API
     const fetchDepartments = async (search: string) => {
         setLoading(true);
         try {
@@ -31,43 +33,56 @@ const Department: React.FC = () => {
                 setFilteredDepartments([]);
             }
         } catch (error) {
+            console.error("Failed to fetch departments:", error);
             setFilteredDepartments([]);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    // Debounced search function to prevent excessive API calls
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const debouncedSearch = useCallback(
+    // Debounced search function
+    const debouncedSearch = useRef(
         debounce((query: string) => {
             fetchDepartments(query);
-            setCurrentPage(1);
-        }, 500),
-        []
-    );
+            setCurrentPage(1); // Reset to the first page on new search
+        }, 500)
+    ).current;
+
+    // Cleanup debounce on unmount
+    useEffect(() => {
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [debouncedSearch]);
 
     // Initial data fetch
     useEffect(() => {
         fetchDepartments("");
     }, []);
 
-    // Effect to handle search query changes
+    // Handle search query changes
     useEffect(() => {
-        debouncedSearch(searchQuery);
-        // Don't include debouncedSearch in the dependency array to avoid infinite loops
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchQuery]);
+        if (searchQuery.trim() === "") {
+            fetchDepartments("");
+        } else {
+            debouncedSearch(searchQuery);
+        }
+    }, [searchQuery, debouncedSearch]);
 
-    const handleAddDepartment = () => {
-        navigate("/admin/add-department");
-    };
+    // Pagination logic
+    const paginatedDepartments = filteredDepartments.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const totalPages = Math.ceil(filteredDepartments.length / itemsPerPage);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
 
     const handleNextPage = () => {
-        if (currentPage < Math.ceil(filteredDepartments.length / itemsPerPage)) {
+        if (currentPage < totalPages) {
             setCurrentPage(currentPage + 1);
         }
     };
@@ -78,10 +93,9 @@ const Department: React.FC = () => {
         }
     };
 
-    const paginatedDepartments = filteredDepartments.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+    const handleAddDepartment = () => {
+        navigate("/admin/add-department");
+    };
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 flex flex-col">
@@ -112,7 +126,6 @@ const Department: React.FC = () => {
             {/* Table Section */}
             <div className="flex-1 px-4 md:px-8 pb-6">
                 <div className="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 rounded-2xl shadow-xl overflow-hidden">
-                    {/* Scrollable container */}
                     <div className="overflow-x-auto w-full">
                         <table className="w-full border-collapse text-white min-w-max">
                             <thead className="bg-gray-800">
@@ -135,8 +148,8 @@ const Department: React.FC = () => {
                                             <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
                                         </tr>
                                     ))
-                                    : paginatedDepartments.length > 0 ? (
-                                        paginatedDepartments.map((department, index) => (
+                                    : paginatedDepartments.length > 0
+                                        ? paginatedDepartments.map((department, index) => (
                                             <tr key={department._id} className="bg-gray-900 bg-opacity-50">
                                                 <td className="border border-gray-700 px-4 py-3 text-center">
                                                     {(currentPage - 1) * itemsPerPage + index + 1}
@@ -149,11 +162,9 @@ const Department: React.FC = () => {
                                                 </td>
                                                 <td className="border border-gray-700 px-4 py-3">
                                                     <div className="flex flex-wrap justify-center gap-2">
-                                                        {/* Always visible */}
                                                         <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
                                                             View
                                                         </button>
-                                                        {/* Edit & Delete buttons only visible on large screens */}
                                                         <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
                                                             Edit
                                                         </button>
@@ -164,13 +175,13 @@ const Department: React.FC = () => {
                                                 </td>
                                             </tr>
                                         ))
-                                    ) : (
-                                        <tr className="bg-gray-900 bg-opacity-50">
-                                            <td colSpan={4} className="border border-gray-700 px-4 py-3 text-center">
-                                                No departments found
-                                            </td>
-                                        </tr>
-                                    )}
+                                        : (
+                                            <tr className="bg-gray-900 bg-opacity-50">
+                                                <td colSpan={4} className="border border-gray-700 px-4 py-3 text-center">
+                                                    No departments found
+                                                </td>
+                                            </tr>
+                                        )}
                             </tbody>
                         </table>
                     </div>
@@ -183,22 +194,17 @@ const Department: React.FC = () => {
                     <div className="flex flex-wrap justify-center gap-2">
                         <button
                             onClick={handlePrevPage}
+                            disabled={currentPage === 1}
                             className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${currentPage === 1 ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"
                                 }`}
-                            disabled={currentPage === 1}
                         >
                             Previous
                         </button>
-                        {Array.from(
-                            { length: Math.ceil(filteredDepartments.length / itemsPerPage) },
-                            (_, i) => i + 1
-                        ).map((page) => (
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                             <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${page === currentPage
-                                    ? "bg-indigo-700"
-                                    : "bg-blue-500 hover:bg-blue-600"
+                                className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${page === currentPage ? "bg-indigo-700" : "bg-blue-500 hover:bg-blue-600"
                                     }`}
                             >
                                 {page}
@@ -206,13 +212,9 @@ const Department: React.FC = () => {
                         ))}
                         <button
                             onClick={handleNextPage}
-                            className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${currentPage === Math.ceil(filteredDepartments.length / itemsPerPage)
-                                ? "bg-gray-500"
-                                : "bg-blue-500 hover:bg-blue-600"
+                            disabled={currentPage === totalPages}
+                            className={`px-3 py-1 rounded text-white transform transition-transform duration-300 hover:scale-105 ${currentPage === totalPages ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"
                                 }`}
-                            disabled={
-                                currentPage === Math.ceil(filteredDepartments.length / itemsPerPage)
-                            }
                         >
                             Next
                         </button>
