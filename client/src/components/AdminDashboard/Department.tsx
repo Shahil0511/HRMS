@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDepartments } from "../../services/departmentServices";
 import ContentLoader from "react-content-loader";
+import { debounce } from "lodash";
 
 interface Department {
     _id: string;
@@ -35,14 +36,27 @@ const Department: React.FC = () => {
         setLoading(false);
     };
 
+    // Debounced search function to prevent excessive API calls
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debouncedSearch = useCallback(
+        debounce((query: string) => {
+            fetchDepartments(query);
+            setCurrentPage(1);
+        }, 500),
+        []
+    );
+
+    // Initial data fetch
     useEffect(() => {
         fetchDepartments("");
     }, []);
 
-    const handleSearch = () => {
-        fetchDepartments(searchQuery);
-        setCurrentPage(1);
-    };
+    // Effect to handle search query changes
+    useEffect(() => {
+        debouncedSearch(searchQuery);
+        // Don't include debouncedSearch in the dependency array to avoid infinite loops
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery]);
 
     const handleAddDepartment = () => {
         navigate("/admin/add-department");
@@ -88,12 +102,9 @@ const Department: React.FC = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="border border-gray-400 bg-gray-800 text-white rounded px-3 py-2 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        <button
-                            onClick={handleSearch}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
-                        >
-                            Search
-                        </button>
+                        {loading && searchQuery && (
+                            <span className="text-white text-sm">Searching...</span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -124,34 +135,42 @@ const Department: React.FC = () => {
                                             <td className="border border-gray-700 px-4 py-3"><SkeletonLoader /></td>
                                         </tr>
                                     ))
-                                    : paginatedDepartments.map((department, index) => (
-                                        <tr key={department._id} className="bg-gray-900 bg-opacity-50">
-                                            <td className="border border-gray-700 px-4 py-3 text-center">
-                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                            </td>
-                                            <td className="border border-gray-700 px-4 py-3">
-                                                {department.departmentName}
-                                            </td>
-                                            <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
-                                                {department.headOfDepartment}
-                                            </td>
-                                            <td className="border border-gray-700 px-4 py-3">
-                                                <div className="flex flex-wrap justify-center gap-2">
-                                                    {/* Always visible */}
-                                                    <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
-                                                        View
-                                                    </button>
-                                                    {/* Edit & Delete buttons only visible on large screens */}
-                                                    <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
-                                                        Edit
-                                                    </button>
-                                                    <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
-                                                        Delete
-                                                    </button>
-                                                </div>
+                                    : paginatedDepartments.length > 0 ? (
+                                        paginatedDepartments.map((department, index) => (
+                                            <tr key={department._id} className="bg-gray-900 bg-opacity-50">
+                                                <td className="border border-gray-700 px-4 py-3 text-center">
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </td>
+                                                <td className="border border-gray-700 px-4 py-3">
+                                                    {department.departmentName}
+                                                </td>
+                                                <td className="border border-gray-700 px-4 py-3 hidden sm:table-cell">
+                                                    {department.headOfDepartment}
+                                                </td>
+                                                <td className="border border-gray-700 px-4 py-3">
+                                                    <div className="flex flex-wrap justify-center gap-2">
+                                                        {/* Always visible */}
+                                                        <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
+                                                            View
+                                                        </button>
+                                                        {/* Edit & Delete buttons only visible on large screens */}
+                                                        <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
+                                                            Edit
+                                                        </button>
+                                                        <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr className="bg-gray-900 bg-opacity-50">
+                                            <td colSpan={4} className="border border-gray-700 px-4 py-3 text-center">
+                                                No departments found
                                             </td>
                                         </tr>
-                                    ))}
+                                    )}
                             </tbody>
                         </table>
                     </div>

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllEmployees } from "../../services/employeeServices";
 import { getDepartments } from "../../services/departmentServices";
 import ContentLoader from "react-content-loader";
+import { debounce } from "lodash";
 
 interface Employee {
     _id: string;
@@ -60,16 +61,25 @@ const EmployeeDashboard: React.FC = () => {
         fetchDepartments();
     }, []);
 
-    const handleSearch = () => {
-        const filtered = employees.filter(
-            (employee) =>
-                employee.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                employee.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                employee.email.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredEmployees(filtered);
-        setCurrentPage(1);
-    };
+    const debouncedSearch = useCallback(
+        debounce(() => {
+            const filtered = employees.filter(
+                (employee) =>
+                    employee.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    employee.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    employee.email.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredEmployees(filtered);
+            setCurrentPage(1);
+        }, 300),
+        [employees, searchQuery]
+    );
+
+    // Use effect to trigger search when query changes
+    useEffect(() => {
+        debouncedSearch();
+        return () => debouncedSearch.cancel();
+    }, [searchQuery, debouncedSearch]);
 
     // ✅ Handle View Click
     const handleViewEmployee = (employeeId: string) => {
@@ -122,12 +132,9 @@ const EmployeeDashboard: React.FC = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="border border-gray-400 bg-gray-800 text-white rounded px-3 py-2 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        <button
-                            onClick={handleSearch}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
-                        >
-                            Search
-                        </button>
+                        {loading && searchQuery && (
+                            <span className="text-white text-sm">Searching...</span>
+                        )}
                     </div>
                 </div>
             </div>
