@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getEmployeesByDepartment } from "../../services/employeeServices";
 import { getDepartments } from "../../services/departmentServices";
 import ContentLoader from "react-content-loader";
+import { debounce } from "lodash";
 
 interface Employee {
     _id: string;
@@ -60,16 +61,25 @@ const EmployeeM: React.FC = () => {
         fetchDepartments();
     }, []);
 
-    const handleSearch = () => {
-        const filtered = employees.filter(
-            (employee) =>
-                employee.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                employee.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                employee.email.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredEmployees(filtered);
-        setCurrentPage(1);
-    };
+    const debouncedSearch = useCallback(
+        debounce(() => {
+            const filtered = employees.filter(
+                (employee) =>
+                    employee.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    employee.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    employee.email.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredEmployees(filtered);
+            setCurrentPage(1);
+        }, 300),
+        [employees, searchQuery]
+    );
+
+    // Use effect to trigger search when query changes
+    useEffect(() => {
+        debouncedSearch();
+        return () => debouncedSearch.cancel();
+    }, [searchQuery, debouncedSearch]);
 
 
     const handleViewEmployee = (employeeId: string) => {
@@ -104,8 +114,8 @@ const EmployeeM: React.FC = () => {
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 flex flex-col">
             {/* Header Section */}
-            <div className="p-6 w-full max-w-full px-4 md:px-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-6 w-full max-w-full px-4 md:px-8 ">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-4">
 
                     <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                         <input
@@ -115,12 +125,9 @@ const EmployeeM: React.FC = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="border border-gray-400 bg-gray-800 text-white rounded px-3 py-2 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        <button
-                            onClick={handleSearch}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition w-full sm:w-auto"
-                        >
-                            Search
-                        </button>
+                        {loading && searchQuery && (
+                            <span className="text-white text-sm">Searching...</span>
+                        )}
                     </div>
                 </div>
             </div>

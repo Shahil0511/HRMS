@@ -6,11 +6,17 @@ import { toast } from "react-toastify";
 const WorkReportM = () => {
     const navigate = useNavigate();
     const [workReports, setWorkReports] = useState<WorkReport[]>([]);
+    const [filteredReports, setFilteredReports] = useState<WorkReport[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 6;
+
+    // Status and date filter states
+    const [statusFilter, setStatusFilter] = useState<string>("All");
+    const [dateFilter, setDateFilter] = useState<string>("All");
+    const [selectedDate, setSelectedDate] = useState<string>("");
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -18,6 +24,7 @@ const WorkReportM = () => {
             try {
                 const data = await fetchWorkReportManager();
                 setWorkReports(data);
+                setFilteredReports(data);
             } catch (err) {
                 setError("Failed to fetch work reports");
             } finally {
@@ -26,6 +33,47 @@ const WorkReportM = () => {
         };
         fetchReports();
     }, []);
+
+    // Apply filters whenever filter states change
+    useEffect(() => {
+        let result = [...workReports];
+
+        // Apply status filter
+        if (statusFilter !== "All") {
+            result = result.filter(report => report.status === statusFilter);
+        }
+
+        // Apply date filter
+        if (dateFilter === "Today") {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            result = result.filter(report => {
+                const reportDate = new Date(report.date);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === today.getTime();
+            });
+        } else if (dateFilter === "Yesterday") {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            result = result.filter(report => {
+                const reportDate = new Date(report.date);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === yesterday.getTime();
+            });
+        } else if (dateFilter === "Custom" && selectedDate) {
+            const customDate = new Date(selectedDate);
+            customDate.setHours(0, 0, 0, 0);
+            result = result.filter(report => {
+                const reportDate = new Date(report.date);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === customDate.getTime();
+            });
+        }
+
+        setFilteredReports(result);
+        setCurrentPage(1); // Reset to first page when filters change
+    }, [statusFilter, dateFilter, selectedDate, workReports]);
 
     const handleViewClick = (id: string) => {
         navigate(`/manager/workreports/${id}`);
@@ -68,7 +116,7 @@ const WorkReportM = () => {
     };
 
     // Get paginated reports
-    const paginatedReports = workReports.slice(
+    const paginatedReports = filteredReports.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -83,13 +131,61 @@ const WorkReportM = () => {
     };
 
     const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(workReports.length / itemsPerPage)));
+        setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredReports.length / itemsPerPage)));
     };
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 p-6">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold text-white text-center sm:text-left">Department Work Reports</h1>
+            </div>
+
+            {/* Filter controls */}
+            <div className="bg-blue-950 p-4 rounded-lg mb-4">
+                <div className="flex flex-col md:flex-row gap-4 justify-between">
+                    {/* Status filter */}
+                    <div className="flex flex-col">
+
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-slate-950 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    {/* Date filter */}
+                    <div className="flex flex-col">
+
+                        <select
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="bg-slate-950 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">All Dates</option>
+                            <option value="Today">Today</option>
+                            <option value="Yesterday">Yesterday</option>
+                            <option value="Custom">Custom Date</option>
+                        </select>
+                    </div>
+
+                    {/* Calendar input for custom date */}
+                    {dateFilter === "Custom" && (
+                        <div className="flex flex-col">
+
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="bg-slate-950 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {loading ? (
@@ -155,7 +251,7 @@ const WorkReportM = () => {
                     </div>
 
                     {/* Pagination */}
-                    {workReports.length > itemsPerPage && (
+                    {filteredReports.length > itemsPerPage && (
                         <div className="flex flex-wrap justify-center gap-2 pt-6">
                             <button
                                 onClick={handlePrevPage}
@@ -168,7 +264,7 @@ const WorkReportM = () => {
                                 Previous
                             </button>
 
-                            {Array.from({ length: Math.ceil(workReports.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                            {Array.from({ length: Math.ceil(filteredReports.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
                                 <button
                                     key={page}
                                     onClick={() => handlePageChange(page)}
@@ -183,11 +279,11 @@ const WorkReportM = () => {
 
                             <button
                                 onClick={handleNextPage}
-                                className={`px-3 py-1 rounded text-white transition-all ${currentPage === Math.ceil(workReports.length / itemsPerPage)
+                                className={`px-3 py-1 rounded text-white transition-all ${currentPage === Math.ceil(filteredReports.length / itemsPerPage)
                                     ? "bg-gray-700 cursor-not-allowed"
                                     : "bg-blue-600 hover:bg-blue-700 hover:scale-105"
                                     }`}
-                                disabled={currentPage === Math.ceil(workReports.length / itemsPerPage)}
+                                disabled={currentPage === Math.ceil(filteredReports.length / itemsPerPage)}
                             >
                                 Next
                             </button>

@@ -6,13 +6,19 @@ import { toast } from "react-toastify";
 const WorkReports = () => {
     const navigate = useNavigate();
     const [workReports, setWorkReports] = useState<WorkReport[]>([]);
+    const [filteredReports, setFilteredReports] = useState<WorkReport[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<Map<string, boolean>>(new Map());
 
+    // Status and date filter states
+    const [statusFilter, setStatusFilter] = useState<string>("All");
+    const [dateFilter, setDateFilter] = useState<string>("All");
+    const [selectedDate, setSelectedDate] = useState<string>("");
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [itemsPerPage] = useState<number>(10);
+    const [itemsPerPage] = useState<number>(8);
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -20,6 +26,7 @@ const WorkReports = () => {
             try {
                 const data = await fetchWorkReportAdmin();
                 setWorkReports(data);
+                setFilteredReports(data);
             } catch (err) {
                 setError("Failed to fetch work reports");
             } finally {
@@ -29,10 +36,51 @@ const WorkReports = () => {
         fetchReports();
     }, []);
 
+    // Apply filters whenever filter states change
+    useEffect(() => {
+        let result = [...workReports];
+
+        // Apply status filter
+        if (statusFilter !== "All") {
+            result = result.filter(report => report.status === statusFilter);
+        }
+
+        // Apply date filter
+        if (dateFilter === "Today") {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            result = result.filter(report => {
+                const reportDate = new Date(report.date);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === today.getTime();
+            });
+        } else if (dateFilter === "Yesterday") {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            result = result.filter(report => {
+                const reportDate = new Date(report.date);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === yesterday.getTime();
+            });
+        } else if (dateFilter === "Custom" && selectedDate) {
+            const customDate = new Date(selectedDate);
+            customDate.setHours(0, 0, 0, 0);
+            result = result.filter(report => {
+                const reportDate = new Date(report.date);
+                reportDate.setHours(0, 0, 0, 0);
+                return reportDate.getTime() === customDate.getTime();
+            });
+        }
+
+        setFilteredReports(result);
+        setCurrentPage(1); // Reset to first page when filters change
+    }, [statusFilter, dateFilter, selectedDate, workReports]);
+
     // Logic for paginated reports
     const indexOfLastReport = currentPage * itemsPerPage;
     const indexOfFirstReport = indexOfLastReport - itemsPerPage;
-    const currentReports = workReports.slice(indexOfFirstReport, indexOfLastReport);
+    const currentReports = filteredReports.slice(indexOfFirstReport, indexOfLastReport);
 
     const handleViewClick = (id: string) => {
         navigate(`/admin/workreports/${id}`);
@@ -73,7 +121,7 @@ const WorkReports = () => {
     };
 
     // Pagination Logic
-    const pageCount = Math.ceil(workReports.length / itemsPerPage);
+    const pageCount = Math.ceil(filteredReports.length / itemsPerPage);
     const handlePageChange = (page: number) => {
         if (page < 1 || page > pageCount) return;
         setCurrentPage(page);
@@ -83,6 +131,54 @@ const WorkReports = () => {
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 p-6">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold text-white text-center sm:text-left">Department Work Reports</h1>
+            </div>
+
+            {/* Filter controls */}
+            <div className="bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 text-white lg:px-6 md:px-6 sm:px-1 py-6 rounded-lg shadow-md my-6">
+                <div className="flex flex-col md:flex-row gap-4 justify-between">
+                    {/* Status filter */}
+                    <div className="flex flex-col">
+
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-slate-900 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    {/* Date filter */}
+                    <div className="flex flex-col">
+
+                        <select
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="bg-slate-950 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="All">All Dates</option>
+                            <option value="Today">Today</option>
+                            <option value="Yesterday">Yesterday</option>
+                            <option value="Custom">Custom Date</option>
+                        </select>
+                    </div>
+
+                    {/* Calendar input for custom date */}
+                    {dateFilter === "Custom" && (
+                        <div className="flex flex-col">
+                            <label className="text-white text-sm mb-1">Select Date</label>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {loading ? (
@@ -150,7 +246,7 @@ const WorkReports = () => {
                     </div>
 
                     {/* Pagination */}
-                    {workReports.length > itemsPerPage && (
+                    {filteredReports.length > itemsPerPage && (
                         <div className="flex flex-wrap justify-center gap-2 pt-6">
                             <button
                                 onClick={() => handlePageChange(currentPage - 1)}
