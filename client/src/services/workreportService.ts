@@ -23,16 +23,17 @@ const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}") || {};
 
-  if (!token || !user?.employeeId) {
-    throw new Error("Authorization token or Employee ID not found");
+  if (!token) {
+    throw new Error("Authorization token or Employee/User ID not found");
   }
-
+  const userId = user?.employeeId || user?.id;
   return {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    employeeId: user.employeeId,
+    employeeId: userId,
+    isAdmin: user?.role === "admin",
   };
 };
 
@@ -91,6 +92,22 @@ export const fetchWorkReportManager = async (): Promise<WorkReport[]> => {
       { employeeId },
       { headers }
     );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching work reports for manager:", error);
+    return [];
+  }
+};
+export const fetchWorkReportAdmin = async (): Promise<WorkReport[]> => {
+  try {
+    const { headers, employeeId, isAdmin } = getAuthHeaders();
+    const requestBody = isAdmin ? {} : { employeeId };
+    const response = await axios.post<WorkReport[]>(
+      `${API_URL}/admin/history`,
+      requestBody,
+      { headers }
+    );
+
     return response.data;
   } catch (error) {
     console.error("Error fetching work reports for manager:", error);

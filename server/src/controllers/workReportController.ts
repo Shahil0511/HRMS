@@ -159,6 +159,27 @@ export const getWorkReportsForManager = async (
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+export const getAllWorkReportsForAdmin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    // Fetch all work reports directly
+
+    const workReports = await WorkReport.find().sort({ createdAt: -1 });
+
+    if (!workReports.length) {
+      console.log("No work reports found.");
+      res.status(200).json({ message: "No work reports available" });
+      return;
+    }
+
+    res.status(200).json(workReports);
+  } catch (error) {
+    console.error("Error fetching all work reports for admin:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 export const getWorkReportById = async (
   req: Request,
