@@ -51,7 +51,18 @@ const EmployeeDashboard = () => {
     }, []);
 
     const stats = [
-        { label: "Total Attendance", value: attendanceData.totalAttendance, icon: <FaUserCheck /> },
+        {
+            label: "Total Attendance", value: attendanceData.totalAttendance, icon: <FaUserCheck />, onClick: () => {
+
+                if (user && user.id) {
+
+                    navigate(`/employee/attendance-list`);
+                } else {
+                    console.log("User ID is undefined");
+                    console.error("User ID is undefined");
+                }
+            }
+        },
         { label: "Total Absent This Month", value: attendanceData.totalAbsent, icon: <FaUserTimes /> },
         { label: "Leaves Taken", value: attendanceData.leavesTaken, icon: <FaClipboardList /> },
         { label: "Work Reports", value: 0, icon: <FaCalendarDay /> },
