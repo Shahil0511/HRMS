@@ -5,7 +5,6 @@ const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
 // const API_URL = "http://localhost:8000/api/workreports";
 
 export interface WorkReport {
-  submissionDate: any;
   details: ReactNode;
   _id: string;
   employeeName: string;
