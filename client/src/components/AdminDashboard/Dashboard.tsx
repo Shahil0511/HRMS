@@ -3,6 +3,7 @@ import { FaUsers, FaBuilding, FaUserCheck, FaUserTimes, FaClipboardList, FaCalen
 import { getTotalDepartment } from "../../services/departmentServices";
 import { getTodayTotalEmployeePresent, getTotalEmployee } from "../../services/employeeServices";
 import { motion } from "framer-motion";
+import { fetchWorkReportAdmin } from "../../services/workreportService";
 
 const Dashboard = () => {
     const [data, setData] = useState({
@@ -71,6 +72,31 @@ const Dashboard = () => {
                 });
         }
     }, [data.totalEmployees]);
+
+    useEffect(() => {
+        setLoading(true);
+
+        fetchWorkReportAdmin()
+            .then((reports) => {
+                const today = new Date().toISOString().split("T")[0];
+                const todaysReports = reports.filter((report) => {
+                    return report.date === today;
+                });
+
+                console.log("Filtered Today's Reports:", todaysReports.length);
+
+                setData((prevData) => ({
+                    ...prevData,
+                    todaysWorksheet: todaysReports.length,
+                }));
+            })
+            .catch((err) => {
+                console.error("Error fetching data:", err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
 
     const stats = [
         { label: "Total Departments", value: data.totalDepartments, icon: <FaBuilding /> },
