@@ -16,15 +16,15 @@ const WorkReportE = () => {
                 setIsLoading(true);
                 const data = await fetchWorkReports();
                 if (Array.isArray(data)) {
-                    setReportHistory(data); // Ensure only arrays are set
+                    setReportHistory(data.reverse());
                 } else {
-                    setReportHistory([]); // Prevent errors if response is unexpected
+                    setReportHistory([]);
                     console.error("Unexpected API response format:", data);
                 }
                 setError(null);
             } catch (err) {
                 setError("Failed to load reports. Please try again later.");
-                setReportHistory([]); // Prevent slice() errors
+                setReportHistory([]);
                 console.error(err);
             } finally {
                 setIsLoading(false);
@@ -49,12 +49,18 @@ const WorkReportE = () => {
         navigate('/employee/workreports/add-work-report');
     };
 
-    // Format date to be more readable
+    const handleEditClick = (reportId: string) => {
+        navigate(`/employee/workreports/edit/${reportId}`);
+    };
+
+    const handleViewClick = (reportId: string) => {
+        navigate(`/employee/workreports/view/${reportId}`);
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleString();
     };
 
-    // Get paginated reports
     const paginatedReports = reportHistory.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -97,6 +103,7 @@ const WorkReportE = () => {
                                         <th className="px-4 py-2 text-left sm:table-cell hidden">Name</th>
                                         <th className="px-4 py-2 text-left">Date</th>
                                         <th className="px-4 py-2 text-left">Status</th>
+                                        <th className="px-4 py-2 text-left">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -115,13 +122,28 @@ const WorkReportE = () => {
                                                     {report.status}
                                                 </span>
                                             </td>
+                                            <td className='px-4 py-3'>
+                                                <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+                                                    <button
+                                                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md text-xs md:text-sm transition"
+                                                        onClick={() => handleEditClick(report._id)}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs md:text-sm transition"
+                                                        onClick={() => handleViewClick(report._id)}
+                                                    >
+                                                        View
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
 
-                        {/* Pagination */}
                         {reportHistory.length > itemsPerPage && (
                             <div className="flex flex-wrap justify-center gap-2 pt-6">
                                 <button
