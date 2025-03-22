@@ -5,6 +5,7 @@ import { FaUserCheck, FaUserTimes, FaClipboardList, FaCalendarDay, FaUser, FaMon
 import moment from 'moment';
 import attendanceService from "../../services/attendanceServices";
 import { useNavigate } from "react-router-dom";
+import { fetchWorkReports } from '../../services/workreportService';
 
 interface AttendanceItem {
     status: string;
@@ -13,7 +14,7 @@ interface AttendanceItem {
 
 const EmployeeDashboard = () => {
     const navigate = useNavigate();
-    const { user } = useSelector((state: any) => state.auth); // Get logged-in user
+    const { user } = useSelector((state: any) => state.auth);
 
     const [attendanceData, setAttendanceData] = useState({
         totalAttendance: 0,
@@ -21,6 +22,21 @@ const EmployeeDashboard = () => {
         leavesTaken: 0,
         complaints: 0,
     });
+    const [workReport, setWorkReport] = useState(0);
+
+    useEffect(() => {
+        const countWorkReports = async () => {
+            try {
+                const data = await fetchWorkReports();
+                const totalData = data.length;
+                setWorkReport(totalData);
+            } catch (error) {
+                console.error("Error fetching work reports:", error);
+                setWorkReport(0);
+            }
+        };
+        countWorkReports();
+    }, []);
 
     useEffect(() => {
         const fetchAttendanceData = async () => {
@@ -65,7 +81,7 @@ const EmployeeDashboard = () => {
         },
         { label: "Total Absent This Month", value: attendanceData.totalAbsent, icon: <FaUserTimes /> },
         { label: "Leaves Taken", value: attendanceData.leavesTaken, icon: <FaClipboardList /> },
-        { label: "Work Reports", value: 0, icon: <FaCalendarDay /> },
+        { label: "Work Reports", value: workReport, icon: <FaCalendarDay /> },
         {
             label: "Profile",
             value: "View",
