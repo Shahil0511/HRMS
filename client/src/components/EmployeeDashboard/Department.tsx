@@ -71,7 +71,7 @@ const EmployeeDepartment: React.FC = () => {
 
     // Navigation handler
     const handleViewEmployee = (employeeId: string) => {
-        console.log("Future update", employeeId)
+        console.log("Wait for Future update", employeeId)
     };
 
     // Pagination handlers
