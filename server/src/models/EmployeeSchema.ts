@@ -15,6 +15,7 @@ export interface IEmployee extends Document {
   department: mongoose.Types.ObjectId;
   designation: string;
   workReports: mongoose.Types.ObjectId[];
+  payroll: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,7 +50,9 @@ const EmployeeSchema: Schema = new Schema(
     },
     designation: { type: String, required: true },
     workReports: [{ type: mongoose.Schema.Types.ObjectId, ref: "WorkReport" }],
+    payroll: [{ type: mongoose.Schema.Types.ObjectId, ref: "Payroll" }],
   },
+
   { timestamps: true }
 );
 
