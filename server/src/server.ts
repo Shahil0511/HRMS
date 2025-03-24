@@ -6,6 +6,7 @@ import departmentRoutes from "./routes/department";
 import employeeRoutes from "./routes/employee";
 import attendanceRoutes from "./routes/attendance";
 import workreportRoutes from "./routes/workreport";
+import payrollRoutes from "./routes/payroll";
 
 import cors from "cors";
 import multer from "multer";
@@ -37,6 +38,7 @@ app.use("/api/", departmentRoutes);
 app.use("/api/", employeeRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/workreports", workreportRoutes);
+app.use("/api/payroll", payrollRoutes);
 
 // Start server
 const startServer = async () => {

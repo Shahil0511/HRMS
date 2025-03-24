@@ -1,113 +1,81 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaMoneyBillWave, FaFileInvoice, FaChartBar, FaCalendarAlt } from "react-icons/fa";
+import {
+    fetchSalary,
+    fetchPayrollData,
+    getUserDataFromLocalStorage,
+    PayrollData,
+    PayrollStat,
+    WorkReport
+} from "../../services/payrollServices";
 
-// Define TypeScript interfaces
-interface WorkReport {
-    id: number;
-    day: string;
-    date: string;
-    status: 'Present' | 'Absent' | 'Week Off' | 'Holiday';
-    workReportStatus: 'Pending' | 'Approved' | 'Rejected';
-    completionStatus: 'Completed' | 'Pending' | 'Rejected';
-    hoursWorked?: number;
-}
-
-interface PayrollStat {
-    title: string;
-    value: string;
-    icon: React.ComponentType;
-    change?: string;
-    isPositive?: boolean;
-}
-
-interface PayrollData {
-    employeeId: string;
-    employeeName: string;
-    monthlySalary: number;
-    currentMonthEarnings: number;
-    pendingWorkReports: number;
-    deductions: number;
-    workReports: WorkReport[];
-}
-
-// Service for fetching payroll data
-const usePayrollService = () => {
+const usePayrollData = () => {
     const [payrollData, setPayrollData] = useState<PayrollData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [name, setName] = useState("");
-    const [empId, setEmpId] = useState("")
+    const [empId, setEmpId] = useState("");
+    const [salary, setSalary] = useState(0);
+    const [deduction, setDeduction] = useState(0);
 
     useEffect(() => {
-        const fetchEmployeeName = async () => {
-            const response = localStorage.getItem("user");
-            if (response) {
-                try {
-                    const user = JSON.parse(response);
-                    setName(user.employeeName);
-                    setEmpId(user.employeeId)
+        const userData = getUserDataFromLocalStorage();
+        if (userData) {
+            setName(userData.employeeName);
+            setEmpId(userData.employeeId);
+        }
+    }, []);
 
-                } catch (error) {
-                    console.error("Error parsing user data:", error);
-                }
+    useEffect(() => {
+        const fetchData = async () => {
+            const token = localStorage.getItem("token");
+            const user = getUserDataFromLocalStorage();
+
+            if (!token || !user?.employeeId) {
+                setError("User or token not found");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const data = await fetchSalary(token, user.employeeId);
+                setSalary(data.baseSalary);
+                setDeduction(data.deductions);
+            } catch (error: any) {
+                setError(error.message);
             }
         };
 
-        fetchEmployeeName();
+        fetchData();
     }, []);
 
-
     useEffect(() => {
-        const fetchPayrollData = async () => {
+        const loadPayrollData = async () => {
+            if (!empId || !name) return;
             try {
-                // In a real application, this would be an API call
-                // For demonstration, we're using mock data
                 setLoading(true);
-
-                // Simulate API delay
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Mock data for a week
-                const mockData: PayrollData = {
-                    employeeId: empId,
-                    employeeName: name,
-                    monthlySalary: 20000,
-                    currentMonthEarnings: 15000,
-                    pendingWorkReports: 5,
-                    deductions: 5000,
-                    workReports: [
-                        { id: 1, day: 'Monday', date: '2025-03-24', status: 'Present', workReportStatus: 'Approved', completionStatus: 'Completed', hoursWorked: 8 },
-                        { id: 2, day: 'Tuesday', date: '2025-03-25', status: 'Present', workReportStatus: 'Approved', completionStatus: 'Completed', hoursWorked: 8.5 },
-                        { id: 3, day: 'Wednesday', date: '2025-03-26', status: 'Present', workReportStatus: 'Pending', completionStatus: 'Pending', hoursWorked: 7.5 },
-                        { id: 4, day: 'Thursday', date: '2025-03-27', status: 'Present', workReportStatus: 'Pending', completionStatus: 'Pending', hoursWorked: 0 },
-                        { id: 5, day: 'Friday', date: '2025-03-28', status: 'Absent', workReportStatus: 'Rejected', completionStatus: 'Rejected', hoursWorked: 0 },
-                        { id: 6, day: 'Saturday', date: '2025-03-29', status: 'Week Off', workReportStatus: 'Approved', completionStatus: 'Completed', hoursWorked: 0 },
-                        { id: 7, day: 'Sunday', date: '2025-03-30', status: 'Week Off', workReportStatus: 'Approved', completionStatus: 'Completed', hoursWorked: 0 }
-                    ]
-                };
-                setPayrollData(mockData);
+                const data = await fetchPayrollData(empId, name, salary, deduction);
+                setPayrollData(data);
                 setError(null);
             } catch (err) {
-                setError("Failed to fetch payroll data. Please try again later.");
-                console.error("Error fetching payroll data:", err);
+                setError(err instanceof Error ? err.message : "An unknown error occurred");
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchPayrollData();
-    }, []);
+        loadPayrollData();
+    }, [empId, name, salary, deduction]);
 
     return { payrollData, loading, error };
 };
 
 const PayrollDashboard: React.FC = () => {
-    const { payrollData, loading, error } = usePayrollService();
+    const { payrollData, loading, error } = usePayrollData();
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const itemsPerPage = 7; // Show a full week
+    const itemsPerPage = 7;
 
-    // Function to format currency
     const formatCurrency = (amount: number): string => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -117,7 +85,6 @@ const PayrollDashboard: React.FC = () => {
         }).format(amount);
     };
 
-    // Calculate stats from payroll data
     const getStats = (): PayrollStat[] => {
         if (!payrollData) return [];
 
@@ -153,40 +120,33 @@ const PayrollDashboard: React.FC = () => {
         ];
     };
 
-    // Calculate paginated data
     const getPaginatedReports = (): WorkReport[] => {
         if (!payrollData) return [];
-
         const indexOfLastItem = currentPage * itemsPerPage;
         const indexOfFirstItem = indexOfLastItem - itemsPerPage;
         return payrollData.workReports.slice(indexOfFirstItem, indexOfLastItem);
     };
 
-    // Calculate total pages
     const getTotalPages = (): number => {
         if (!payrollData) return 1;
         return Math.ceil(payrollData.workReports.length / itemsPerPage);
     };
 
-    // Determine status badge color
     const getStatusBadgeColor = (status: string): string => {
         switch (status) {
             case 'Present':
+            case 'Approved':
+            case 'Completed':
                 return 'bg-green-500';
             case 'Absent':
+            case 'Rejected':
                 return 'bg-red-500';
             case 'Week Off':
                 return 'bg-gray-500';
             case 'Holiday':
                 return 'bg-blue-500';
-            case 'Approved':
-                return 'bg-green-500';
             case 'Pending':
                 return 'bg-yellow-500';
-            case 'Rejected':
-                return 'bg-red-500';
-            case 'Completed':
-                return 'bg-green-500';
             default:
                 return 'bg-gray-500';
         }
@@ -308,7 +268,6 @@ const PayrollDashboard: React.FC = () => {
                     </table>
                 </div>
 
-                {/* Pagination Controls - only show if more than 7 days of data */}
                 {getTotalPages() > 1 && (
                     <div className="mt-6 flex justify-center gap-4">
                         <button
@@ -342,7 +301,6 @@ const PayrollDashboard: React.FC = () => {
                 <h3 className="text-white text-2xl font-bold mb-6">Payroll Summary</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Weekly Performance */}
                     <div className="bg-indigo-800/30 p-6 rounded-xl">
                         <h4 className="text-white text-lg font-medium mb-4">Weekly Performance</h4>
                         <div className="flex justify-between mb-3">
@@ -362,7 +320,6 @@ const PayrollDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Monthly Summary */}
                     <div className="bg-indigo-800/30 p-6 rounded-xl">
                         <h4 className="text-white text-lg font-medium mb-4">Monthly Summary</h4>
                         <div className="space-y-3">
