@@ -7,7 +7,8 @@ import {
     getUserDataFromLocalStorage,
     PayrollData,
     PayrollStat,
-    WorkReport
+    WorkReport,
+    reportData
 } from "../../services/payrollServices";
 
 const usePayrollData = () => {
@@ -18,6 +19,7 @@ const usePayrollData = () => {
     const [empId, setEmpId] = useState("");
     const [salary, setSalary] = useState(0);
     const [deduction, setDeduction] = useState(0);
+    const [pendingWorkReport, setPendingWorkReport] = useState<WorkReport[] | null>(null);
 
     useEffect(() => {
         const userData = getUserDataFromLocalStorage();
@@ -25,6 +27,17 @@ const usePayrollData = () => {
             setName(userData.employeeName);
             setEmpId(userData.employeeId);
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchPendingReports = async () => {
+            const pendingData = await reportData();
+            if (pendingData) {
+                setPendingWorkReport(pendingData as unknown as WorkReport[] | null);
+            }
+        };
+
+        fetchPendingReports();
     }, []);
 
     useEffect(() => {
@@ -52,10 +65,16 @@ const usePayrollData = () => {
 
     useEffect(() => {
         const loadPayrollData = async () => {
-            if (!empId || !name) return;
+            if (!empId || !name || !pendingWorkReport) return;
             try {
                 setLoading(true);
-                const data = await fetchPayrollData(empId, name, salary, deduction);
+                const data = await fetchPayrollData(
+                    empId,
+                    name,
+                    salary,
+                    deduction,
+                    pendingWorkReport.length
+                );
                 setPayrollData(data);
                 setError(null);
             } catch (err) {
@@ -66,7 +85,7 @@ const usePayrollData = () => {
         };
 
         loadPayrollData();
-    }, [empId, name, salary, deduction]);
+    }, [empId, name, salary, deduction, pendingWorkReport]);
 
     return { payrollData, loading, error };
 };
@@ -108,7 +127,7 @@ const PayrollDashboard: React.FC = () => {
                 value: payrollData.pendingWorkReports.toString(),
                 icon: FaFileInvoice,
                 change: "-2",
-                isPositive: true
+                isPositive: false
             },
             {
                 title: "Deductions",

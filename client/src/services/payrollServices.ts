@@ -1,4 +1,5 @@
 import axios from "axios";
+import { fetchWorkReports } from "./workreportService";
 
 const API_URL = "https://hrms-backend-7176.onrender.com/api/payroll";
 // const API_URL = "http://localhost:8000/api/payroll";
@@ -65,7 +66,8 @@ export const fetchPayrollData = async (
   employeeId: string,
   employeeName: string,
   salary: number,
-  deduction: number
+  deduction: number,
+  pendingReports: number
 ): Promise<PayrollData> => {
   try {
     // Simulate API delay
@@ -76,8 +78,8 @@ export const fetchPayrollData = async (
       employeeId,
       employeeName,
       monthlySalary: salary,
-      currentMonthEarnings: 15000,
-      pendingWorkReports: 5,
+      currentMonthEarnings: salary - deduction,
+      pendingWorkReports: pendingReports,
       deductions: deduction,
       workReports: [
         {
@@ -162,4 +164,22 @@ export const getUserDataFromLocalStorage = () => {
     }
   }
   return null;
+};
+
+export const reportData = async () => {
+  try {
+    const reportData = await fetchWorkReports();
+    if (!Array.isArray(reportData)) {
+      throw new Error("Invalid report data format");
+    }
+
+    const pendingReports = reportData.filter(
+      (report) => report.status === "Pending"
+    );
+
+    return pendingReports;
+  } catch (error) {
+    console.error("Error fetching or processing report data:", error);
+    return null;
+  }
 };
