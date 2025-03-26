@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { getEmployeeAttendance } from "../../../services/attendanceServices";
-import { format, addDays, eachDayOfInterval, isSameDay, parseISO, differenceInHours } from "date-fns";
+import { fetchWorkReports, WorkReport as APIWorkReport } from "../../../services/workreportService";
+import { format, addDays, eachDayOfInterval, isSameDay, parseISO, differenceInMinutes } from "date-fns";
 
 interface AttendanceRecord {
     id: string;
@@ -12,9 +13,14 @@ interface AttendanceRecord {
     checkOut?: string;
 }
 
+type WorkReport = APIWorkReport;
+
+const MIN_COMPLETION_MINUTES = 8 * 60 + 45; // 8 hours 45 minutes
+
 const PayrollTable = () => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
+    const [workReports, setWorkReports] = useState<WorkReport[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<"weekly" | "monthly">("weekly");
@@ -23,47 +29,55 @@ const PayrollTable = () => {
     const itemsPerPage = 7;
 
     useEffect(() => {
-        const fetchAttendance = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await getEmployeeAttendance();
-                if (Array.isArray(response)) {
-                    setAttendanceData(response);
+
+                const [attendanceResponse, workReportsResponse] = await Promise.all([
+                    getEmployeeAttendance(),
+                    fetchWorkReports()
+                ]);
+
+                if (Array.isArray(attendanceResponse)) {
+                    setAttendanceData(attendanceResponse);
                 } else {
-                    setAttendanceData([]);
-                    throw new Error("Invalid data format received from server");
+                    throw new Error("Invalid attendance data format");
                 }
+
+                if (Array.isArray(workReportsResponse)) {
+                    setWorkReports(workReportsResponse);
+                } else {
+                    throw new Error("Invalid work reports data format");
+                }
+
             } catch (error) {
-                console.error("Error fetching attendance data:", error);
-                setError("Failed to load attendance data. Please try again later.");
+                console.error("Error fetching data:", error);
+                setError("Failed to load data. Please try again later.");
             } finally {
                 setLoading(false);
             }
         };
-        fetchAttendance();
+
+        fetchData();
     }, []);
 
-    // Calculate date ranges based on view mode
     const dateRange = useMemo(() => {
         const startDate = new Date(currentDateRange);
         const endDate = new Date(currentDateRange);
 
         if (viewMode === "weekly") {
-            // Set to start of week (Sunday)
             startDate.setDate(startDate.getDate() - startDate.getDay());
             endDate.setDate(startDate.getDate() + 6);
         } else {
-            // Monthly view
             startDate.setDate(1);
             endDate.setMonth(startDate.getMonth() + 1);
-            endDate.setDate(0); // Last day of month
+            endDate.setDate(0);
         }
 
         return { startDate, endDate };
     }, [currentDateRange, viewMode]);
 
-    // Generate all dates in the range and merge with attendance data
     const processedData = useMemo(() => {
         const { startDate, endDate } = dateRange;
         const allDates = eachDayOfInterval({ start: startDate, end: endDate });
@@ -72,41 +86,80 @@ const PayrollTable = () => {
             const dateStr = format(date, 'yyyy-MM-dd');
             const dayStr = format(date, 'EEEE');
 
-            // Find matching attendance record
-            const record = attendanceData.find(record =>
+            const attendanceRecord = attendanceData.find(record =>
                 isSameDay(parseISO(record.date), date)
             );
 
-            // Calculate hours worked if check-in/out exists
-            let hoursWorked = 0;
-            if (record?.checkIn && record?.checkOut) {
-                const start = parseISO(record.checkIn);
-                const end = parseISO(record.checkOut);
-                hoursWorked = differenceInHours(end, start);
-            } else if (record?.hoursWorked) {
-                hoursWorked = record.hoursWorked;
+            const workReport = workReports.find(report =>
+                isSameDay(parseISO(report.date), date)
+            );
+
+            let minutesWorked = 0;
+            if (attendanceRecord?.checkIn && attendanceRecord?.checkOut) {
+                const start = parseISO(attendanceRecord.checkIn);
+                const end = parseISO(attendanceRecord.checkOut);
+                minutesWorked = differenceInMinutes(end, start);
+            } else if (attendanceRecord?.hoursWorked) {
+                minutesWorked = attendanceRecord.hoursWorked * 60;
+            }
+
+            const hoursWorked = Math.floor(minutesWorked / 60);
+            const remainingMinutes = minutesWorked % 60;
+            const hoursDisplay = `${hoursWorked}h ${remainingMinutes}m`;
+
+            let completionStatus = "Not Completed";
+            if (attendanceRecord) {
+                if (workReport) {
+                    if (workReport.status === "Approved" && minutesWorked >= MIN_COMPLETION_MINUTES) {
+                        completionStatus = "Completed";
+                    } else if (workReport.status === "Approved") {
+                        completionStatus = "Partially Completed";
+                    } else if (workReport.status === "Pending") {
+                        completionStatus = "Pending Approval";
+                    } else {
+                        completionStatus = "Rejected";
+                    }
+                } else if (minutesWorked >= MIN_COMPLETION_MINUTES) {
+                    completionStatus = "Worked (No Report)";
+                } else {
+                    completionStatus = "Incomplete";
+                }
             }
 
             return {
                 id: dateStr,
                 date,
                 day: dayStr,
-                status: record?.status || "Absent",
-                hoursWorked,
-                isRecorded: !!record
+                status: attendanceRecord?.status || "Absent",
+                hoursWorked: minutesWorked / 60,
+                hoursDisplay,
+                isRecorded: !!attendanceRecord,
+                hasWorkReport: !!workReport,
+                workReportStatus: workReport?.status,
+                completionStatus,
+                tasks: workReport ?
+                    `${workReport.completedTasks} completed` :
+                    'No tasks recorded'
             };
         });
-    }, [attendanceData, dateRange]);
+    }, [attendanceData, workReports, dateRange]);
 
-    // Calculate totals
     const totals = useMemo(() => {
+        const completedDays = processedData.filter(d =>
+            d.completionStatus === "Completed"
+        ).length;
+
         return {
             presentDays: processedData.filter(d => d.status === "Present").length,
             absentDays: processedData.filter(d => d.status === "Absent").length,
-            totalHours: processedData.reduce((sum, d) => sum + (d.hoursWorked || 0), 0),
+            totalHours: processedData.reduce((sum, d) => sum + d.hoursWorked, 0),
             holidays: processedData.filter(d =>
                 ["Holiday", "Week Off"].includes(d.status)
-            ).length
+            ).length,
+            completedDays,
+            completionRate: processedData.length > 0
+                ? Math.round((completedDays / processedData.length) * 100)
+                : 0
         };
     }, [processedData]);
 
@@ -132,7 +185,11 @@ const PayrollTable = () => {
             case "Holiday":
                 return "bg-blue-500";
             case "Pending":
+            case "Pending Approval":
                 return "bg-yellow-500";
+            case "Partially Completed":
+            case "Worked (No Report)":
+                return "bg-orange-500";
             default:
                 return "bg-gray-500";
         }
@@ -217,23 +274,22 @@ const PayrollTable = () => {
                     </div>
                 </div>
 
-                {/* Summary Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div className="bg-indigo-800/50 p-4 rounded-lg">
                         <p className="text-gray-300 text-sm">Present Days</p>
                         <p className="text-white text-2xl font-bold">{totals.presentDays}</p>
                     </div>
                     <div className="bg-indigo-800/50 p-4 rounded-lg">
-                        <p className="text-gray-300 text-sm">Absent Days</p>
-                        <p className="text-white text-2xl font-bold">{totals.absentDays}</p>
+                        <p className="text-gray-300 text-sm">Completed Days</p>
+                        <p className="text-white text-2xl font-bold">{totals.completedDays}</p>
                     </div>
                     <div className="bg-indigo-800/50 p-4 rounded-lg">
                         <p className="text-gray-300 text-sm">Total Hours</p>
-                        <p className="text-white text-2xl font-bold">{totals.totalHours}</p>
+                        <p className="text-white text-2xl font-bold">{totals.totalHours.toFixed(1)}</p>
                     </div>
                     <div className="bg-indigo-800/50 p-4 rounded-lg">
-                        <p className="text-gray-300 text-sm">Holidays/Week Off</p>
-                        <p className="text-white text-2xl font-bold">{totals.holidays}</p>
+                        <p className="text-gray-300 text-sm">Completion Rate</p>
+                        <p className="text-white text-2xl font-bold">{totals.completionRate}%</p>
                     </div>
                 </div>
 
@@ -245,7 +301,9 @@ const PayrollTable = () => {
                                 <th className="py-3 px-4 text-left font-medium">Date</th>
                                 <th className="py-3 px-4 text-left font-medium">Status</th>
                                 <th className="py-3 px-4 text-left font-medium">Hours</th>
-                                <th className="py-3 px-4 text-left font-medium">Recorded</th>
+                                <th className="py-3 px-4 text-left font-medium">Work Report</th>
+                                <th className="py-3 px-4 text-left font-medium">Completion</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -263,15 +321,23 @@ const PayrollTable = () => {
                                         </span>
                                     </td>
                                     <td className="py-3 px-4">
-                                        {report.hoursWorked > 0 ? `${report.hoursWorked}h` : '-'}
+                                        {report.hoursWorked > 0 ? report.hoursDisplay : '-'}
                                     </td>
                                     <td className="py-3 px-4">
-                                        {report.isRecorded ? (
-                                            <span className="text-green-400">✓</span>
+                                        {report.hasWorkReport ? (
+                                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.workReportStatus || "")}`}>
+                                                {report.workReportStatus}
+                                            </span>
                                         ) : (
-                                            <span className="text-red-400">✗</span>
+                                            <span className="text-gray-400">Not Submitted</span>
                                         )}
                                     </td>
+                                    <td className="py-3 px-4">
+                                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.completionStatus)}`}>
+                                            {report.completionStatus}
+                                        </span>
+                                    </td>
+
                                 </tr>
                             ))}
                         </tbody>
