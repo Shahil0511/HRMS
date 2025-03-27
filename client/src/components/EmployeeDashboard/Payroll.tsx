@@ -139,21 +139,42 @@ const PayrollDashboard: React.FC = () => {
     };
 
     const getStats = (): PayrollStat[] => {
-        if (!payrollData) return [];
+        if (!payrollData || !workingDaysData?.fullMonthData) return [];
 
+        // Get current month and year
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+
+        // Get total days in current month
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        // Calculate compliant days - now with safe access to fullMonthData
+        const compliantDays = workingDaysData.fullMonthData
+            ? workingDaysData.fullMonthData.filter(day =>
+                day.status === "Present" &&
+                day.completionStatus === "Completed" &&
+                day.hoursWorked >= 8.75
+            ).length
+            : 0; // Default to 0 if fullMonthData is undefined
+
+        // Calculate daily rate and current earnings
+        const dailyRate = payrollData.monthlySalary / daysInMonth;
+        const compliantEarnings = dailyRate * compliantDays;
+        const currentMonthAL = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
         return [
             {
-                title: "Monthly Salary",
+                title: `${currentMonthAL} Salary`,
                 value: formatCurrency(payrollData.monthlySalary),
                 icon: FaMoneyBillWave,
                 change: "+2.5%",
                 isPositive: true
             },
             {
-                title: "March Earnings",
-                value: formatCurrency(payrollData.currentMonthEarnings),
+                title: `${currentMonthAL} Earnings`,
+                value: formatCurrency(compliantEarnings),
                 icon: FaCalendarAlt,
-                change: "80%",
+                change: `${Math.round((compliantDays / daysInMonth) * 100)}%`,
                 isPositive: true
             },
             {
@@ -238,9 +259,10 @@ const PayrollDashboard: React.FC = () => {
             </motion.div>
 
             {/* Weekly Work Report Table */}
-            <PayrollTable
-                onWorkingDaysCalculated={handleWorkingDaysCalculated}
-            />
+            <div className="w-80%">
+                <PayrollTable onWorkingDaysCalculated={handleWorkingDaysCalculated} />
+            </div>
+
 
             {/* NEW: Monthly Data Display Component */}
             {workingDaysData?.fullMonthData && (
@@ -350,6 +372,41 @@ const PayrollDashboard: React.FC = () => {
                                     day.completionStatus === "Completed" &&
                                     day.hoursWorked >= 8.75
                                 ).length}
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {workingDaysData?.fullMonthData && (
+                <motion.div
+                    className="w-full max-w-6xl bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 p-8 rounded-2xl shadow-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.8 }}
+                >
+                    <h3 className="text-white text-2xl font-bold mb-6">Earnings Calculation</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Monthly Salary</p>
+                            <p className="text-white text-2xl font-bold">
+                                {formatCurrency(payrollData?.monthlySalary || 0)}
+                            </p>
+                        </div>
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Compliant Days</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.completionStatus === "Completed" &&
+                                    day.hoursWorked >= 8.75
+                                ).length} / {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}
+                            </p>
+                        </div>
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Daily Rate</p>
+                            <p className="text-white text-2xl font-bold">
+                                {formatCurrency((payrollData?.monthlySalary || 0) / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())}
                             </p>
                         </div>
                     </div>

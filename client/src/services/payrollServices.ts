@@ -78,7 +78,7 @@ export const fetchPayrollData = async (
       employeeId,
       employeeName,
       monthlySalary: salary,
-      currentMonthEarnings: salary - deduction,
+      currentMonthEarnings: 0,
       pendingWorkReports: pendingReports,
       deductions: deduction,
       workReports: [
