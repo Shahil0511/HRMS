@@ -91,8 +91,43 @@ const usePayrollData = () => {
 
 const PayrollDashboard: React.FC = () => {
     const { payrollData, loading, error } = usePayrollData();
+    const [hasLoggedData, setHasLoggedData] = useState(false);
+
+    const [workingDaysData, setWorkingDaysData] = useState<{
+        workingDays: number;
+        weekOffs: number;
+        fullMonthData?: {
+            date: string;
+            status: string;
+            hoursWorked: number;
+            completionStatus: string;
+        }[];
+    } | null>(null);
+
+    const handleWorkingDaysCalculated = React.useCallback((data: {
+        workingDays: number;
+        weekOffs: number;
+        fullMonthData: {
+            date: string;
+            status: string;
+            hoursWorked: number;
+            completionStatus: string;
+        }[];
+    }) => {
+        // Only update if the data has actually changed
+        if (JSON.stringify(workingDaysData) !== JSON.stringify(data)) {
+            setWorkingDaysData(data);
+            setHasLoggedData(false); // Reset logging flag when new data arrives
+        }
+    }, [workingDaysData]);
+
+    useEffect(() => {
+        if (workingDaysData && !hasLoggedData) {
 
 
+            setHasLoggedData(true);
+        }
+    }, [workingDaysData, hasLoggedData]);
 
     const formatCurrency = (amount: number): string => {
         return new Intl.NumberFormat('en-US', {
@@ -203,7 +238,123 @@ const PayrollDashboard: React.FC = () => {
             </motion.div>
 
             {/* Weekly Work Report Table */}
-            <PayrollTable />
+            <PayrollTable
+                onWorkingDaysCalculated={handleWorkingDaysCalculated}
+            />
+
+            {/* NEW: Monthly Data Display Component */}
+            {workingDaysData?.fullMonthData && (
+                <motion.div
+                    className="w-full max-w-6xl bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 p-8 rounded-2xl shadow-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.7 }}
+                >
+                    <h3 className="text-white text-2xl font-bold mb-6">Attendance Summary</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Total Present Days */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Total Present Days</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present"
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Total Absent Days */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Total Absent Days</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Absent"
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Present with Approved Work Report */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Present with Approved Reports</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.completionStatus === "Completed"
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Present with Pending Work Report */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Present with Pending Reports</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.completionStatus.includes("Pending")
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Present with Pending/Approved Reports */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Present with Submitted Reports</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    (day.completionStatus === "Completed" ||
+                                        day.completionStatus.includes("Pending"))
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Present with Less Work Hours */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Present with Less Hours</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.hoursWorked < 8.75 &&
+                                    day.hoursWorked > 0
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Present with Rejected Work Report */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Present with Rejected Reports</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.completionStatus === "Rejected"
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Present with No Work Report */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Present with No Reports</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.completionStatus === "Worked (No Report)"
+                                ).length}
+                            </p>
+                        </div>
+
+                        {/* Fully Compliant Days */}
+                        <div className="bg-indigo-800/30 p-4 rounded-lg">
+                            <p className="text-gray-300 text-sm">Fully Compliant Days</p>
+                            <p className="text-white text-2xl font-bold">
+                                {workingDaysData.fullMonthData.filter(day =>
+                                    day.status === "Present" &&
+                                    day.completionStatus === "Completed" &&
+                                    day.hoursWorked >= 8.75
+                                ).length}
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Summary Section */}
             <motion.div
@@ -217,6 +368,7 @@ const PayrollDashboard: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-indigo-800/30 p-6 rounded-xl">
                         <h4 className="text-white text-lg font-medium mb-4">Weekly Performance</h4>
+
                         <div className="flex justify-between mb-3">
                             <span className="text-white opacity-80">Attendance Rate</span>
                             <span className="text-white font-medium">80%</span>

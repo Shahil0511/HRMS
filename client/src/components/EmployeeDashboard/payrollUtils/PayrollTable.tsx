@@ -17,7 +17,20 @@ type WorkReport = APIWorkReport;
 
 const MIN_COMPLETION_MINUTES = 8 * 60 + 45; // 8 hours 45 minutes
 
-const PayrollTable = () => {
+interface PayrollTableProps {
+    onWorkingDaysCalculated?: (workingDaysData: {
+        workingDays: number;
+        weekOffs: number;
+        fullMonthData: {
+            date: string;
+            status: string;
+            hoursWorked: number;
+            completionStatus: string;
+        }[];
+    }) => void;
+}
+
+const PayrollTable: React.FC<PayrollTableProps> = ({ onWorkingDaysCalculated }) => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
     const [workReports, setWorkReports] = useState<WorkReport[]>([]);
@@ -143,6 +156,85 @@ const PayrollTable = () => {
             };
         });
     }, [attendanceData, workReports, dateRange]);
+
+    // Calculate working days and week offs
+    useEffect(() => {
+        if (onWorkingDaysCalculated) {
+            // Get the full month data
+            const monthStart = new Date(currentDateRange);
+            monthStart.setDate(1);
+            const monthEnd = new Date(monthStart);
+            monthEnd.setMonth(monthEnd.getMonth() + 1);
+            monthEnd.setDate(0);
+
+            const allMonthDates = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+            const fullMonthData = allMonthDates.map(date => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const attendanceRecord = attendanceData.find(record =>
+                    isSameDay(parseISO(record.date), date)
+                );
+                const workReport = workReports.find(report =>
+                    isSameDay(parseISO(report.date), date)
+                );
+
+                let minutesWorked = 0;
+                if (attendanceRecord?.checkIn && attendanceRecord?.checkOut) {
+                    minutesWorked = differenceInMinutes(
+                        parseISO(attendanceRecord.checkOut),
+                        parseISO(attendanceRecord.checkIn)
+                    );
+                } else if (attendanceRecord?.hoursWorked) {
+                    minutesWorked = attendanceRecord.hoursWorked * 60;
+                }
+
+                let completionStatus = "Not Completed";
+                if (attendanceRecord) {
+                    if (workReport) {
+                        if (workReport.status === "Approved" && minutesWorked >= MIN_COMPLETION_MINUTES) {
+                            completionStatus = "Completed";
+                        } else if (workReport.status === "Approved") {
+                            completionStatus = "Partially Completed";
+                        } else if (workReport.status === "Pending") {
+                            completionStatus = "Pending Approval";
+                        } else {
+                            completionStatus = "Rejected";
+                        }
+                    } else if (minutesWorked >= MIN_COMPLETION_MINUTES) {
+                        completionStatus = "Worked (No Report)";
+                    } else {
+                        completionStatus = "Incomplete";
+                    }
+                }
+
+                return {
+                    date: dateStr,
+                    status: attendanceRecord?.status || "Absent",
+                    hoursWorked: minutesWorked / 60,
+                    completionStatus
+                };
+            });
+            // Calculate working days (must have worked at least 8h45m and work report not rejected)
+            const workingDays = fullMonthData.filter(day =>
+                day.hoursWorked >= MIN_COMPLETION_MINUTES / 60 &&
+                day.completionStatus !== "Rejected"
+            ).length;
+
+            // Calculate week offs (1 week off for every 7 days absent)
+            const absentDays = fullMonthData.filter(day =>
+                day.status === "Absent"
+            ).length;
+            const weekOffs = Math.floor(absentDays / 7);
+
+            // Send data to parent component
+            onWorkingDaysCalculated({
+                workingDays,
+                weekOffs,
+                fullMonthData
+            });
+        }
+    }, [processedData, onWorkingDaysCalculated, currentDateRange, attendanceData, workReports]);
+
 
     const totals = useMemo(() => {
         const completedDays = processedData.filter(d =>
