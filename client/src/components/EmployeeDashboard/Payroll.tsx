@@ -19,7 +19,7 @@ const usePayrollData = () => {
     const [name, setName] = useState("");
     const [empId, setEmpId] = useState("");
     const [salary, setSalary] = useState(0);
-    const [deduction, setDeduction] = useState(0);
+    const [deduction] = useState(0);
     const [pendingWorkReport, setPendingWorkReport] = useState<WorkReport[] | null>(null);
 
     useEffect(() => {
@@ -54,7 +54,7 @@ const usePayrollData = () => {
             try {
                 const data = await fetchSalary(token, user.employeeId);
                 setSalary(data.baseSalary);
-                setDeduction(data.deductions);
+
             } catch (error: any) {
                 setError(error.message);
             }
@@ -123,8 +123,6 @@ const PayrollDashboard: React.FC = () => {
 
     useEffect(() => {
         if (workingDaysData && !hasLoggedData) {
-
-
             setHasLoggedData(true);
         }
     }, [workingDaysData, hasLoggedData]);
@@ -161,6 +159,7 @@ const PayrollDashboard: React.FC = () => {
         // Calculate daily rate and current earnings
         const dailyRate = payrollData.monthlySalary / daysInMonth;
         const compliantEarnings = dailyRate * compliantDays;
+        const deductions = payrollData.monthlySalary - compliantEarnings;
         const currentMonthAL = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
         return [
             {
@@ -186,7 +185,7 @@ const PayrollDashboard: React.FC = () => {
             },
             {
                 title: "Deductions",
-                value: formatCurrency(payrollData.deductions),
+                value: formatCurrency(deductions),
                 icon: FaChartBar,
                 change: "+500",
                 isPositive: false
