@@ -312,153 +312,152 @@ const PayrollTable: React.FC<PayrollTableProps> = ({ onWorkingDaysCalculated }) 
     }
 
     return (
-        <div className="w-full">
-            <motion.div
-                className="w-full max-w-6xl bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 p-8 rounded-2xl shadow-lg"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-            >
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <h3 className="text-white text-2xl font-bold">
-                        {viewMode === "weekly" ? "Weekly" : "Monthly"} Attendance Report
-                    </h3>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex bg-gray-800 rounded-lg p-1">
-                            <button
-                                className={`px-3 py-1 rounded-md ${viewMode === "weekly" ? "bg-blue-600 text-white" : "text-gray-300"}`}
-                                onClick={() => setViewMode("weekly")}
-                            >
-                                Weekly
-                            </button>
-                            <button
-                                className={`px-3 py-1 rounded-md ${viewMode === "monthly" ? "bg-blue-600 text-white" : "text-gray-300"}`}
-                                onClick={() => setViewMode("monthly")}
-                            >
-                                Monthly
-                            </button>
-                        </div>
+        <motion.div
+            className="w-full max-w-6xl bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 p-8 rounded-2xl shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+        >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h3 className="text-white text-2xl font-bold">
+                    {viewMode === "weekly" ? "Weekly" : "Monthly"} Attendance Report
+                </h3>
 
-                        <div className="flex items-center gap-2">
-                            <button
-                                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
-                                onClick={() => handleDateRangeChange("prev")}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </button>
+                <div className="flex items-center gap-4">
+                    <div className="flex bg-gray-800 rounded-lg p-1">
+                        <button
+                            className={`px-3 py-1 rounded-md ${viewMode === "weekly" ? "bg-blue-600 text-white" : "text-gray-300"}`}
+                            onClick={() => setViewMode("weekly")}
+                        >
+                            Weekly
+                        </button>
+                        <button
+                            className={`px-3 py-1 rounded-md ${viewMode === "monthly" ? "bg-blue-600 text-white" : "text-gray-300"}`}
+                            onClick={() => setViewMode("monthly")}
+                        >
+                            Monthly
+                        </button>
+                    </div>
 
-                            <span className="text-white text-sm">
-                                {format(dateRange.startDate, 'MMM d')} - {format(dateRange.endDate, 'MMM d, yyyy')}
-                            </span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                            onClick={() => handleDateRangeChange("prev")}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </button>
 
-                            <button
-                                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
-                                onClick={() => handleDateRangeChange("next")}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
+                        <span className="text-white text-sm">
+                            {format(dateRange.startDate, 'MMM d')} - {format(dateRange.endDate, 'MMM d, yyyy')}
+                        </span>
+
+                        <button
+                            className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                            onClick={() => handleDateRangeChange("next")}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-indigo-800/50 p-4 rounded-lg">
-                        <p className="text-gray-300 text-sm">Present Days</p>
-                        <p className="text-white text-2xl font-bold">{totals.presentDays}</p>
-                    </div>
-                    <div className="bg-indigo-800/50 p-4 rounded-lg">
-                        <p className="text-gray-300 text-sm">Completed Days</p>
-                        <p className="text-white text-2xl font-bold">{totals.completedDays}</p>
-                    </div>
-                    <div className="bg-indigo-800/50 p-4 rounded-lg">
-                        <p className="text-gray-300 text-sm">Total Hours</p>
-                        <p className="text-white text-2xl font-bold">{totals.totalHours.toFixed(1)}</p>
-                    </div>
-                    <div className="bg-indigo-800/50 p-4 rounded-lg">
-                        <p className="text-gray-300 text-sm">Completion Rate</p>
-                        <p className="text-white text-2xl font-bold">{totals.completionRate}%</p>
-                    </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-indigo-800/50 p-4 rounded-lg">
+                    <p className="text-gray-300 text-sm">Present Days</p>
+                    <p className="text-white text-2xl font-bold">{totals.presentDays}</p>
                 </div>
+                <div className="bg-indigo-800/50 p-4 rounded-lg">
+                    <p className="text-gray-300 text-sm">Completed Days</p>
+                    <p className="text-white text-2xl font-bold">{totals.completedDays}</p>
+                </div>
+                <div className="bg-indigo-800/50 p-4 rounded-lg">
+                    <p className="text-gray-300 text-sm">Total Hours</p>
+                    <p className="text-white text-2xl font-bold">{totals.totalHours.toFixed(1)}</p>
+                </div>
+                <div className="bg-indigo-800/50 p-4 rounded-lg">
+                    <p className="text-gray-300 text-sm">Completion Rate</p>
+                    <p className="text-white text-2xl font-bold">{totals.completionRate}%</p>
+                </div>
+            </div>
 
-                <div className="overflow-x-auto">
-                    <table className="min-w-full text-white">
-                        <thead>
-                            <tr className="border-b border-gray-700">
-                                <th className="py-3 px-4 text-left font-medium">Day</th>
-                                <th className="py-3 px-4 text-left font-medium">Date</th>
-                                <th className="py-3 px-4 text-left font-medium">Status</th>
-                                <th className="py-3 px-4 text-left font-medium">Hours</th>
-                                <th className="py-3 px-4 text-left font-medium">Work Report</th>
-                                <th className="py-3 px-4 text-left font-medium">Completion</th>
+            <div className="overflow-x-auto">
+                <table className="min-w-full text-white">
+                    <thead>
+                        <tr className="border-b border-gray-700">
+                            <th className="py-3 px-4 text-left font-medium">Day</th>
+                            <th className="py-3 px-4 text-left font-medium">Date</th>
+                            <th className="py-3 px-4 text-left font-medium">Status</th>
+                            <th className="py-3 px-4 text-left font-medium">Hours</th>
+                            <th className="py-3 px-4 text-left font-medium">Work Report</th>
+                            <th className="py-3 px-4 text-left font-medium">Completion</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {getPaginatedReports().map((report) => (
+                            <tr
+                                key={report.id}
+                                className={`border-b border-gray-700 transition-colors ${report.isRecorded ? "hover:bg-indigo-800/30" : "opacity-70"
+                                    }`}
+                            >
+                                <td className="py-3 px-4">{report.day}</td>
+                                <td className="py-3 px-4">{format(report.date, 'MMM d, yyyy')}</td>
+                                <td className="py-3 px-4">
+                                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.status)}`}>
+                                        {report.status}
+                                    </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                    {report.hoursWorked > 0 ? report.hoursDisplay : '-'}
+                                </td>
+                                <td className="py-3 px-4">
+                                    {report.hasWorkReport ? (
+                                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.workReportStatus || "")}`}>
+                                            {report.workReportStatus}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-400">Not Submitted</span>
+                                    )}
+                                </td>
+                                <td className="py-3 px-4">
+                                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.completionStatus)}`}>
+                                        {report.completionStatus}
+                                    </span>
+                                </td>
 
                             </tr>
-                        </thead>
-                        <tbody>
-                            {getPaginatedReports().map((report) => (
-                                <tr
-                                    key={report.id}
-                                    className={`border-b border-gray-700 transition-colors ${report.isRecorded ? "hover:bg-indigo-800/30" : "opacity-70"
-                                        }`}
-                                >
-                                    <td className="py-3 px-4">{report.day}</td>
-                                    <td className="py-3 px-4">{format(report.date, 'MMM d, yyyy')}</td>
-                                    <td className="py-3 px-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.status)}`}>
-                                            {report.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        {report.hoursWorked > 0 ? report.hoursDisplay : '-'}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        {report.hasWorkReport ? (
-                                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.workReportStatus || "")}`}>
-                                                {report.workReportStatus}
-                                            </span>
-                                        ) : (
-                                            <span className="text-gray-400">Not Submitted</span>
-                                        )}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(report.completionStatus)}`}>
-                                            {report.completionStatus}
-                                        </span>
-                                    </td>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {getTotalPages() > 1 && (
-                    <div className="mt-6 flex justify-center gap-4">
-                        <button
-                            className="px-4 py-2 bg-blue-600 rounded-lg text-white disabled:bg-gray-600 disabled:opacity-50 transition-colors"
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                        >
-                            Previous
-                        </button>
-                        <div className="flex items-center text-white">
-                            <span>{currentPage} of {getTotalPages()}</span>
-                        </div>
-                        <button
-                            className="px-4 py-2 bg-blue-600 rounded-lg text-white disabled:bg-gray-600 disabled:opacity-50 transition-colors"
-                            disabled={currentPage === getTotalPages()}
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                        >
-                            Next
-                        </button>
+            {getTotalPages() > 1 && (
+                <div className="mt-6 flex justify-center gap-4">
+                    <button
+                        className="px-4 py-2 bg-blue-600 rounded-lg text-white disabled:bg-gray-600 disabled:opacity-50 transition-colors"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                        Previous
+                    </button>
+                    <div className="flex items-center text-white">
+                        <span>{currentPage} of {getTotalPages()}</span>
                     </div>
-                )}
-            </motion.div>
-        </div>
+                    <button
+                        className="px-4 py-2 bg-blue-600 rounded-lg text-white disabled:bg-gray-600 disabled:opacity-50 transition-colors"
+                        disabled={currentPage === getTotalPages()}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
+        </motion.div>
     );
 };
 

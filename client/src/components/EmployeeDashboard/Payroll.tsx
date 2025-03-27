@@ -258,10 +258,8 @@ const PayrollDashboard: React.FC = () => {
             </motion.div>
 
             {/* Weekly Work Report Table */}
-            <div className="w-80%">
-                <PayrollTable onWorkingDaysCalculated={handleWorkingDaysCalculated} />
-            </div>
 
+            <PayrollTable onWorkingDaysCalculated={handleWorkingDaysCalculated} />
 
             {/* NEW: Monthly Data Display Component */}
             {workingDaysData?.fullMonthData && (
