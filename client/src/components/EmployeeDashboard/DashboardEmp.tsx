@@ -41,23 +41,71 @@ const EmployeeDashboard = () => {
     useEffect(() => {
         const fetchAttendanceData = async () => {
             try {
+                // 1. Fetch attendance data
                 const data = await attendanceService.getEmployeeAttendance();
 
-                const groupedByDate = data.reduce((acc: Record<string, AttendanceItem>, curr: AttendanceItem) => {
-                    const date = moment(curr.date).format("YYYY-MM-DD");
-                    if (!acc[date]) {
-                        acc[date] = { ...curr, status: curr.status };
+                // 2. Filter current month's start and end dates
+                const currentMonthStart = moment().startOf('month');
+                const currentMonthEnd = moment().endOf('month');
+
+                // 3. Group data by date to ensure unique days
+                const groupedByDate = data.reduce((acc: Record<string, AttendanceItem>, curr: any) => {
+                    const dateKey = moment(curr.date).format('YYYY-MM-DD');
+                    if (!acc[dateKey]) {
+                        acc[dateKey] = curr;
                     }
                     return acc;
-                }, {});
+                }, {} as Record<string, AttendanceItem>);
 
-                const uniqueAttendance = Object.values(groupedByDate) as AttendanceItem[];
+                const uniqueAttendance: AttendanceItem[] = Object.values(groupedByDate);
 
-                const totalAttendance = uniqueAttendance.filter((item) => item.status === 'Present').length;
-                const totalAbsent = uniqueAttendance.filter((item) => item.status === 'Absent').length;
-                const leavesTaken = uniqueAttendance.filter((item) => item.status === 'Leave').length;
+                // 4. Filter data for the current month
+                const currentMonthData = uniqueAttendance.filter((item) => {
+                    const itemDate = moment(item.date);
+                    return itemDate.isBetween(currentMonthStart, currentMonthEnd, null, '[]');
+                });
 
-                setAttendanceData({ totalAttendance, totalAbsent, leavesTaken, complaints: 0 });
+                // 5. Get all dates in the current month (from the 1st to today)
+                const allDatesInMonth: string[] = [];
+                let currentDate = currentMonthStart.clone();
+                while (currentDate.isSameOrBefore(currentMonthEnd)) {
+                    allDatesInMonth.push(currentDate.format('YYYY-MM-DD'));
+                    currentDate.add(1, 'day');
+                }
+
+                // 6. Create map of existing attendance dates (unique)
+                const allUniqueDaysThisMonth = new Set(
+                    currentMonthData.map((item) => moment(item.date).format('YYYY-MM-DD'))
+                );
+
+                // 7. Calculate present days (only weekdays up to today)
+                const totalAttendance = currentMonthData.filter((item) => {
+                    const date = moment(item.date);
+                    const isPastDate = date.isSameOrBefore(moment(), 'day');
+                    return item.status === 'Present' && isPastDate;
+                }).length;
+
+                // 8. Calculate missing dates (absent days)
+                const missingDatesCount = allDatesInMonth.filter(date => {
+                    const momentDate = moment(date);
+                    const isPastDate = momentDate.isSameOrBefore(moment(), 'day');
+                    return isPastDate && !allUniqueDaysThisMonth.has(date); // Check against unique attendance dates
+                }).length;
+
+                // 9. Calculate total absent days (including missing dates)
+                const totalAbsent = currentMonthData.filter((item) => item.status === 'Absent').length + missingDatesCount;
+
+                // 10. Calculate leave days
+                const leavesTaken = currentMonthData.filter((item) => item.status === 'Leave').length;
+
+                // 11. Update state with attendance data
+                setAttendanceData({
+                    totalAttendance,
+                    totalAbsent,
+                    leavesTaken,
+                    complaints: 0
+                });
+
             } catch (error) {
                 console.error("Error fetching attendance data", error);
             }
@@ -65,6 +113,7 @@ const EmployeeDashboard = () => {
 
         fetchAttendanceData();
     }, []);
+
 
     const stats = [
         {
