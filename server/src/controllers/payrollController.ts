@@ -55,3 +55,59 @@ export const getPayroll = async (
     });
   }
 };
+
+//Admin all in one
+
+export const getTotalSalary = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    // Fetch total salary for all employees
+    const totalSalaryResult = await Payroll.aggregate([
+      { $group: { _id: null, totalSalary: { $sum: "$baseSalary" } } },
+    ]);
+
+    // Fetch total salary per department with department names
+    const departmentSalary = await Payroll.aggregate([
+      {
+        $group: {
+          _id: "$department", // Use department ObjectId from Payroll
+          departmentTotal: { $sum: "$baseSalary" },
+        },
+      },
+      {
+        $lookup: {
+          from: "departments", // Ensure this is the correct collection name
+          localField: "_id", // department ObjectId from Payroll
+          foreignField: "_id", // _id in Departments collection
+          as: "departmentDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$departmentDetails", // Ensure there's a departmentDetails object
+          preserveNullAndEmptyArrays: true, // If no department data, still include the record
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          departmentName: "$departmentDetails.departmentName", // Fetch department name
+          departmentTotal: 1, // Fetch the department's total salary
+        },
+      },
+    ]);
+
+    const totalSalary = totalSalaryResult[0]?.totalSalary || 0;
+
+    // Return the response
+    res.status(200).json({
+      totalSalary,
+      departmentSalary, // Returns department name and salary
+    });
+  } catch (error) {
+    console.error("Error fetching salary data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

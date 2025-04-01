@@ -4,6 +4,16 @@ import { fetchWorkReports } from "./workreportService";
 const API_URL = "https://hrms-backend-7176.onrender.com/api/payroll";
 // const API_URL = "http://localhost:8000/api/payroll";
 
+export interface PayrollResponse {
+  totalSalary: number;
+  departmentSalary: DepartmentSalary[];
+}
+
+export interface DepartmentSalary {
+  departmentTotal: number;
+  departmentName: string;
+}
+
 // Define TypeScript interfaces
 export interface WorkReport {
   id: number;
@@ -183,3 +193,37 @@ export const reportData = async () => {
     return null;
   }
 };
+
+export const fetchPayrollservice =
+  async (): Promise<PayrollResponse | null> => {
+    try {
+      const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user");
+
+      if (!token || !user) {
+        console.error("Token or user data missing from local storage");
+        return null;
+      }
+
+      const userData = JSON.parse(user);
+
+      const response = await axios.post(
+        `${API_URL}/totalsalary`,
+        { role: "admin", user: userData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return {
+        totalSalary: response.data.totalSalary,
+        departmentSalary: response.data.departmentSalary,
+      };
+    } catch (error) {
+      console.error("Error fetching payroll data:", error);
+      return null;
+    }
+  };
