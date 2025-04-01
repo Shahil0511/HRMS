@@ -128,9 +128,42 @@ const EmployeeDashboard = () => {
                 }
             }
         },
-        { label: "Total Absent This Month", value: attendanceData.totalAbsent, icon: <FaUserTimes /> },
-        { label: "Leaves Taken", value: attendanceData.leavesTaken, icon: <FaClipboardList /> },
-        { label: "Work Reports", value: workReport, icon: <FaCalendarDay /> },
+        {
+            label: "Total Absent This Month", value: attendanceData.totalAbsent, icon: <FaUserTimes />, onClick: () => {
+
+                if (user && user.id) {
+
+                    navigate(`/employee/attendance-list`);
+                } else {
+                    console.log("User ID is undefined");
+                    console.error("User ID is undefined");
+                }
+            }
+        },
+        {
+            label: "Leaves Taken", value: attendanceData.leavesTaken, icon: <FaClipboardList />, onClick: () => {
+
+                if (user && user.id) {
+
+                    navigate(`/employee/leaves`);
+                } else {
+                    console.log("User ID is undefined");
+                    console.error("User ID is undefined");
+                }
+            }
+        },
+        {
+            label: "Work Reports", value: workReport, icon: <FaCalendarDay />, onClick: () => {
+
+                if (user && user.id) {
+
+                    navigate(`/employee/workreports`);
+                } else {
+                    console.log("User ID is undefined");
+                    console.error("User ID is undefined");
+                }
+            }
+        },
         {
             label: "Profile",
             value: "View",
@@ -146,7 +179,18 @@ const EmployeeDashboard = () => {
                 }
             }
         },
-        { label: "Payroll", value: "$0", icon: <FaMoneyBillWave /> },
+        {
+            label: "Payroll", value: "$", icon: <FaMoneyBillWave />, onClick: () => {
+
+                if (user && user.id) {
+
+                    navigate(`/employee/payroll`);
+                } else {
+                    console.log("User ID is undefined");
+                    console.error("User ID is undefined");
+                }
+            }
+        },
         { label: "Complaints", value: attendanceData.complaints, icon: <FaExclamationCircle /> },
         { label: "Others", value: 0, icon: <FaEllipsisH /> }
     ];
