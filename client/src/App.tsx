@@ -49,6 +49,7 @@ import Payrole from "./components/EmployeeDashboard/Payroll";
 import ManagerAttendanceList from "./components/ManagerDashboard/attendanceUtils/ManagerAttendanceList";
 import WorkReportForm from "./components/EmployeeDashboard/workReports/WorkReportForm";
 import WorkReportDetail from "./components/ManagerDashboard/workreport/WorkReportDetails";
+import AdminEmployeAttendaceView from "./components/AdminDashboard/attendanceUtils/AdminEmployeAttendaceView";
 
 
 
@@ -97,6 +98,7 @@ const App = () => {
           <Route path="employee" element={<Employee />} />
           <Route path="leaves" element={<Leaves />} />
           <Route path="attendance" element={<Attendance />} />
+          <Route path="attendance/:id" element={<AdminEmployeAttendaceView />} />
           <Route path="payroll" element={<Payroll />} />
           <Route path="workreports" element={<WorkReports />} />
           <Route path="/admin/workreports/:id" element={<WorkReportDetail />} />

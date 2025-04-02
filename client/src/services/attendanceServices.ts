@@ -63,6 +63,9 @@ export const getEmployeeAttendance = async () => apiRequest("employee", "GET");
  */
 export const getTodayPresentEmployees = async () => apiRequest("today", "GET");
 
+export const getEmployeeAttendanceForAdmin = async (employeeId: string) =>
+  apiRequest(`employee/${employeeId}`, "GET");
+
 // Exporting all attendance-related functions as a service
 const attendanceService = {
   checkIn,
@@ -70,5 +73,6 @@ const attendanceService = {
   getAttendanceRecords,
   getEmployeeAttendance,
   getTodayPresentEmployees,
+  getEmployeeAttendanceForAdmin,
 };
 export default attendanceService;

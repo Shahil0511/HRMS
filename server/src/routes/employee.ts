@@ -7,6 +7,7 @@ import {
   getEmployeeById,
   getEmployeeProfile,
   getEmployeesByDepartment,
+  getUserByAttendanceId,
 } from "../controllers/employeeController";
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
@@ -63,6 +64,12 @@ router.post(
   "/employees/department_employee",
   verifyToken,
   getEmployeesByDepartment
+);
+
+router.get(
+  "/employees/attendance/:attendanceId",
+  verifyToken,
+  getUserByAttendanceId
 );
 
 export default router;

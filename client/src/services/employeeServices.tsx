@@ -207,3 +207,22 @@ export const getEmployeesByDepartment = async () => {
         throw error;
     }
 };
+
+
+
+export const fetchEmployeeById = async (attendanceId: string) => {
+    try {
+        const token = handleTokenValidation();
+        const response = await axios.get(`${API_URL}/attendance/${attendanceId}`, {
+            headers: setAuthHeader(token),
+        });
+        return {
+            success: true,
+            name: response.data.data.name,
+            data: response.data.data
+        };
+    } catch (error) {
+        console.error("Error fetching employee:", error);
+        return { success: false, message: "Failed to fetch employee" };
+    }
+};

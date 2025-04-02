@@ -264,3 +264,36 @@ export const getEmployeeAttendanceThisMonth = async (
     );
   }
 };
+
+export const getEmployeeAttendancebyID = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({ message: "Attendance record ID is required" });
+      return;
+    }
+
+    // Find attendance record by _id
+    const attendanceRecord = await Attendance.findById(id);
+
+    if (!attendanceRecord) {
+      res.status(404).json({ message: "Attendance record not found" });
+      return;
+    }
+
+    const empId = attendanceRecord.employeeId;
+
+    // Fetch all attendance records of the employee
+    const allAttendanceRecords = await Attendance.find({ employeeId: empId });
+
+    res.status(200).json(allAttendanceRecords);
+  } catch (error) {
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Server Error" });
+    }
+  }
+};

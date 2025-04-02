@@ -4,6 +4,7 @@ import { IUser, User } from "../models/UserSchema";
 import { Employee, IEmployee } from "../models/EmployeeSchema";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import Attendance from "../models/AttendanceSchema";
 
 interface RequestWithUser extends Request {
   user?: any;
@@ -476,5 +477,49 @@ export const getEmployeesByDepartment = async (
       message: "Server error",
       error: error instanceof Error ? error.message : "Unknown error",
     });
+  }
+};
+
+export const getUserByAttendanceId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { attendanceId } = req.params;
+
+    let response;
+    let status = 200;
+
+    if (!attendanceId || !mongoose.Types.ObjectId.isValid(attendanceId)) {
+      response = { success: false, message: "Invalid Attendance ID" };
+      status = 400;
+    } else {
+      const attendance = await Attendance.findById(attendanceId);
+      if (!attendance) {
+        response = { success: false, message: "Attendance not found" };
+        status = 404;
+      } else {
+        const user = await User.findOne({ _id: attendance.employeeId }).select(
+          "-password -refreshToken"
+        );
+        response = user
+          ? { success: true, data: user }
+          : {
+              success: false,
+              message: "User not found",
+              employeeId: attendance.employeeId,
+            };
+        status = user ? 200 : 404;
+      }
+    }
+
+    res.status(status).json(response);
+  } catch (error: any) {
+    const errorResponse = {
+      success: false,
+      message: "Server error",
+      error: error.message,
+    };
+    res.status(500).json(errorResponse);
   }
 };

@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { loadAdminAttendance } from "../../store/slices/attendanceSlice";
 import { RootState, AppDispatch } from "../../store/store";
 import ContentLoader from "react-content-loader";
+import { useNavigate } from "react-router-dom";
 
 const AdminAttendance = () => {
+    const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>();
     const { adminRecords } = useSelector((state: RootState) => state.attendance);
 
@@ -39,6 +41,11 @@ const AdminAttendance = () => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+
+    const handelClick = (id: string) => {
+        navigate(`/admin/attendance/${id}`);
+    };
+
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 text-white p-6">
@@ -90,7 +97,7 @@ const AdminAttendance = () => {
                                                     <td className="border border-gray-700 px-4 py-3">{record.checkOut || "N/A"}</td>
                                                     <td className="border border-gray-700 px-4 py-3">
                                                         <div className="flex gap-2">
-                                                            <button className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
+                                                            <button onClick={() => handelClick(record.id)} className="bg-green-500 px-2 py-1 rounded hover:bg-green-600">View</button>
                                                         </div>
                                                     </td>
                                                 </tr>
