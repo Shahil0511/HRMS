@@ -11,14 +11,13 @@ interface Department {
 }
 
 const Department: React.FC = () => {
-    console.log("redeered")
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [, setDepartments] = useState<Department[]>([]);
     const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const itemsPerPage = 6;
+    const itemsPerPage = 10;
     const navigate = useNavigate();
 
     // Fetch departments from the API
@@ -96,6 +95,9 @@ const Department: React.FC = () => {
     const handleAddDepartment = () => {
         navigate("/admin/add-department");
     };
+    const handleViewClick = (id: string) => {
+        navigate(`/admin/department/${id}`);
+    };
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 flex flex-col">
@@ -124,7 +126,7 @@ const Department: React.FC = () => {
             </div>
 
             {/* Table Section */}
-            <div className="flex-1 px-4 md:px-8 pb-6">
+            <div className=" px-4 md:px-8 pb-6">
                 <div className="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 rounded-2xl shadow-xl overflow-hidden">
                     <div className="overflow-x-auto w-full">
                         <table className="w-full border-collapse text-white min-w-max">
@@ -162,7 +164,7 @@ const Department: React.FC = () => {
                                                 </td>
                                                 <td className="border border-gray-700 px-4 py-3">
                                                     <div className="flex flex-wrap justify-center gap-2">
-                                                        <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
+                                                        <button onClick={() => handleViewClick(department._id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm transform transition-transform duration-300 hover:scale-105">
                                                             View
                                                         </button>
                                                         <button className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm sm:inline-block hidden transform transition-transform duration-300 hover:scale-105">
@@ -190,7 +192,7 @@ const Department: React.FC = () => {
 
             {/* Pagination Section */}
             {filteredDepartments.length > 0 && (
-                <div className="px-4 md:px-8 pb-6">
+                <div className="px-4 md:px-8 ">
                     <div className="flex flex-wrap justify-center gap-2">
                         <button
                             onClick={handlePrevPage}

@@ -50,6 +50,7 @@ import ManagerAttendanceList from "./components/ManagerDashboard/attendanceUtils
 import WorkReportForm from "./components/EmployeeDashboard/workReports/WorkReportForm";
 import WorkReportDetail from "./components/ManagerDashboard/workreport/WorkReportDetails";
 import AdminEmployeAttendaceView from "./components/AdminDashboard/attendanceUtils/AdminEmployeAttendaceView";
+import SingleDepartment from "./components/AdminDashboard/departmentUtils/SingleDepartment";
 
 
 
@@ -94,6 +95,7 @@ const App = () => {
         >
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="department" element={<Department />} />
+          <Route path="department/:id" element={<SingleDepartment />} />
           <Route path="add-department" element={<AddDepartment />} />
           <Route path="employee" element={<Employee />} />
           <Route path="leaves" element={<Leaves />} />

@@ -3,14 +3,7 @@ import { Department } from "../models/DepartmentSchema";
 import { Employee } from "../models/EmployeeSchema";
 import Attendance from "../models/AttendanceSchema";
 import { User } from "../models/UserSchema";
-import { Types } from "mongoose";
-
-// Types
-interface IUser {
-  _id: string;
-  name: string;
-  employeeId: string;
-}
+import mongoose, { Types } from "mongoose";
 
 // Constants
 const DEFAULT_PAGE = 1;
@@ -272,5 +265,30 @@ export const getTodayTotalDepartmentPresent = async (
     }
   } catch (error) {
     handleError(res, error, "Error fetching today's department attendance");
+  }
+};
+
+export const getDepartmentDetails = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // Find the department by ID
+    const department = await Department.findById(id);
+    if (!department) {
+      res.status(404).json({ message: "Department not found" });
+      return;
+    }
+    // Fetch employees linked to the department
+    const employees = await Employee.find({
+      department: new mongoose.Types.ObjectId(department._id as string),
+    });
+
+    res.json({ department, employees });
+  } catch (error) {
+    console.error("Error fetching department details:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

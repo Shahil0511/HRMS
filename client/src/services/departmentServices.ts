@@ -68,3 +68,8 @@ export const getAllDepartments = async () => {
 export const getTotalDepartment = async () => {
   return getRequest(`${API_URL}/totaldepartment`);
 };
+
+export const getDepartmentDetails = async (departmentId: string) => {
+  const response = await getRequest(`${API_URL}/${departmentId}`);
+  return response;
+};

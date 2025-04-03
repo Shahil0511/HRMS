@@ -83,8 +83,6 @@ const Dashboard = () => {
                     return report.date === today;
                 });
 
-                console.log("Filtered Today's Reports:", todaysReports.length);
-
                 setData((prevData) => ({
                     ...prevData,
                     todaysWorksheet: todaysReports.length,

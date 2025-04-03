@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addDepartment,
+  getDepartmentDetails,
   getDepartments,
   getTodayTotalDepartmentPresent,
   getTotalDepartment,
@@ -24,5 +25,6 @@ router.post("/departments", verifyToken, isAdmin, addDepartment);
 router.get("/departments", getDepartments);
 router.get("/departments/totaldepartment", getTotalDepartment);
 router.post("/department/todayPresent", getTodayTotalDepartmentPresent);
+router.get("/departments/:id", getDepartmentDetails);
 
 export default router;
