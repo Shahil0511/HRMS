@@ -10,6 +10,7 @@ export interface PayrollResponse {
 }
 
 export interface DepartmentSalary {
+  _id: string;
   percentage: any;
   departmentTotal: number;
   departmentName: string;
@@ -218,6 +219,7 @@ export const fetchPayrollservice =
           },
         }
       );
+
       return {
         totalSalary: response.data.totalSalary,
         departmentSalary: response.data.departmentSalary,

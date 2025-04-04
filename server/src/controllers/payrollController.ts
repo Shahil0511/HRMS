@@ -92,7 +92,7 @@ export const getTotalSalary = async (
       },
       {
         $project: {
-          _id: 0,
+          _id: 1,
           departmentName: "$departmentDetails.departmentName", // Fetch department name
           departmentTotal: 1, // Fetch the department's total salary
         },

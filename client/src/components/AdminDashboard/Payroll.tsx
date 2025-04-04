@@ -12,6 +12,9 @@ import { fetchPayrollservice, PayrollResponse } from "../../services/payrollServ
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, Legend } from "recharts";
 import ContentLoader from "react-content-loader";
 import React from "react";
+import { useNavigate } from "react-router-dom";
+
+
 
 // Color palette for charts
 const COLORS = [
@@ -104,6 +107,7 @@ const TabLoader = () => (
 );
 
 const Payroll = () => {
+    const navigate = useNavigate()
     const [payrollData, setPayrollData] = useState<PayrollResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -185,8 +189,8 @@ const Payroll = () => {
         return { stats: statsData, formattedDateTime: dateTime };
     }, [payrollData]);
 
-    const handleDepartmentClick = (departmentName: string) => {
-        console.log(`Navigating to ${departmentName} department`);
+    const handleDepartmentClick = (id: string) => {
+        navigate(`/admin/department/${id}`);
     };
 
     const CustomTooltip = ({ active, payload }: any) => {
@@ -317,13 +321,13 @@ const Payroll = () => {
                             <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                                 {payrollData?.departmentSalary.map((dept, index) => (
                                     <motion.div
-                                        key={index}
+                                        key={dept._id}
                                         className="group bg-gray-800 bg-opacity-50 p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-indigo-900 hover:bg-opacity-30 transition-all"
                                         whileHover={{ scale: 1.01 }}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ duration: 0.3, delay: index * 0.05 }}
-                                        onClick={() => handleDepartmentClick(dept.departmentName)}
+                                        onClick={() => handleDepartmentClick(dept._id)}
                                     >
                                         <div>
                                             <p className="text-white font-medium group-hover:text-indigo-300 transition-colors">
