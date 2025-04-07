@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUserTie, FaCalendarAlt, FaPhone, FaEnvelope, FaMapMarkerAlt, FaUsers, FaFileAlt, FaMoneyBillWave, FaIdBadge } from "react-icons/fa";
 import { format } from "date-fns";
@@ -32,6 +32,7 @@ interface Department {
 }
 
 const SingleDepartment = () => {
+    const navigate = useNavigate()
     const { id } = useParams<{ id: string }>();
     const [department, setDepartment] = useState<Department | null>(null);
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -64,6 +65,10 @@ const SingleDepartment = () => {
     const formatDate = (dateString: Date) => {
         return format(new Date(dateString), "MMMM dd, yyyy");
     };
+
+    const handlePayrollClick = (id: string) => {
+        navigate(`/admin/employee/payroll/${id}`)
+    }
 
     if (loading) {
         return (
@@ -281,10 +286,10 @@ const SingleDepartment = () => {
                                             <span className="font-medium text-blue-300">Reports: </span>
                                             <span className="text-green-400 font-bold">{employee.workReports.length}</span>
                                         </div>
-                                        <div className="text-sm">
-                                            <span className="font-medium text-blue-300">Payrolls: </span>
-                                            <span className="text-purple-400 font-bold">{employee.payroll.length}</span>
-                                        </div>
+                                        <button onClick={() => handlePayrollClick(employee._id)} className="text-sm bg-green-600 py-2 px-4 rounded-xl">
+                                            <span className="font-medium text-white">Payrolls: </span>
+                                            <span className="text-red-500 font-bold">{employee.payroll.length}</span>
+                                        </button>
                                     </div>
                                 </motion.div>
                             ))}
