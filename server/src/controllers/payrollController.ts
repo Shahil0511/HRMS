@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import { Payroll } from "../models/PayrollSchema";
 import { Employee } from "../models/EmployeeSchema";
+import mongoose from "mongoose";
+
+import Attendance from "../models/AttendanceSchema";
+import { User } from "../models/UserSchema";
 
 // Controller to get payroll data for an employee
 export const getPayroll = async (
@@ -112,22 +116,55 @@ export const getTotalSalary = async (
   }
 };
 
-export const fechEmployeeName = async (
+export const getPayrollAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const { id } = req.params;
 
-    const employee = await Employee.findById(id);
+    // Validate Employee ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: "Invalid employee ID format" });
+      return;
+    }
+
+    // 1. Fetch the employee by ID
+    const employee = await Employee.findById(id).populate("workReports").lean();
+
     if (!employee) {
       res.status(404).json({ message: "Employee not found" });
       return;
     }
-    const name = `${employee.firstName} ${employee.lastName}`;
-    res.status(200).json({ name });
+
+    // 2. Find the linked User using employeeId field
+    const user = await User.findOne({ employeeId: id }).lean();
+
+    if (!user) {
+      res.status(404).json({ message: "User not found for this employee" });
+      return;
+    }
+
+    // 3. Use user._id to fetch attendance
+    const attendance = await Attendance.find({ employeeId: user._id }).lean();
+
+    // 4. Get payroll (assuming one-to-one)
+    const payroll = await Payroll.findOne({ employee: id }).lean();
+
+    // 5. Construct response
+    const responseData = {
+      name: `${employee.firstName} ${employee.lastName}`,
+      salary: payroll?.baseSalary || 0,
+      workReports: employee.workReports || [],
+      attendance: attendance || [],
+    };
+
+    res.status(200).json(responseData);
   } catch (error) {
-    console.error("Error fetching employee name:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching payroll:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 };

@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getPayroll,
   getTotalSalary,
-  fechEmployeeName,
+  getPayrollAdmin,
 } from "../controllers/payrollController";
 
 import { verifyToken } from "../middlewares/verifyToken";
@@ -12,6 +12,6 @@ const router = Router();
 router.post("/", getPayroll);
 router.post("/totalsalary", verifyToken, isAdmin, getTotalSalary);
 
-router.get("/admin/employees/:id", verifyToken, isAdmin, fechEmployeeName);
+router.get("/admin/employees/:id", verifyToken, isAdmin, getPayrollAdmin);
 
 export default router;
