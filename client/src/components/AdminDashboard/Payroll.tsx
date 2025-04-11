@@ -162,7 +162,7 @@ const Payroll = () => {
         const statsData = [
             {
                 title: "Total Payroll",
-                value: `$${payrollData.totalSalary.toLocaleString()}`,
+                value: `₹${payrollData.totalSalary.toLocaleString()}`,
                 icon: FiDollarSign,
                 description: "Total company payroll expenditure"
             },
@@ -176,11 +176,11 @@ const Payroll = () => {
                 title: "Highest Department",
                 value: highestDept.departmentName,
                 icon: FiTrendingUp,
-                description: `$${highestDept.departmentTotal.toLocaleString()}`
+                description: `₹${highestDept.departmentTotal.toLocaleString()}`
             },
             {
                 title: "Average Department",
-                value: `$${Math.round(payrollData.totalSalary / payrollData.departmentSalary.length).toLocaleString()}`,
+                value: `₹${Math.round(payrollData.totalSalary / payrollData.departmentSalary.length).toLocaleString()}`,
                 icon: FiPieChart,
                 description: "Average department payroll"
             }
@@ -199,7 +199,7 @@ const Payroll = () => {
             return (
                 <div className="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
                     <p className="font-bold text-white">{data.departmentName}</p>
-                    <p className="text-indigo-300">${data.departmentTotal.toLocaleString()}</p>
+                    <p className="text-indigo-300">₹{data.departmentTotal.toLocaleString()}</p>
                     <p className="text-purple-500">{data.percentage?.toFixed(1)}% of total</p>
                 </div>
             );
@@ -339,7 +339,7 @@ const Payroll = () => {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <p className="text-white font-bold">
-                                                ${dept.departmentTotal.toLocaleString()}
+                                                ₹{dept.departmentTotal.toLocaleString()}
                                             </p>
                                             <FiChevronRight className="text-gray-400 group-hover:text-white transition-colors" />
                                         </div>
@@ -400,30 +400,39 @@ const Payroll = () => {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
                                             data={payrollData?.departmentSalary}
-                                            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                                            margin={{ top: 20, right: 30, left: 40, bottom: 60 }}
                                             layout="vertical"
                                         >
+
                                             <XAxis type="number" tick={{ fill: '#fff' }} />
                                             <YAxis
                                                 type="category"
                                                 dataKey="departmentName"
                                                 width={100}
-                                                tick={{ fill: '#fff', fontSize: 12 }}
+                                                tick={{ fill: '#fff', fontSize: 14 }}
                                             />
                                             <Tooltip content={<CustomTooltip />} />
-                                            <Legend />
+                                            <Legend
+                                                wrapperStyle={{
+                                                    color: 'white',
+                                                }}
+                                            />
+
                                             <Bar
                                                 dataKey="departmentTotal"
                                                 name="Salary"
                                                 animationDuration={1500}
+                                                label={{
+                                                    position: 'right',
+                                                    fill: 'white',
+                                                    fontSize: 14,
+                                                }}
                                             >
                                                 {payrollData?.departmentSalary.map((_entry, index) => (
-                                                    <Cell
-                                                        key={`cell-${index}`}
-                                                        fill={COLORS[index % COLORS.length]}
-                                                    />
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Bar>
+
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}
