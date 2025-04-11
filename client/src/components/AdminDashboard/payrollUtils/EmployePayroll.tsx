@@ -66,7 +66,7 @@ const EmployeePayroll = () => {
     const [productivityChartData, setProductivityChartData] = useState<ChartData[]>([]);
 
     const MS_PER_MINUTE = 60 * 1000;
-    const requiredMinutes = 8.5 * 60 + 45;
+    const requiredMinutes = 8 * 60 + 45;
 
     // Calculate values based on the selected month
     const calculateMonthlyValues = () => {
