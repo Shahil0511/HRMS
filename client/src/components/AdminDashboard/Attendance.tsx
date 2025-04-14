@@ -9,7 +9,6 @@ const AdminAttendance = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>();
     const { adminRecords } = useSelector((state: RootState) => state.attendance);
-
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(true);
     const itemsPerPage = 6;
@@ -76,11 +75,11 @@ const AdminAttendance = () => {
                                         {loading
                                             ? Array.from({ length: itemsPerPage }).map((_, index) => (
                                                 <tr key={index} className="bg-gray-900 bg-opacity-50">
-                                                    <td className="border border-gray-700 px-2 py-2"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-2 py-2 hidden sm:table-cell"><SkeletonLoader /></td>
                                                     <td className="border border-gray-700 px-2 py-2"><SkeletonLoader /></td>
                                                     <td className="border border-gray-700 px-2 py-2 hidden md:table-cell"><SkeletonLoader /></td>
                                                     <td className="border border-gray-700 px-2 py-2"><SkeletonLoader /></td>
-                                                    <td className="border border-gray-700 px-2 py-2 hidden xs:table-cell"><SkeletonLoader /></td>
+                                                    <td className="border border-gray-700 px-2 py-2"><SkeletonLoader /></td>
                                                     <td className="border border-gray-700 px-2 py-2"><SkeletonLoader /></td>
                                                 </tr>
                                             ))
@@ -96,7 +95,7 @@ const AdminAttendance = () => {
                                                     <td className="border border-gray-700 px-2 py-2 text-xs md:text-sm">
                                                         {record.checkIn || "N/A"}
                                                     </td>
-                                                    <td className="border border-gray-700 px-2 py-2 text-xs md:text-sm xs:table-cell">
+                                                    <td className="border border-gray-700 px-2 py-2 text-xs md:text-sm">
                                                         {record.checkOut || "N/A"}
                                                     </td>
                                                     <td className="border border-gray-700 px-2 py-2 text-xs md:text-sm">
