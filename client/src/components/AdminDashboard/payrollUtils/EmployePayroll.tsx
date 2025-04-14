@@ -5,6 +5,7 @@ import { fetchEmployeePayrollData } from "../../../services/adminEmployePayrollS
 import { FiFilter, FiCheck, FiX, FiClock, FiDollarSign, FiTrendingUp, FiAlertCircle, FiMinusCircle, FiUserCheck, FiUserX, FiPieChart, FiCalendar, FiPrinter, FiDownload } from "react-icons/fi";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addWeeks, addMonths, startOfMonth, endOfMonth, getDaysInMonth } from "date-fns";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { FaRupeeSign } from "react-icons/fa";
 
 interface WorkReport {
     _id: string;
@@ -379,7 +380,7 @@ const EmployeePayroll = () => {
             <div className="flex justify-between items-start">
                 <div>
                     <p className="text-indigo-200 text-sm font-medium mb-1">{title}</p>
-                    <p className="text-white text-2xl font-bold">{typeof value === 'number' ? `$${value.toLocaleString()}` : value}</p>
+                    <p className="text-white text-2xl font-bold">{typeof value === 'number' ? `₹${value.toLocaleString()}` : value}</p>
                     {trend && trendValue && (
                         <div className={`flex items-center mt-2 text-xs ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-indigo-300'}`}>
                             {trend === 'up' ? (
@@ -798,7 +799,7 @@ const EmployeePayroll = () => {
                             Print Report
                         </button>
                         <button className="px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 transition-colors flex items-center gap-2">
-                            <FiDollarSign />
+                            <FaRupeeSign />
                             Process Payroll
                         </button>
                     </div>
