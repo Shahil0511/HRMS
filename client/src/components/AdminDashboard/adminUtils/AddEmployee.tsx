@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getAllDepartments } from "../../../services/departmentServices";
 import { addEmployee } from "../../../services/employeeServices";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom"; // Importing useNavigate for navigation
+import { useNavigate } from "react-router-dom";
 
 // Improved InputField component
 type InputFieldProps = {
@@ -13,7 +13,7 @@ type InputFieldProps = {
     value: string | undefined;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     required?: boolean;
-    options?: { name: string; id: string }[];  // For select type, expect an array of objects with name and id
+    options?: { name: string; id: string }[];
 };
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -24,12 +24,12 @@ const InputField: React.FC<InputFieldProps> = ({
     value,
     onChange,
     required = false,
-    options = [],  // For select type, an array of objects { name, id }
+    options = [],
 }) => {
     return (
-        <div>
-            <label htmlFor={id} className="block text-sm text-white font-bold mb-2">
-                {label}
+        <div className="mb-4">
+            <label htmlFor={id} className="block text-sm font-medium text-white mb-1">
+                {label} {required && <span className="text-red-400">*</span>}
             </label>
             {type === "select" ? (
                 <select
@@ -37,7 +37,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className="block w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-blue-950"
+                    className="w-full px-3 py-2 text-gray-800 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required={required}
                 >
                     <option value="">Select {label}</option>
@@ -58,7 +58,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     name={name}
                     value={value}
                     onChange={onChange}
-                    className="block w-full text-sm py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-gray-800 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required={required}
                 />
             )}
@@ -75,14 +75,15 @@ const AddEmployee: React.FC = () => {
         phoneNumber: "",
         email: "",
         address: "",
-        department: "",  // department will store ObjectId here
+        department: "",
         designation: "",
     });
 
     const [departments, setDepartments] = useState<{ name: string; id: string }[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate(); // Using useNavigate for navigation
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const navigate = useNavigate();
 
     // Fetch departments
     useEffect(() => {
@@ -113,7 +114,7 @@ const AddEmployee: React.FC = () => {
         const { name, value } = e.target;
         if (name === "department") {
             const selectedDept = departments.find((dept) => dept.id === value);
-            setFormData({ ...formData, [name]: selectedDept ? selectedDept.id : "" }); // Store ObjectId
+            setFormData({ ...formData, [name]: selectedDept ? selectedDept.id : "" });
         } else {
             setFormData({ ...formData, [name]: value });
         }
@@ -121,13 +122,14 @@ const AddEmployee: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null); // Reset any previous errors
+        setError(null);
+        setIsSubmitting(true);
 
         try {
             const response = await addEmployee(formData);
-            toast.success("Employee added successfully!"); // Success toast notification
+            toast.success("Employee added successfully!");
             console.log("Employee added successfully:", response);
-            setFormData({ // Clear the form data
+            setFormData({
                 firstName: "",
                 lastName: "",
                 gender: "",
@@ -138,114 +140,139 @@ const AddEmployee: React.FC = () => {
                 department: "",
                 designation: "",
             });
-            navigate("/admin/employee"); // Redirect to /admin/employee
+            navigate("/admin/employee");
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
             setError(errorMessage);
-            toast.error(`Error: ${errorMessage}`);  // Error toast notification
+            toast.error(`Error: ${errorMessage}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div>
-            <form
-                onSubmit={handleSubmit}
-                className="bg-gradient-to-r from-gray-900 to-indigo-900 px-8 py-5 shadow-lg text-white"
-            >
-                {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField
-                        label="First Name"
-                        id="firstName"
-                        name="firstName"
-                        type="text"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        required
-                    />
-                    <InputField
-                        label="Last Name"
-                        id="lastName"
-                        name="lastName"
-                        type="text"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        required
-                    />
-                    <InputField
-                        label="Gender"
-                        id="gender"
-                        name="gender"
-                        type="select"
-                        value={formData.gender}
-                        onChange={handleChange}
-                        required
-                        options={[{ name: "Male", id: "Male" }, { name: "Female", id: "Female" }, { name: "Other", id: "Other" }]}
+        <div className="min-h-screen bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 p-6 flex flex-col items-center gap-6">
+            <div className="w-full max-w-4xl">
+                <div className="bg-gradient-to-r from-gray-900 to-indigo-900 rounded-lg shadow-xl overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-700">
+                        <h2 className="text-xl font-bold text-white">Add New Employee</h2>
+                    </div>
 
-                    />
-                    <InputField
-                        label="Date of Birth"
-                        id="dob"
-                        name="dob"
-                        type="date"
-                        value={formData.dob}
-                        onChange={handleChange}
-                        required
-                    />
-                    <InputField
-                        label="Phone Number"
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        type="tel"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                        required
-                    />
-                    <InputField
-                        label="Email"
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                    />
-                    <InputField
-                        label="Address"
-                        id="address"
-                        name="address"
-                        type="text"
-                        value={formData.address}
-                        onChange={handleChange}
-                        required
-                    />
-                    <InputField
-                        label="Department"
-                        id="department"
-                        name="department"
-                        type="select"
-                        value={formData.department}
-                        onChange={handleChange}
-                        required
-                        options={loading ? [] : departments}
-                    />
-                    <InputField
-                        label="Designation"
-                        id="designation"
-                        name="designation"
-                        type="text"
-                        value={formData.designation}
-                        onChange={handleChange}
-                        required
-                    />
+                    <form onSubmit={handleSubmit} className="px-6 py-4">
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-300 text-sm">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                            <InputField
+                                label="First Name"
+                                id="firstName"
+                                name="firstName"
+                                type="text"
+                                value={formData.firstName}
+                                onChange={handleChange}
+                                required
+                            />
+                            <InputField
+                                label="Last Name"
+                                id="lastName"
+                                name="lastName"
+                                type="text"
+                                value={formData.lastName}
+                                onChange={handleChange}
+                                required
+                            />
+                            <InputField
+                                label="Gender"
+                                id="gender"
+                                name="gender"
+                                type="select"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                required
+                                options={[{ name: "Male", id: "Male" }, { name: "Female", id: "Female" }, { name: "Other", id: "Other" }]}
+                            />
+                            <InputField
+                                label="Date of Birth"
+                                id="dob"
+                                name="dob"
+                                type="date"
+                                value={formData.dob}
+                                onChange={handleChange}
+                                required
+                            />
+                            <InputField
+                                label="Phone Number"
+                                id="phoneNumber"
+                                name="phoneNumber"
+                                type="tel"
+                                value={formData.phoneNumber}
+                                onChange={handleChange}
+                                required
+                            />
+                            <InputField
+                                label="Email"
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+                            <div className="md:col-span-2">
+                                <InputField
+                                    label="Address"
+                                    id="address"
+                                    name="address"
+                                    type="text"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <InputField
+                                label="Department"
+                                id="department"
+                                name="department"
+                                type="select"
+                                value={formData.department}
+                                onChange={handleChange}
+                                required
+                                options={loading ? [] : departments}
+                            />
+                            <InputField
+                                label="Designation"
+                                id="designation"
+                                name="designation"
+                                type="text"
+                                value={formData.designation}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/admin/employee")}
+                                className="px-4 py-2 mr-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className={`px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+                                    }`}
+                            >
+                                {isSubmitting ? "Adding..." : "Add Employee"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <button
-                    type="submit"
-                    className="mt-6 w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700"
-                >
-                    Add Employee
-                </button>
-            </form>
+            </div>
         </div>
     );
 };
