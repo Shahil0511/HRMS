@@ -712,14 +712,15 @@ const EmployeePayroll = () => {
                                     const attendance = employeeData?.attendance?.find(a => isSameDay(new Date(a.date), date));
                                     const isCurrentMonth = isSameMonth(date, currentDate);
 
+
                                     // Calculate hours worked if available
                                     let hoursWorked = "N/A";
                                     if (attendance?.checkIn && attendance?.checkOut) {
                                         const checkIn = new Date(attendance.checkIn);
                                         const checkOut = new Date(attendance.checkOut);
                                         const diffMs = checkOut.getTime() - checkIn.getTime();
-                                        const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
-                                        const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
+                                        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60)); // Calculate total hours
+                                        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); // Calculate remaining minutes
                                         hoursWorked = `${diffHrs}h ${diffMins}m`;
                                     }
 
