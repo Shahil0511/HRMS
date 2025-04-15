@@ -78,7 +78,7 @@ const EmployeePayroll = () => {
         const daysInMonth = getDaysInMonth(new Date(year, month));
         const dailyRate = employeeData.salary / daysInMonth;
 
-        // Filter data for the selected month
+        // Get valid attendances
         const validAttendances = employeeData.attendance?.filter((entry) => {
             const entryDate = new Date(entry.date);
             if (
@@ -96,6 +96,7 @@ const EmployeePayroll = () => {
             return durationMinutes >= requiredMinutes;
         });
 
+        // Get approved reports
         const approvedReports = employeeData.workReports?.filter(report => {
             const reportDate = new Date(report.date);
             return reportDate.getMonth() === month &&
@@ -103,18 +104,24 @@ const EmployeePayroll = () => {
                 report.status === "Approved";
         });
 
-        const validDays = validAttendances.filter((att) => {
-            return approvedReports.some((report) =>
+        // Valid days = both present & has approved report
+        const validDays = validAttendances.filter((att) =>
+            approvedReports.some((report) =>
                 new Date(report.date).toDateString() === new Date(att.date).toDateString()
-            );
-        }).length;
+            )
+        ).length;
 
-        const totalWorkingDays = daysInMonth; // Assuming all days are working days
-        const earnings = validDays * dailyRate;
+        const totalWorkingDays = daysInMonth; // Assume all are working days for now
+
+        const paidLeave = 4;
+        const paidDays = Math.min(validDays + paidLeave, totalWorkingDays); // Don't exceed total days
+
+        const earnings = paidDays * dailyRate;
         const deductions = employeeData.salary - earnings;
 
         return { earnings, deductions, validDays, totalWorkingDays };
     };
+
 
     const calculateChartData = () => {
         if (!employeeData) return;

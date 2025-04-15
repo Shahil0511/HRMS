@@ -2,7 +2,7 @@
 
 const Leaves = () => {
     return (
-        <div>Welcome to leave TAb</div>
+        <div>Leaves</div>
     )
 }
 
