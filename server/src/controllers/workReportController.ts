@@ -268,3 +268,85 @@ export const rejectWorkReport = async (
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+// Get Single Work Report (to match frontend service)
+export const getSingleWorkReport = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { reportId } = req.params; // Get report ID from URL
+
+    if (!reportId) {
+      res.status(400).json({ message: "Work report ID is required" });
+      return;
+    }
+
+    const workReport = await WorkReport.findById(reportId);
+
+    if (!workReport) {
+      res.status(404).json({ message: "Work report not found" });
+      return;
+    }
+
+    res.status(200).json(workReport);
+  } catch (error) {
+    console.error(`Error fetching work report:`, error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Update Work Report
+export const updateWorkReport = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { reportId } = req.params;
+    const {
+      employeeName,
+      department,
+      designation,
+      date,
+      completedTasks,
+      ongoingTasks,
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !employeeName ||
+      !department ||
+      !designation ||
+      !date ||
+      !completedTasks ||
+      !ongoingTasks
+    ) {
+      res.status(400).json({ message: "All fields are required" });
+      return;
+    }
+
+    const workReport = await WorkReport.findById(reportId);
+
+    if (!workReport) {
+      res.status(404).json({ message: "Work report not found" });
+      return;
+    }
+
+    // Update the work report
+    workReport.employeeName = employeeName;
+    workReport.department = department;
+    workReport.designation = designation;
+    workReport.date = date;
+    workReport.completedTasks = completedTasks;
+    workReport.ongoingTasks = ongoingTasks;
+
+    await workReport.save();
+
+    res.status(200).json({
+      message: "Work report updated successfully",
+      workReport,
+    });
+  } catch (error) {
+    console.error("Error updating work report:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

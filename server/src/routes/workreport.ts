@@ -8,6 +8,7 @@ import {
   getWorkReportsForManager,
   rejectWorkReport,
   submitWorkReport,
+  updateWorkReport,
 } from "../controllers/workReportController";
 import { isAdmin } from "../middlewares/verifyAdmin";
 import { verifyToken } from "../middlewares/verifyToken";
@@ -28,5 +29,6 @@ router.post("/admin/history", verifyToken, isAdmin, getAllWorkReportsForAdmin);
 router.get("/manager/workreport/:reportId", getWorkReportById);
 router.put("/:id/approve", verifyToken, approveWorkReport);
 router.put("/:id/reject", verifyToken, rejectWorkReport);
+router.put("/edit/:reportId", updateWorkReport);
 
 export default router;

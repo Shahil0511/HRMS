@@ -5,6 +5,7 @@ const API_URL = "https://hrms-backend-7176.onrender.com/api/workreports";
 // const API_URL = "http://localhost:8000/api/workreports";
 
 export interface WorkReport {
+  employeeId: any;
   details: ReactNode;
   _id: string;
   employeeName: string;
@@ -142,6 +143,25 @@ const updateWorkReportStatus = async (
   } catch (error) {
     console.error(`Error ${action}ing work report with ID: ${id}`, error);
     return false;
+  }
+};
+
+export const updateWorkReport = async (
+  reportId: string,
+  formData: Omit<WorkReport, "_id" | "status" | "createdAt" | "updatedAt">
+): Promise<WorkReport | null> => {
+  try {
+    const { headers } = getAuthHeaders();
+
+    const response = await axios.put<WorkReport>(
+      `${API_URL}/edit/${reportId}`,
+      formData,
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating work report with ID: ${reportId}`, error);
+    return null;
   }
 };
 

@@ -81,6 +81,8 @@ const App = () => {
           <Route path="settings" element={<EmployeeSettings />} />
           <Route path="payroll" element={<Payrole />} />
           <Route path="workreports" element={<WorkReportE />} />
+          <Route path="workreports/view/:id" element={<WorkReportForm />} />
+          <Route path="workreports/edit/:id" element={<WorkReportForm />} />
           <Route path="workreports/add-work-report" element={<WorkReportForm />} />
           <Route path="profile/:id" element={<MyProfile />} />
         </Route>
