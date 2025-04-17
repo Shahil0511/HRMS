@@ -9,6 +9,8 @@ import { FaRupeeSign } from "react-icons/fa";
 import * as XLSX from 'xlsx';
 
 interface WorkReport {
+    ongoingTasks: string;
+    completedTasks: string;
     _id: string;
     date: string;
     status: "Approved" | "Pending" | "Rejected";
@@ -392,7 +394,15 @@ const EmployeePayroll = () => {
             [`Employee ID: ${id}`],
             [`Period: ${format(start, 'MMM d, yyyy')} to ${format(end, 'MMM d, yyyy')}`],
             [], // empty row
-            ["Date", "Day", "Work Report Status", "Attendance Status", "Hours Worked"] // column headers
+            [
+                "Date",
+                "Day",
+                "Work Report Status",
+                "Completed Tasks",
+                "Ongoing Tasks",
+                "Attendance Status",
+                "Hours Worked"
+            ] // column headers
         ];
 
         // 2. Create the data rows
@@ -415,6 +425,8 @@ const EmployeePayroll = () => {
                 format(date, 'yyyy-MM-dd'),
                 format(date, 'EEEE'),
                 report ? report.status : 'Not Submitted',
+                report ? report.completedTasks || 'No completed tasks' : 'Not Submitted',
+                report ? report.ongoingTasks || 'No ongoing tasks' : 'Not Submitted',
                 attendance ? attendance.status : 'Not Recorded',
                 hoursWorked
             ];
@@ -431,12 +443,14 @@ const EmployeePayroll = () => {
             { wch: 12 }, // Date
             { wch: 10 }, // Day
             { wch: 18 }, // Work Report Status
+            { wch: 40 }, // Completed Tasks (wider for text)
+            { wch: 40 }, // Ongoing Tasks (wider for text)
             { wch: 18 }, // Attendance Status
             { wch: 12 }  // Hours Worked
         ];
 
-        // 6. Add styling to header row (A5:E5)
-        const headerRange = { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } }; // 5th row (0-based index)
+        // 6. Add styling to header row (A5:G5)
+        const headerRange = { s: { r: 4, c: 0 }, e: { r: 4, c: 6 } };
         for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
             const cellAddress = XLSX.utils.encode_cell({ r: headerRange.s.r, c: C });
             if (!ws[cellAddress]) continue;
@@ -447,15 +461,31 @@ const EmployeePayroll = () => {
             };
         }
 
-        // 7. Add autofilter (starting from header row to end of data)
+        // 7. Set text wrapping for task columns (columns D and E)
+        const taskColIndices = [3, 4]; // D and E columns (0-based)
+        for (let r = 5; r < worksheetData.length; r++) {
+            taskColIndices.forEach(col => {
+                const cellAddress = XLSX.utils.encode_cell({ r, c: col });
+                if (ws[cellAddress]) {
+                    ws[cellAddress].s = ws[cellAddress].s || {};
+                    ws[cellAddress].s.alignment = {
+                        ...ws[cellAddress].s.alignment,
+                        wrapText: true,
+                        vertical: "top"
+                    };
+                }
+            });
+        }
+
+        // 8. Add autofilter
         ws['!autofilter'] = {
             ref: XLSX.utils.encode_range({
-                s: { r: 4, c: 0 }, // Header row (5th row)
-                e: { r: 4 + dataRows.length, c: 4 } // Last data row
+                s: { r: 4, c: 0 },
+                e: { r: 4 + dataRows.length, c: 6 }
             })
         };
 
-        // 8. Create workbook and export
+        // 9. Create workbook and export
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Daily Records");
         XLSX.writeFile(wb, `Employee_Daily_Records_${employeeData.name}_${format(currentDate, 'MMMM_yyyy')}.xlsx`);
