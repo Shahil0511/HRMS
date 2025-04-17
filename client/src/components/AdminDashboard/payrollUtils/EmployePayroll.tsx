@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchEmployeePayrollData } from "../../../services/adminEmployePayrollServices";
-import { FiFilter, FiCheck, FiX, FiClock, FiDollarSign, FiTrendingUp, FiAlertCircle, FiMinusCircle, FiUserCheck, FiUserX, FiPieChart, FiCalendar, FiPrinter, FiDownload } from "react-icons/fi";
+import { FiFilter, FiCheck, FiX, FiClock, FiDollarSign, FiTrendingUp, FiAlertCircle, FiMinusCircle, FiUserCheck, FiUserX, FiPieChart, FiCalendar, FiDownload } from "react-icons/fi";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addWeeks, addMonths, startOfMonth, endOfMonth, getDaysInMonth } from "date-fns";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { FaRupeeSign } from "react-icons/fa";
+import * as XLSX from 'xlsx';
 
 interface WorkReport {
     _id: string;
@@ -381,6 +382,85 @@ const EmployeePayroll = () => {
             (attendance && attendance.status.toLowerCase() === filterStatus)
         );
     });
+
+    const exportToExcel = () => {
+        if (!employeeData) return;
+
+        // 1. Create header information
+        const headerInfo = [
+            [`Employee: ${employeeData.name}`],
+            [`Employee ID: ${id}`],
+            [`Period: ${format(start, 'MMM d, yyyy')} to ${format(end, 'MMM d, yyyy')}`],
+            [], // empty row
+            ["Date", "Day", "Work Report Status", "Attendance Status", "Hours Worked"] // column headers
+        ];
+
+        // 2. Create the data rows
+        const dataRows = filteredDates.map(date => {
+            const report = employeeData?.workReports?.find(r => isSameDay(new Date(r.date), date));
+            const attendance = employeeData?.attendance?.find(a => isSameDay(new Date(a.date), date));
+
+            // Calculate hours worked
+            let hoursWorked = "N/A";
+            if (attendance?.checkIn && attendance?.checkOut) {
+                const checkIn = new Date(attendance.checkIn);
+                const checkOut = new Date(attendance.checkOut);
+                const diffMs = checkOut.getTime() - checkIn.getTime();
+                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                hoursWorked = `${diffHrs}h ${diffMins}m`;
+            }
+
+            return [
+                format(date, 'yyyy-MM-dd'),
+                format(date, 'EEEE'),
+                report ? report.status : 'Not Submitted',
+                attendance ? attendance.status : 'Not Recorded',
+                hoursWorked
+            ];
+        });
+
+        // 3. Combine header and data
+        const worksheetData = [...headerInfo, ...dataRows];
+
+        // 4. Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+
+        // 5. Set column widths
+        ws['!cols'] = [
+            { wch: 12 }, // Date
+            { wch: 10 }, // Day
+            { wch: 18 }, // Work Report Status
+            { wch: 18 }, // Attendance Status
+            { wch: 12 }  // Hours Worked
+        ];
+
+        // 6. Add styling to header row (A5:E5)
+        const headerRange = { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } }; // 5th row (0-based index)
+        for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: headerRange.s.r, c: C });
+            if (!ws[cellAddress]) continue;
+            ws[cellAddress].s = {
+                font: { bold: true },
+                fill: { fgColor: { rgb: "FFD9D9D9" } },
+                alignment: { horizontal: "center" }
+            };
+        }
+
+        // 7. Add autofilter (starting from header row to end of data)
+        ws['!autofilter'] = {
+            ref: XLSX.utils.encode_range({
+                s: { r: 4, c: 0 }, // Header row (5th row)
+                e: { r: 4 + dataRows.length, c: 4 } // Last data row
+            })
+        };
+
+        // 8. Create workbook and export
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Daily Records");
+        XLSX.writeFile(wb, `Employee_Daily_Records_${employeeData.name}_${format(currentDate, 'MMMM_yyyy')}.xlsx`);
+    };
+
 
     const PayrollCard = ({ title, value, icon, trend, trendValue }: { title: string, value: number | string, icon: React.ReactNode, trend?: 'up' | 'down' | 'neutral', trendValue?: string }) => (
         <div className="bg-indigo-800/50 backdrop-blur-sm p-6 rounded-lg shadow-lg border border-indigo-600/30">
@@ -802,10 +882,14 @@ const EmployeePayroll = () => {
                             <FiDownload />
                             Export Data
                         </button>
-                        <button className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2">
-                            <FiPrinter />
-                            Print Report
+                        <button
+                            onClick={exportToExcel}
+                            className="px-4 py-2 bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                        >
+                            <FiDownload />
+                            Export Monthly Records
                         </button>
+
                         <button className="px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 transition-colors flex items-center gap-2">
                             <FaRupeeSign />
                             Process Payroll
