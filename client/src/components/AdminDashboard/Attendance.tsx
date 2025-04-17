@@ -4,6 +4,7 @@ import { loadAdminAttendance } from "../../store/slices/attendanceSlice";
 import { RootState, AppDispatch } from "../../store/store";
 import ContentLoader from "react-content-loader";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from 'xlsx';
 
 const AdminAttendance = () => {
     const navigate = useNavigate()
@@ -45,11 +46,52 @@ const AdminAttendance = () => {
         navigate(`/admin/attendance/${id}`);
     };
 
+    const exportToExcel = () => {
+        const ws = XLSX.utils.json_to_sheet(
+            adminRecords.map((record, index) => {
+                let workingHours: string | number = "N/A";
+
+                if (record.checkIn && record.checkOut) {
+                    const checkInTime = new Date(`1970-01-01T${record.checkIn}`);
+                    const checkOutTime = new Date(`1970-01-01T${record.checkOut}`);
+
+                    if (!isNaN(checkInTime.getTime()) && !isNaN(checkOutTime.getTime())) {
+                        const diffMs = checkOutTime.getTime() - checkInTime.getTime(); // Safe arithmetic
+                        workingHours = (diffMs / (1000 * 60 * 60)).toFixed(2); // Convert ms to hours
+                    }
+                }
+
+                return {
+                    "ID": index + 1,
+                    "Name": record.employeeName || "N/A",
+                    "Email": record.email || "N/A",
+                    "Check-in": record.checkIn || "N/A",
+                    "Check-out": record.checkOut || "N/A",
+                    "Working-Hours": workingHours
+                };
+            })
+        );
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+
+        XLSX.writeFile(wb, `attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+
+
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 text-white p-4 md:p-6">
             <div className="w-full max-w-full px-2 md:px-4 lg:px-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 md:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 md:gap-4 mb-2">
                     <h2 className="text-xl md:text-2xl font-semibold">Today's Present Employees</h2>
+                    <button
+                        onClick={exportToExcel}
+                        className="bg-green-600 hover:bg-green-700 px-3 py-1 md:px-4 md:py-2 rounded text-xs md:text-sm font-medium transition-colors"
+                        disabled={adminRecords.length === 0}
+                    >
+                        Export to Excel
+                    </button>
                 </div>
             </div>
 
