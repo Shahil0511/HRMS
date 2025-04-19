@@ -4,10 +4,10 @@ import { loadAdminAttendance } from "../../store/slices/attendanceSlice";
 import { RootState, AppDispatch } from "../../store/store";
 import ContentLoader from "react-content-loader";
 import { useNavigate } from "react-router-dom";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 const AdminAttendance = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { adminRecords } = useSelector((state: RootState) => state.attendance);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -16,10 +16,13 @@ const AdminAttendance = () => {
 
     const fetchAttendance = useCallback(() => {
         setLoading(true);
-        dispatch(loadAdminAttendance()).finally(() => {
-            setLoading(false);
-        });
+        dispatch(loadAdminAttendance())
+            .finally(() => {
+                setLoading(false);
+            });
     }, [dispatch]);
+
+
 
     useEffect(() => {
         fetchAttendance();
@@ -42,43 +45,170 @@ const AdminAttendance = () => {
         currentPage * itemsPerPage
     );
 
-    const handelClick = (id: string) => {
+    const handleClick = (id: string) => {
         navigate(`/admin/attendance/${id}`);
     };
 
-    const exportToExcel = () => {
-        const ws = XLSX.utils.json_to_sheet(
-            adminRecords.map((record, index) => {
-                let workingHours: string | number = "N/A";
+    const exportToExcel = async () => {
+        try {
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'Attendance System';
+            workbook.created = new Date();
 
-                if (record.checkIn && record.checkOut) {
-                    const checkInTime = new Date(`1970-01-01T${record.checkIn}`);
-                    const checkOutTime = new Date(`1970-01-01T${record.checkOut}`);
+            const worksheet = workbook.addWorksheet('Attendance Records');
 
-                    if (!isNaN(checkInTime.getTime()) && !isNaN(checkOutTime.getTime())) {
-                        const diffMs = checkOutTime.getTime() - checkInTime.getTime(); // Safe arithmetic
-                        workingHours = (diffMs / (1000 * 60 * 60)).toFixed(2); // Convert ms to hours
+            // Define columns with appropriate widths (removed department)
+            worksheet.columns = [
+                { header: 'ID', key: 'id', width: 12 },
+                { header: 'Employee Name', key: 'name', width: 25 },
+                { header: 'Email', key: 'email', width: 30 },
+                { header: 'Check-In Time', key: 'checkIn', width: 20 },
+                { header: 'Check-Out Time', key: 'checkOut', width: 20 },
+                { header: 'Total Time Worked', key: 'totalTimeWorked', width: 20 },
+                { header: 'Status', key: 'status', width: 15 }
+            ];
+
+            // Style header row
+            const headerRow = worksheet.getRow(1);
+            headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            headerRow.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4F46E5' } // indigo-600
+            };
+            headerRow.alignment = { horizontal: 'center' };
+
+            // Add data rows
+            adminRecords.forEach((record) => {
+                // Process checkIn - handle as string or get first item if array
+                let checkInValue: string = 'N/A';
+                if (record.checkIn) {
+                    // Access first element if it's an array, or use directly if it's actually a string
+                    const checkInStr = Array.isArray(record.checkIn) ? record.checkIn[0] : record.checkIn as unknown as string;
+                    checkInValue = checkInStr || 'N/A';
+                }
+
+                // Process checkOut - handle as string or get first item if array
+                let checkOutValue: string = 'N/A';
+                let fullCheckOutValue: string = 'N/A'; // Keep full datetime for calculation
+
+                if (record.checkOut) {
+                    // Access first element if it's an array, or use directly if it's actually a string
+                    const checkOutStr = Array.isArray(record.checkOut) ? record.checkOut[0] : record.checkOut as unknown as string;
+                    fullCheckOutValue = checkOutStr || 'N/A';
+
+                    // Remove date part for display only
+                    if (checkOutStr && typeof checkOutStr === 'string') {
+                        const dateMatch = /^\d{4}-\d{2}-\d{2}\s(.+)$/.exec(checkOutStr);
+                        checkOutValue = dateMatch ? dateMatch[1] : checkOutStr;
+                    } else {
+                        checkOutValue = checkOutStr || 'N/A';
                     }
                 }
 
-                return {
-                    "ID": index + 1,
-                    "Name": record.employeeName || "N/A",
-                    "Email": record.email || "N/A",
-                    "Check-in": record.checkIn || "N/A",
-                    "Check-out": record.checkOut || "N/A",
-                    "Working-Hours": workingHours
-                };
-            })
-        );
+                // Calculate total time worked
+                let calculatedTotalTime = 'N/A';
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+                if (checkInValue !== 'N/A' && fullCheckOutValue !== 'N/A') {
+                    try {
+                        // Prepare dates for calculation
+                        const today = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
 
-        XLSX.writeFile(wb, `attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
+                        // Parse checkout time (which might include date)
+                        let checkOutDate: Date;
+                        if (fullCheckOutValue.includes('-')) {
+                            // Full datetime already present
+                            checkOutDate = new Date(fullCheckOutValue);
+                        } else {
+                            // Only time present, assume same day
+                            checkOutDate = new Date(`${today}T${fullCheckOutValue}`);
+                        }
+
+                        // Parse checkin time (add today's date if needed)
+                        const checkInDate = new Date(`${today}T${checkInValue}`);
+
+                        // Calculate difference in milliseconds
+                        const diffMs = checkOutDate.getTime() - checkInDate.getTime();
+
+                        if (diffMs > 0) {
+                            // Convert to hours and minutes
+                            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                            calculatedTotalTime = `${diffHours}h ${diffMinutes}m`;
+                        } else {
+                            calculatedTotalTime = 'Invalid';
+                        }
+                    } catch (error) {
+                        console.error('Error calculating time difference:', error);
+                        calculatedTotalTime = 'Error';
+                    }
+                }
+
+                const row = worksheet.addRow({
+                    id: record.id || 'N/A',
+                    name: record.employeeName || 'N/A',
+                    email: record.email || 'N/A',
+                    checkIn: checkInValue,
+                    checkOut: checkOutValue,
+                    totalTimeWorked: calculatedTotalTime,
+                    status: record.status || 'N/A'
+                });
+
+                // Format time worked column
+                if (calculatedTotalTime !== 'N/A' && calculatedTotalTime !== 'Invalid' && calculatedTotalTime !== 'Error') {
+                    const timeCell = row.getCell('totalTimeWorked');
+
+                    // Extract hours for conditional formatting
+                    const hoursMatch = calculatedTotalTime.match(/(\d+)h/);
+                    if (hoursMatch) {
+                        const hours = parseInt(hoursMatch[1]);
+                        if (hours < 4) {
+                            timeCell.font = { color: { argb: 'FFEF4444' } }; // red
+                        } else if (hours < 8) {
+                            timeCell.font = { color: { argb: 'FFF59E0B' } }; // yellow
+                        } else {
+                            timeCell.font = { color: { argb: 'FF10B981' } }; // green
+                        }
+                    }
+                }
+
+                // Style for consistent cell appearance
+                row.eachCell((cell) => {
+                    cell.alignment = { vertical: 'middle' };
+                });
+            });
+
+            // Add auto filter
+            worksheet.autoFilter = {
+                from: { row: 1, column: 1 },
+                to: { row: worksheet.rowCount, column: worksheet.columns.length }
+            };
+
+            // Freeze header row
+            worksheet.views = [{
+                state: 'frozen',
+                ySplit: 1
+            }];
+
+            // Generate Excel file
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_records_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+        }
     };
-
-
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-indigo-900 via-blue-900 to-gray-900 text-white p-4 md:p-6">
@@ -87,9 +217,12 @@ const AdminAttendance = () => {
                     <h2 className="text-xl md:text-2xl font-semibold">Today's Present Employees</h2>
                     <button
                         onClick={exportToExcel}
-                        className="bg-green-600 hover:bg-green-700 px-3 py-1 md:px-4 md:py-2 rounded text-xs md:text-sm font-medium transition-colors"
+                        className="bg-green-600 hover:bg-green-700 px-3 py-1 md:px-4 md:py-2 rounded text-xs md:text-sm font-medium transition-colors flex items-center gap-1"
                         disabled={adminRecords.length === 0}
                     >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
                         Export to Excel
                     </button>
                 </div>
@@ -143,9 +276,13 @@ const AdminAttendance = () => {
                                                     <td className="border border-gray-700 px-2 py-2 text-xs md:text-sm">
                                                         <div className="flex justify-center">
                                                             <button
-                                                                onClick={() => handelClick(record.id)}
-                                                                className="bg-green-500 px-2 py-1 rounded hover:bg-green-600 text-xs md:text-sm"
+                                                                onClick={() => handleClick(record.id)}
+                                                                className="bg-green-500 px-2 py-1 rounded hover:bg-green-600 text-xs md:text-sm flex items-center gap-1"
                                                             >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                </svg>
                                                                 View
                                                             </button>
                                                         </div>
@@ -162,9 +299,13 @@ const AdminAttendance = () => {
                     <div className="flex justify-center mt-4 gap-1 md:gap-2 pb-4 md:pb-6 flex-wrap">
                         <button
                             onClick={handlePrevPage}
-                            className={`px-2 md:px-3 py-1 rounded text-xs md:text-base ${currentPage === 1 ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"}`}
+                            className={`px-2 md:px-3 py-1 rounded text-xs md:text-base flex items-center gap-1 ${currentPage === 1 ? "bg-gray-500 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+                                }`}
                             disabled={currentPage === 1}
                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
                             Prev
                         </button>
 
@@ -172,7 +313,8 @@ const AdminAttendance = () => {
                             <button
                                 key={i}
                                 onClick={() => handlePageChange(i + 1)}
-                                className={`px-2 md:px-3 py-1 rounded text-xs md:text-base ${currentPage === i + 1 ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-600"}`}
+                                className={`px-2 md:px-3 py-1 rounded text-xs md:text-base ${currentPage === i + 1 ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-600"
+                                    }`}
                             >
                                 {i + 1}
                             </button>
@@ -180,10 +322,16 @@ const AdminAttendance = () => {
 
                         <button
                             onClick={handleNextPage}
-                            className={`px-2 md:px-3 py-1 rounded text-xs md:text-base ${currentPage === Math.ceil(adminRecords.length / itemsPerPage) ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"}`}
+                            className={`px-2 md:px-3 py-1 rounded text-xs md:text-base flex items-center gap-1 ${currentPage === Math.ceil(adminRecords.length / itemsPerPage)
+                                ? "bg-gray-500 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-600"
+                                }`}
                             disabled={currentPage === Math.ceil(adminRecords.length / itemsPerPage)}
                         >
                             Next
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                         </button>
                     </div>
                 </>

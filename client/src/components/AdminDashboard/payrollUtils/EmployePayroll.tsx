@@ -6,7 +6,8 @@ import { FiFilter, FiCheck, FiX, FiClock, FiDollarSign, FiTrendingUp, FiAlertCir
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addWeeks, addMonths, startOfMonth, endOfMonth, getDaysInMonth } from "date-fns";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { FaRupeeSign } from "react-icons/fa";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+
 
 interface WorkReport {
     ongoingTasks: string;
@@ -385,28 +386,45 @@ const EmployeePayroll = () => {
         );
     });
 
-    const exportToExcel = () => {
+    const exportToExcel = async () => {
         if (!employeeData) return;
 
-        // 1. Create header information
-        const headerInfo = [
-            [`Employee: ${employeeData.name}`],
-            [`Employee ID: ${id}`],
-            [`Period: ${format(start, 'MMM d, yyyy')} to ${format(end, 'MMM d, yyyy')}`],
-            [], // empty row
-            [
-                "Date",
-                "Day",
-                "Work Report Status",
-                "Completed Tasks",
-                "Ongoing Tasks",
-                "Attendance Status",
-                "Hours Worked"
-            ] // column headers
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Daily Records');
+
+        // Set document properties
+        workbook.creator = 'Payroll System';
+        workbook.created = new Date();
+
+        // Add header information
+        worksheet.addRow([`Employee: ${employeeData.name}`]);
+        worksheet.addRow([`Employee ID: ${id}`]);
+        worksheet.addRow([`Period: ${format(start, 'MMM d, yyyy')} to ${format(end, 'MMM d, yyyy')}`]);
+        worksheet.addRow([]); // Empty row
+
+        // Define columns
+        worksheet.columns = [
+            { header: 'Date', key: 'date', width: 12 },
+            { header: 'Day', key: 'day', width: 12 },
+            { header: 'Work Report Status', key: 'reportStatus', width: 20 },
+            { header: 'Completed Tasks', key: 'completedTasks', width: 30 },
+            { header: 'Ongoing Tasks', key: 'ongoingTasks', width: 30 },
+            { header: 'Attendance Status', key: 'attendanceStatus', width: 20 },
+            { header: 'Hours Worked', key: 'hoursWorked', width: 15 }
         ];
 
-        // 2. Create the data rows
-        const dataRows = filteredDates.map(date => {
+        // Style header row
+        const headerRow = worksheet.getRow(5);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4F46E5' } // indigo-600
+        };
+        headerRow.alignment = { horizontal: 'center' };
+
+        // Add data rows
+        filteredDates.forEach(date => {
             const report = employeeData?.workReports?.find(r => isSameDay(new Date(r.date), date));
             const attendance = employeeData?.attendance?.find(a => isSameDay(new Date(a.date), date));
 
@@ -418,77 +436,72 @@ const EmployeePayroll = () => {
                 const diffMs = checkOut.getTime() - checkIn.getTime();
                 const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
                 const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                hoursWorked = `${diffHrs}h ${diffMins}m`;
+                hoursWorked = `${diffHrs}h ${diffMins.toFixed(0)}m`;
             }
 
-            return [
-                format(date, 'yyyy-MM-dd'),
-                format(date, 'EEEE'),
-                report ? report.status : 'Not Submitted',
-                report ? report.completedTasks || 'No completed tasks' : 'Not Submitted',
-                report ? report.ongoingTasks || 'No ongoing tasks' : 'Not Submitted',
-                attendance ? attendance.status : 'Not Recorded',
+            const row = worksheet.addRow({
+                date: format(date, 'yyyy-MM-dd'),
+                day: format(date, 'EEEE'),
+                reportStatus: report ? report.status : 'Not Submitted',
+                completedTasks: report ? report.completedTasks || 'No completed tasks' : 'Not Submitted',
+                ongoingTasks: report ? report.ongoingTasks || 'No ongoing tasks' : 'Not Submitted',
+                attendanceStatus: attendance ? attendance.status : 'Not Recorded',
                 hoursWorked
-            ];
+            });
+
+            // Apply conditional formatting for status columns
+            if (report) {
+                const statusCell = row.getCell('reportStatus');
+                statusCell.font = {
+                    color: {
+                        argb: report.status === "Approved" ? 'FF10B981' :
+                            report.status === "Pending" ? 'FFF59E0B' :
+                                'FFEF4444'
+                    }
+                };
+            }
+
+            if (attendance) {
+                const statusCell = row.getCell('attendanceStatus');
+                statusCell.font = {
+                    color: {
+                        argb: attendance.status === "Present" ? 'FF10B981' :
+                            attendance.status === "Absent" ? 'FFEF4444' :
+                                attendance.status === "Half Day" ? 'FFF59E0B' :
+                                    attendance.status === "Leave" ? 'FF3B82F6' :
+                                        attendance.status === "Late" ? 'FFF97316' :
+                                            'FF8B5CF6'
+                    }
+                };
+            }
+
+            // Set word wrap for task columns
+            ['completedTasks', 'ongoingTasks'].forEach(key => {
+                row.getCell(key).alignment = { wrapText: true, vertical: 'top' };
+            });
         });
 
-        // 3. Combine header and data
-        const worksheetData = [...headerInfo, ...dataRows];
-
-        // 4. Create worksheet
-        const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-
-        // 5. Set column widths
-        ws['!cols'] = [
-            { wch: 12 }, // Date
-            { wch: 10 }, // Day
-            { wch: 18 }, // Work Report Status
-            { wch: 40 }, // Completed Tasks (wider for text)
-            { wch: 40 }, // Ongoing Tasks (wider for text)
-            { wch: 18 }, // Attendance Status
-            { wch: 12 }  // Hours Worked
-        ];
-
-        // 6. Add styling to header row (A5:G5)
-        const headerRange = { s: { r: 4, c: 0 }, e: { r: 4, c: 6 } };
-        for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
-            const cellAddress = XLSX.utils.encode_cell({ r: headerRange.s.r, c: C });
-            if (!ws[cellAddress]) continue;
-            ws[cellAddress].s = {
-                font: { bold: true },
-                fill: { fgColor: { rgb: "FFD9D9D9" } },
-                alignment: { horizontal: "center" }
-            };
-        }
-
-        // 7. Set text wrapping for task columns (columns D and E)
-        const taskColIndices = [3, 4]; // D and E columns (0-based)
-        for (let r = 5; r < worksheetData.length; r++) {
-            taskColIndices.forEach(col => {
-                const cellAddress = XLSX.utils.encode_cell({ r, c: col });
-                if (ws[cellAddress]) {
-                    ws[cellAddress].s = ws[cellAddress].s || {};
-                    ws[cellAddress].s.alignment = {
-                        ...ws[cellAddress].s.alignment,
-                        wrapText: true,
-                        vertical: "top"
-                    };
-                }
-            });
-        }
-
-        // 8. Add autofilter
-        ws['!autofilter'] = {
-            ref: XLSX.utils.encode_range({
-                s: { r: 4, c: 0 },
-                e: { r: 4 + dataRows.length, c: 6 }
-            })
+        // Add auto filter
+        worksheet.autoFilter = {
+            from: { row: 5, column: 1 },
+            to: { row: worksheet.rowCount, column: worksheet.columns.length }
         };
 
-        // 9. Create workbook and export
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Daily Records");
-        XLSX.writeFile(wb, `Employee_Daily_Records_${employeeData.name}_${format(currentDate, 'MMMM_yyyy')}.xlsx`);
+        // Freeze header row
+        worksheet.views = [{
+            state: 'frozen',
+            ySplit: 5
+        }];
+
+        // Generate Excel file
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Employee_Daily_Records_${employeeData.name.replace(/\s+/g, '_')}_${format(currentDate, 'MMMM_yyyy')}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
 
