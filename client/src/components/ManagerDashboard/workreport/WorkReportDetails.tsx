@@ -42,6 +42,14 @@ function WorkReportDetail() {
     if (loading) return <p className="text-center text-white">Loading...</p>;
     if (error) return <p className="text-center text-red-400">{error}</p>;
 
+    const getUserRole = (): "admin" | "manager" | null => {
+        const role = localStorage.getItem("role");
+        if (role === "admin" || role === "manager") {
+            return role;
+        }
+        return null; // invalid or missing role
+    };
+
     const handleApprove = async () => {
         if (!id) return;
 
@@ -51,7 +59,13 @@ function WorkReportDetail() {
 
             if (success) {
                 toast.success("Work report approved successfully!");
-                navigate("/manager/workreports"); // Redirect after approval
+
+                const userRole = getUserRole();
+                if (userRole) {
+                    navigate(`/${userRole}/workreports`);
+                } else {
+                    toast.error("Invalid user role. Cannot navigate.");
+                }
             } else {
                 toast.error("Error approving work report");
             }
@@ -71,7 +85,13 @@ function WorkReportDetail() {
 
             if (success) {
                 toast.success("Work report rejected successfully!");
-                navigate("/manager/workreports"); // Redirect after rejection
+
+                const userRole = getUserRole();
+                if (userRole) {
+                    navigate(`/${userRole}/workreports`);
+                } else {
+                    toast.error("Invalid user role. Cannot navigate.");
+                }
             } else {
                 toast.error("Error rejecting work report");
             }
@@ -81,6 +101,9 @@ function WorkReportDetail() {
             setIsSubmitting(false);
         }
     };
+
+
+
 
     return (
         <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 py-3 px-6">
@@ -184,10 +207,18 @@ function WorkReportDetail() {
                             <button
                                 type="button"
                                 className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-5 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                onClick={() => navigate('/manager/workreports')}
+                                onClick={() => {
+                                    const role = getUserRole();
+                                    if (role) {
+                                        navigate(`/${role}/workreports`);
+                                    } else {
+                                        toast.error("Invalid user role. Cannot navigate.");
+                                    }
+                                }}
                             >
                                 Back
                             </button>
+
                             <div className="flex space-x-4">
                                 <button
                                     type="button"
