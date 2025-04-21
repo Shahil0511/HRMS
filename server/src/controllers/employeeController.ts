@@ -5,6 +5,7 @@ import { Employee, IEmployee } from "../models/EmployeeSchema";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import Attendance from "../models/AttendanceSchema";
+import { Department } from "../models/DepartmentSchema";
 
 interface RequestWithUser extends Request {
   user?: any;
@@ -437,9 +438,10 @@ export const getEmployeesByDepartment = async (
       return;
     }
 
-    // Fetch only the department field
+    // Fetch employee with department info
     const employee = await Employee.findById(employeeId)
       .select("department")
+      .populate("department", "departmentName") // Populate department name
       .lean();
 
     if (!employee) {
@@ -460,15 +462,20 @@ export const getEmployeesByDepartment = async (
       return;
     }
 
-    // Fetch employees with projection to limit returned fields
-    const employees = await Employee.find({ department: employee.department })
-      .select("firstName lastName email designation")
+    // Fetch employees with department info
+    const employees = await Employee.find({
+      department: employee.department._id,
+    })
+      .select("firstName lastName email designation department")
+      .populate("department", "departmentName")
       .lean();
+    const department = await Department.findById(employee.department._id);
 
     res.status(200).json({
       success: true,
       count: employees.length,
       employees,
+      departmentName: department?.departmentName,
     });
   } catch (error) {
     console.error("Error fetching employees by department:", error);

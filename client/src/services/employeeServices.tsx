@@ -177,19 +177,14 @@ export const getEmployeesByDepartment = async () => {
             throw new Error("User data, token, or role not found in localStorage");
         }
 
-        // Parse stored user data
         const user = JSON.parse(userData);
-
-        // Extract user details from the session
         const userId = user?.id;
         if (!userId) throw new Error("User ID is required");
 
-        // Set Authorization header with token
         const headers = {
             Authorization: `Bearer ${token}`,
         };
 
-        // Send role, userId, and other user data in request body
         const response = await axios.post(
             `${API_URL}/department_employee`,
             {
