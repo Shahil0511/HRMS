@@ -23,8 +23,10 @@ const WorkReportM = () => {
             setLoading(true);
             try {
                 const data = await fetchWorkReportManager();
-                setWorkReports(data);
-                setFilteredReports(data);
+                // Sort by date in descending order (newest first)
+                const sortedData = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                setWorkReports(sortedData);
+                setFilteredReports(sortedData);
             } catch (err) {
                 setError("Failed to fetch work reports");
             } finally {
@@ -71,6 +73,7 @@ const WorkReportM = () => {
             });
         }
 
+        // Maintain the sorted order when applying filters
         setFilteredReports(result);
         setCurrentPage(1); // Reset to first page when filters change
     }, [statusFilter, dateFilter, selectedDate, workReports]);
@@ -115,7 +118,7 @@ const WorkReportM = () => {
         }
     };
 
-    // Get paginated reports
+    // Get paginated reports (already reversed)
     const paginatedReports = filteredReports.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -145,7 +148,6 @@ const WorkReportM = () => {
                 <div className="flex flex-col md:flex-row gap-4 justify-between">
                     {/* Status filter */}
                     <div className="flex flex-col">
-
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -160,7 +162,6 @@ const WorkReportM = () => {
 
                     {/* Date filter */}
                     <div className="flex flex-col">
-
                         <select
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
@@ -176,7 +177,6 @@ const WorkReportM = () => {
                     {/* Calendar input for custom date */}
                     {dateFilter === "Custom" && (
                         <div className="flex flex-col">
-
                             <input
                                 type="date"
                                 value={selectedDate}
