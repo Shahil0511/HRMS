@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/attendance";
-// const API_URL = "http://localhost:8000/api/attendance";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/attendance";
+const API_URL = "http://localhost:8000/api/attendance";
 
 /**
  * Retrieves the authentication token from local storage.

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/payroll/admin";
-// const API_URL = "http://localhost:8000/api/payroll/admin";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/payroll/admin";
+const API_URL = "http://localhost:8000/api/payroll/admin";
 
 export interface WorkReport {
   _id: string;

@@ -1,8 +1,8 @@
 import axios from "axios";
 import { fetchWorkReports } from "./workreportService";
 
-const API_URL = "https://hrms-backend-7176.onrender.com/api/payroll";
-// const API_URL = "http://localhost:8000/api/payroll";
+// const API_URL = "https://hrms-backend-7176.onrender.com/api/payroll";
+const API_URL = "http://localhost:8000/api/payroll";
 
 export interface PayrollResponse {
   totalSalary: number;

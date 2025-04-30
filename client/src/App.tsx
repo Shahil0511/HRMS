@@ -18,7 +18,7 @@ import AddDepartment from "./components/AdminDashboard/adminUtils/AddDepartment"
 
 // Employee Pages
 import EmployeeDepartment from "./components/EmployeeDashboard/Department";
-import EmployeeLeaves from "./components/EmployeeDashboard/Leaves";
+import LeavePageE from "./components/EmployeeDashboard/Leaves";
 import EmployeeAttendance from "./components/EmployeeDashboard/Attendance";
 import EmployeeSettings from "./components/EmployeeDashboard/Settings";
 import DashboardEmp from "./components/EmployeeDashboard/DashboardEmp";
@@ -52,6 +52,7 @@ import WorkReportDetail from "./components/ManagerDashboard/workreport/WorkRepor
 import AdminEmployeAttendaceView from "./components/AdminDashboard/attendanceUtils/AdminEmployeAttendaceView";
 import SingleDepartment from "./components/AdminDashboard/departmentUtils/SingleDepartment";
 import EmployePayroll from "./components/AdminDashboard/payrollUtils/EmployePayroll";
+import LeaveForm from "./components/EmployeeDashboard/leaves/LeaveForm";
 
 
 
@@ -75,7 +76,8 @@ const App = () => {
         >
           <Route path="dashboard" element={<DashboardEmp />} />
           <Route path="department" element={<EmployeeDepartment />} />
-          <Route path="leaves" element={<EmployeeLeaves />} />
+          <Route path="leaves" element={<LeavePageE />} />
+          <Route path="leaves/leave-application" element={<LeaveForm />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="attendance-list" element={<EmployeeAttendanceList />} />
           <Route path="settings" element={<EmployeeSettings />} />
@@ -85,6 +87,7 @@ const App = () => {
           <Route path="workreports/edit/:id" element={<WorkReportForm />} />
           <Route path="workreports/add-work-report" element={<WorkReportForm />} />
           <Route path="profile/:id" element={<MyProfile />} />
+
         </Route>
 
         {/* Protected Admin Routes */}
