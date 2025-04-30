@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 
-// const API_URL = "https://hrms-backend-7176.onrender.com/api/departments";
-const API_URL = "http://localhost:8000/api/departments";
+const API_URL = "https://hrms-backend-7176.onrender.com/api/departments";
+// const API_URL = "http://localhost:8000/api/departments";
 
 const handleApiError = (error: any): { success: boolean; message: string } => {
   console.error("API Error:", error);

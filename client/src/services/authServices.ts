@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const API_BASE_URL = "https://hrms-backend-7176.onrender.com/api/auth";
-const API_BASE_URL = "http://localhost:8000/api/auth";
+const API_BASE_URL = "https://hrms-backend-7176.onrender.com/api/auth";
+// const API_BASE_URL = "http://localhost:8000/api/auth";
 
 export const loginUser = async (data: { email: string; password: string }) => {
   try {

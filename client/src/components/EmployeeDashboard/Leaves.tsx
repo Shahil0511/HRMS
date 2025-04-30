@@ -1,6 +1,7 @@
-import axios from 'axios';
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchLeaveHistoryByEmployeeId } from '../../services/leaveServices';
 
 interface LeaveRequest {
     _id: string;
@@ -59,8 +60,6 @@ const LeavePageE = () => {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
         };
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
@@ -73,37 +72,12 @@ const LeavePageE = () => {
     useEffect(() => {
         const fetchLeaveHistory = async () => {
             try {
-                const userDataString = localStorage.getItem('user');
-                if (!userDataString) {
-                    throw new Error('No user data found in localStorage');
-                }
-
-                const userData = JSON.parse(userDataString);
-                const employeeId = userData._id || userData.id;
-
-                if (!employeeId) {
-                    throw new Error('Employee ID not found in user data');
-                }
-
-                const response = await axios.get(`http://localhost:8000/api/leave/getLeavesByEmpID/${employeeId}`);
-                if (!response.data || !Array.isArray(response.data)) {
-                    throw new Error('Invalid response data format');
-                }
-
-                // Transform the leave data to ensure proper formatting
-                const normalizedLeaves = response.data.map(leave => ({
+                const leaves: LeaveRequest[] = (await fetchLeaveHistoryByEmployeeId()).map(leave => ({
                     ...leave,
-                    _id: leave.id || leave._id, // Convert ObjectId to string
-                    employeeId: leave.employeeId?.toString(),
-                    startDate: new Date(leave.startDate).toISOString(),
-                    endDate: new Date(leave.endDate).toISOString(),
-                    createdAt: new Date(leave.createdAt).toISOString(),
-                    updatedAt: new Date(leave.updatedAt).toISOString()
+                    status: leave.status.charAt(0).toUpperCase() + leave.status.slice(1) as LeaveRequest['status']
                 }));
 
-
-
-                setLeaveHistory(normalizedLeaves);
+                setLeaveHistory(leaves);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching leave history:', error);
@@ -114,6 +88,7 @@ const LeavePageE = () => {
 
         fetchLeaveHistory();
     }, []);
+
 
     if (loading) {
         return (

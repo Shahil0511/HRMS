@@ -1,5 +1,8 @@
 import axios from "axios";
 
+const API_URL = "https://hrms-backend-7176.onrender.com/api/leave";
+// const API_URL = "http://localhost:8000/api/leave";
+
 export interface LeaveForm {
   employeeId: any;
   _id: string;
@@ -14,10 +17,15 @@ export interface LeaveForm {
   updatedAt: string;
 }
 
-// Define the LeaveStatus type
-export type LeaveStatus = "pending" | "approved" | "rejected";
+export interface LeaveRequest extends LeaveForm {
+  startDate: string;
+  endDate: string;
+  totalLeaveDuration: number;
+  status: LeaveStatus;
+}
 
-const API_URL = "http://localhost:8000/api/leave";
+// Define the LeaveStatus type
+export type LeaveStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 // Helper function to get token and user data
 const getAuthHeaders = () => {
@@ -123,3 +131,70 @@ export const updateLeave = async (
     return null;
   }
 };
+
+export const fetchLeaveHistoryByEmployeeId = async (): Promise<
+  LeaveRequest[]
+> => {
+  try {
+    const userDataString = localStorage.getItem("user");
+    if (!userDataString) {
+      throw new Error("No user data found in localStorage");
+    }
+
+    const userData = JSON.parse(userDataString);
+    const employeeId = userData._id || userData.id;
+
+    if (!employeeId) {
+      throw new Error("Employee ID not found in user data");
+    }
+
+    const response = await axios.get(
+      `${API_URL}/getLeavesByEmpID/${employeeId}`
+    );
+
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error("Invalid response data format");
+    }
+
+    const normalizedLeaves: LeaveRequest[] = response.data.map((leave: any) => {
+      const startDate = new Date(leave.startDate).toISOString();
+      const endDate = new Date(leave.endDate).toISOString();
+      const totalLeaveDuration =
+        Math.round(
+          (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+      return {
+        ...leave,
+        _id: leave.id || leave._id,
+        employeeId: leave.employeeId?.toString(),
+        startDate,
+        endDate,
+        totalLeaveDuration,
+        status: capitalizeStatus(leave.status),
+        createdAt: new Date(leave.createdAt).toISOString(),
+        updatedAt: new Date(leave.updatedAt).toISOString(),
+      };
+    });
+
+    return normalizedLeaves;
+  } catch (error) {
+    console.error("Error fetching leave history:", error);
+    throw error;
+  }
+};
+
+function capitalizeStatus(
+  status: string
+): "Pending" | "Approved" | "Rejected" | "Cancelled" {
+  const map: Record<string, "Pending" | "Approved" | "Rejected" | "Cancelled"> =
+    {
+      pending: "Pending",
+      approved: "Approved",
+      rejected: "Rejected",
+      cancelled: "Cancelled",
+    };
+
+  return map[status.toLowerCase()] || "Pending";
+}
