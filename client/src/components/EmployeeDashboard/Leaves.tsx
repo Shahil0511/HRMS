@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchLeaveHistoryByEmployeeId } from '../../services/leaveServices';
@@ -72,16 +71,37 @@ const LeavePageE = () => {
     useEffect(() => {
         const fetchLeaveHistory = async () => {
             try {
-                const leaves: LeaveRequest[] = (await fetchLeaveHistoryByEmployeeId()).map(leave => ({
-                    ...leave,
-                    status: leave.status.charAt(0).toUpperCase() + leave.status.slice(1) as LeaveRequest['status']
-                }));
+                setLoading(true);
+                setError(null);
 
-                setLeaveHistory(leaves);
+                const response = await fetchLeaveHistoryByEmployeeId();
+
+                if (response && 'message' in response && typeof response.message === 'string') {
+                    setLeaveHistory([]);
+                    setLoading(false);
+                    return;
+                }
+
+                if (Array.isArray(response)) {
+                    const formattedLeaves = response.map(leave => ({
+                        ...leave,
+                        status: leave.status.charAt(0).toUpperCase() + leave.status.slice(1) as LeaveRequest['status']
+                    }));
+                    setLeaveHistory(formattedLeaves);
+                } else {
+                    setLeaveHistory([]);
+                }
+
                 setLoading(false);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching leave history:', error);
-                setError(error instanceof Error ? error.message : 'Failed to fetch leave history');
+                // Check if it's a 404 error
+                if (error.response && error.response.status === 404) {
+                    setError('No leave records found for your account.');
+                    setLeaveHistory([]);
+                } else {
+                    setError(error.message || 'Failed to fetch leave history');
+                }
                 setLoading(false);
             }
         };
@@ -89,19 +109,10 @@ const LeavePageE = () => {
         fetchLeaveHistory();
     }, []);
 
-
     if (loading) {
         return (
             <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 px-6 py-2 flex items-center justify-center">
                 <div className="text-white">Loading leave history...</div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-l from-indigo-900 via-blue-900 to-gray-900 px-6 py-2 flex items-center justify-center">
-                <div className="text-red-300">{error}</div>
             </div>
         );
     }
@@ -121,7 +132,12 @@ const LeavePageE = () => {
             <div className="bg-gradient-to-r from-indigo-900 via-blue-900 to-gray-900 text-white py-4 px-4 rounded-md shadow-md">
                 <h2 className="text-xl font-semibold mb-4">Leave Request History</h2>
 
-                {leaveHistory.length === 0 ? (
+                {error ? (
+                    <div className="text-center py-8">
+                        <p className="text-yellow-300">{error}</p>
+                        <p className="mt-2">You haven't applied for any leaves yet.</p>
+                    </div>
+                ) : leaveHistory.length === 0 ? (
                     <div className="text-center py-8">
                         <p>No leave records found. Apply for leave to get started.</p>
                     </div>
