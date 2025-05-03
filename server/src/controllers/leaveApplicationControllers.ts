@@ -267,3 +267,33 @@ export const submitLeave = async (
     });
   }
 };
+
+export const updateLeave = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Find the leave by ID and update it
+    const updatedLeave = await Leave.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedLeave) {
+      res.status(404).json({ message: "Leave not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Leave updated successfully",
+      leave: updatedLeave,
+    });
+  } catch (error) {
+    console.error("Error updating leave:", error);
+    res.status(500).json({ message: "Error updating leave" });
+  }
+};

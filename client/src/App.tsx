@@ -78,6 +78,8 @@ const App = () => {
           <Route path="department" element={<EmployeeDepartment />} />
           <Route path="leaves" element={<LeavePageE />} />
           <Route path="leaves/leave-application" element={<LeaveForm />} />
+          <Route path="leaves/edit/:id" element={<LeaveForm />} />
+          <Route path="leaves/view/:id" element={<LeaveForm />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="attendance-list" element={<EmployeeAttendanceList />} />
           <Route path="settings" element={<EmployeeSettings />} />

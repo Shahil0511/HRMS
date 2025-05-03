@@ -7,6 +7,7 @@ import {
   getLeavesByEmployeeId,
   newLeave,
   submitLeave,
+  updateLeave,
 } from "../controllers/leaveApplicationControllers";
 
 // import { isEmployee } from "../middlewares/isEmployee";
@@ -19,5 +20,6 @@ router.get("/allLeaves", getAllLeaves); // /api/leave/allLeaves
 router.get("/getLeavesByEmpID/:id", getLeavesByEmployeeId); // /api/leave/getLeavesByEmpID/:id
 router.get("/getLeaveById/:id", getLeaveById);
 router.post("/submit", verifyToken, submitLeave);
+router.put("/edit/:id", verifyToken, updateLeave);
 
 export default router;

@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getEmployeeDetails, submitLeaveForm, updateLeave } from '../../../services/leaveServices';
-
+import {
+    getEmployeeDetails,
+    submitLeaveForm,
+    updateLeave,
+    fetchLeavesById,
+    fetchLeaveHistoryByEmployeeId
+} from '../../../services/leaveServices';
 
 interface FormData {
     employeeName: string;
@@ -67,6 +72,58 @@ function LeaveForm() {
         }));
     }, [formData.startDate, formData.endDate, calculateLeaveDays]);
 
+    // Fetch leave by ID for edit and view modes
+    const fetchLeaveDetails = async (leaveId: string) => {
+        try {
+            // First try to get it from the employee's leave history
+            const allLeaves = await fetchLeaveHistoryByEmployeeId();
+            const leave = allLeaves.find(leave => leave._id === leaveId);
+
+            if (leave) {
+                setFormData({
+                    employeeName: leave.employeeName,
+                    employeeId: leave.employeeId,
+                    department: leave.department,
+                    designation: leave.designation,
+                    date: new Date(leave.createdAt).toISOString().split('T')[0],
+                    typeOfLeave: leave.leaveType,
+                    startDate: new Date(leave.startDate).toISOString().split('T')[0],
+                    endDate: new Date(leave.endDate).toISOString().split('T')[0],
+                    totalLeaveDuration: leave.totalLeaveDuration.toString(),
+                    reason: leave.reason,
+                });
+                return;
+            }
+
+            // If not found in history, try direct fetch
+            const leaveDetails = await fetchLeavesById(leaveId);
+            if (leaveDetails) {
+                // Format dates for form inputs
+                const formattedDate = new Date(leaveDetails.date).toISOString().split('T')[0];
+
+                setFormData({
+                    employeeName: leaveDetails.employeeName,
+                    employeeId: leaveDetails.employeeId,
+                    department: leaveDetails.department,
+                    designation: leaveDetails.designation,
+                    date: formattedDate,
+                    typeOfLeave: leaveDetails.leaveType,
+                    startDate: formattedDate, // Adjust if your API returns startDate
+                    endDate: formattedDate,   // Adjust if your API returns endDate
+                    totalLeaveDuration: '1',  // Adjust if your API returns duration
+                    reason: leaveDetails.reason,
+                });
+            } else {
+                toast.error("Leave details not found");
+                navigate('/employee/leaves/');
+            }
+        } catch (error) {
+            console.error('Error fetching leave details:', error);
+            toast.error("Failed to load leave details");
+            navigate('/employee/leaves/');
+        }
+    };
+
     // Fetch employee details and Leave data if needed
     useEffect(() => {
         const fetchData = async () => {
@@ -88,7 +145,9 @@ function LeaveForm() {
                 }
 
                 // For view and edit modes, fetch the Leave details
-                /* here we have to write code details for a view and edit mode */
+                if ((isViewMode || isEditMode) && id) {
+                    await fetchLeaveDetails(id);
+                }
 
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -133,10 +192,9 @@ function LeaveForm() {
                 leaveType: formData.typeOfLeave,
                 startDate: formData.startDate,
                 endDate: formData.endDate,
-                totalLeaveDuration: formData.totalLeaveDuration,
+                totalLeaveDuration: parseInt(formData.totalLeaveDuration),
                 reason: formData.reason,
             };
-
 
             if (isEditMode && id) {
                 await updateLeave(id, submissionData);
