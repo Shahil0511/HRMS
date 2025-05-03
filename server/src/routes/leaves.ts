@@ -1,6 +1,7 @@
 // File: server/src/routes/leaves.ts
 
 import { Router } from "express";
+import { getEmployeeDetails } from "../controllers/employeeController";
 import {
   getAllLeaves,
   getLeaveById,
@@ -21,5 +22,6 @@ router.get("/getLeavesByEmpID/:id", getLeavesByEmployeeId); // /api/leave/getLea
 router.get("/getLeaveById/:id", getLeaveById);
 router.post("/submit", verifyToken, submitLeave);
 router.put("/edit/:id", verifyToken, updateLeave);
+router.post("/employeedetails", getEmployeeDetails);
 
 export default router;

@@ -50,7 +50,7 @@ export const getEmployeeDetails = async () => {
   try {
     const { headers, employeeId } = getAuthHeaders();
     const response = await axios.post(
-      `http://localhost:8000/api/workreports/employeedetails`,
+      `${API_URL}/employeedetails`,
       { employeeId },
       { headers }
     );
