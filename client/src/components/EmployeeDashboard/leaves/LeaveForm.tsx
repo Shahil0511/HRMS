@@ -309,7 +309,6 @@ function LeaveForm() {
                                     type="date"
                                     name="date"
                                     value={formData.date}
-                                    onChange={handleChange}
                                     readOnly={isViewMode}
                                     className="shadow appearance-none border border-blue-800 rounded-md w-full py-3 px-3 bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
