@@ -198,3 +198,20 @@ function capitalizeStatus(
 
   return map[status.toLowerCase()] || "Pending";
 }
+
+export const fetchLeavesAdmin = async (): Promise<LeaveRequest[]> => {
+  try {
+    const { headers, employeeId, isAdmin } = getAuthHeaders();
+    const requestBody = isAdmin ? {} : { employeeId };
+    const response = await axios.post<LeaveRequest[]>(
+      `${API_URL}/admin/history`,
+      requestBody,
+      { headers }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching work reports for manager:", error);
+    return [];
+  }
+};

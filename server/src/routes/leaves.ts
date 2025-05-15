@@ -9,10 +9,12 @@ import {
   newLeave,
   submitLeave,
   updateLeave,
+  getAllLeavesForAdmin,
 } from "../controllers/leaveApplicationControllers";
 
 // import { isEmployee } from "../middlewares/isEmployee";
 import { verifyToken } from "../middlewares/verifyToken";
+import { isAdmin } from "../middlewares/verifyAdmin";
 
 const router = Router();
 
@@ -23,5 +25,6 @@ router.get("/getLeaveById/:id", getLeaveById);
 router.post("/submit", verifyToken, submitLeave);
 router.put("/edit/:id", verifyToken, updateLeave);
 router.post("/employeedetails", getEmployeeDetails);
+router.post("/admin/history", getAllLeavesForAdmin);
 
 export default router;

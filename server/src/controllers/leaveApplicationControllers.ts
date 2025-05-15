@@ -297,3 +297,23 @@ export const updateLeave = async (
     res.status(500).json({ message: "Error updating leave" });
   }
 };
+
+export const getAllLeavesForAdmin = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const leaves = await Leave.find().sort({ createAt: -1 });
+
+    if (!leaves.length) {
+      console.log("No Work Report Found.");
+      res.status(200).json({ message: "No work reports available" });
+      return;
+    }
+
+    res.status(200).json(leaves);
+  } catch (error) {
+    console.error("Error fetching all work reports for admin:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
