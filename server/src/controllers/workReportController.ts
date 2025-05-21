@@ -159,24 +159,35 @@ export const getWorkReportsForManager = async (
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 export const getAllWorkReportsForAdmin = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    // Fetch all work reports directly
+    // Extract pagination values from query params
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = 35;
+    const skip = (page - 1) * limit;
 
-    const workReports = await WorkReport.find().sort({ createdAt: -1 });
+    // Fetch work reports with pagination
+    const workReports = await WorkReport.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    4;
+    // Get total count for frontend pagination control
+    const totalCount = await WorkReport.countDocuments();
 
-    if (!workReports.length) {
-      console.log("No work reports found.");
-      res.status(200).json({ message: "No work reports available" });
-      return;
-    }
-
-    res.status(200).json(workReports);
+    res.status(200).json({
+      success: true,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+      totalCount,
+      data: workReports,
+    });
   } catch (error) {
-    console.error("Error fetching all work reports for admin:", error);
+    console.error("Error fetching paginated work reports for admin:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

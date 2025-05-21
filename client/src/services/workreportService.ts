@@ -99,19 +99,22 @@ export const fetchWorkReportManager = async (): Promise<WorkReport[]> => {
     return [];
   }
 };
-export const fetchWorkReportAdmin = async (): Promise<WorkReport[]> => {
+export const fetchWorkReportAdmin = async (page = 1): Promise<WorkReport[]> => {
   try {
     const { headers, employeeId, isAdmin } = getAuthHeaders();
+
+    const url = `${API_URL}/admin/history?page=${page}`;
     const requestBody = isAdmin ? {} : { employeeId };
-    const response = await axios.post<WorkReport[]>(
-      `${API_URL}/admin/history`,
+
+    const response = await axios.post<{ data: WorkReport[] }>(
+      url,
       requestBody,
       { headers }
     );
 
-    return response.data;
+    return response.data.data;
   } catch (error) {
-    console.error("Error fetching work reports for manager:", error);
+    console.error("Error fetching work reports:", error);
     return [];
   }
 };
