@@ -109,7 +109,8 @@ export const addEmployee = async (employeeData: any) => {
  * Get all employees with optional search
  */
 export const getAllEmployees = async (search?: string) => {
-  return getRequest(API_URL, { search });
+  const response = await getRequest(API_URL, { search });
+  return response;
 };
 
 /**

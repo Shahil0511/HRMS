@@ -33,6 +33,7 @@ const EmployeeDashboard: React.FC = () => {
             setLoading(true);  // Set loading to true while fetching
             try {
                 const data = await getAllEmployees();
+
                 setEmployees(data.employees);
                 setFilteredEmployees(data.employees);
             } catch (error) {

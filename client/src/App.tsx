@@ -53,6 +53,7 @@ import AdminEmployeAttendaceView from "./components/AdminDashboard/attendanceUti
 import SingleDepartment from "./components/AdminDashboard/departmentUtils/SingleDepartment";
 import EmployePayroll from "./components/AdminDashboard/payrollUtils/EmployePayroll";
 import LeaveForm from "./components/EmployeeDashboard/leaves/LeaveForm";
+import Rooster from "./components/AdminDashboard/Rooster";
 
 
 
@@ -107,6 +108,7 @@ const App = () => {
           <Route path="add-department" element={<AddDepartment />} />
           <Route path="employee" element={<Employee />} />
           <Route path="leaves" element={<Leaves />} />
+          <Route path="rooster" element={<Rooster />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="attendance/:id" element={<AdminEmployeAttendaceView />} />
           <Route path="payroll" element={<Payroll />} />
