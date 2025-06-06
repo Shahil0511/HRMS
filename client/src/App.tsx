@@ -54,6 +54,7 @@ import SingleDepartment from "./components/AdminDashboard/departmentUtils/Single
 import EmployePayroll from "./components/AdminDashboard/payrollUtils/EmployePayroll";
 import LeaveForm from "./components/EmployeeDashboard/leaves/LeaveForm";
 import Rooster from "./components/AdminDashboard/Rooster";
+import RosterE from "./components/EmployeeDashboard/RosterE";
 
 
 
@@ -81,6 +82,7 @@ const App = () => {
           <Route path="leaves/leave-application" element={<LeaveForm />} />
           <Route path="leaves/edit/:id" element={<LeaveForm />} />
           <Route path="leaves/view/:id" element={<LeaveForm />} />
+          <Route path="roster" element={<RosterE />} />
           <Route path="attendance" element={<EmployeeAttendance />} />
           <Route path="attendance-list" element={<EmployeeAttendanceList />} />
           <Route path="settings" element={<EmployeeSettings />} />

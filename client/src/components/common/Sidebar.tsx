@@ -50,6 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, toggleSidebar }) => {
                 { to: "/employee/department", icon: <FaLayerGroup size={22} />, text: "Department" },
                 { to: "/employee/attendance", icon: <FaClipboardList size={22} />, text: "Attendance" },
                 { to: "/employee/leaves", icon: <FaCalendarAlt size={22} />, text: "Leaves" },
+                { to: "/employee/roster", icon: <FaCalendarAlt size={22} />, text: "Roster" },
                 { to: "/employee/workreports", icon: <FaFileInvoice size={22} />, text: "Work Report" },
                 { to: "/employee/payroll", icon: <FaMoneyBillAlt size={22} />, text: "PayRoll" },
                 { to: "/employee/settings", icon: <FaCog size={22} />, text: "Settings" },
