@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+import { IUser } from "../models/UserSchema";
+
 interface IAssignedEmployee {
-  employeeObject: import("/Users/shahil/Desktop/HRMS/server/src/models/UserSchema").IUser &
+  employeeObject: IUser &
     Required<{ _id: mongoose.Types.ObjectId }> & { __v: number };
   employee: mongoose.Types.ObjectId;
   department: string;
