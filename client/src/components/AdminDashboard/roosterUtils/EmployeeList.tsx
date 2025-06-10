@@ -83,8 +83,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
                     {employees.length}
                 </span>
             </div>
-
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-130 overflow-y-auto">
                 {employees.map(employee => {
                     const employeeAssignments = assignments.filter(a => a.employeeId === employee.id);
                     const isAssigned = employeeAssignments.length > 0;

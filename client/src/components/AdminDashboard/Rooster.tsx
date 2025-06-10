@@ -277,10 +277,16 @@ const Roster: React.FC = () => {
                         timeSlot: shift.label,
                         shiftStart: shift.start,
                         shiftEnd: shift.end,
-                        assignedEmployees: dayAssignments.map(assignment => ({
-                            employee: assignment.employeeId,
-                            department: assignment.designation
-                        }))
+                        assignedEmployees: dayAssignments.map(assignment => {
+                            // Find the employee object for this assignment
+                            const employeeObject = employees.find(emp => emp.id === assignment.employeeId);
+
+                            return {
+                                employee: assignment.employeeId,
+                                department: assignment.designation,
+                                employeeObject: employeeObject || null // Add the required employeeObject property
+                            };
+                        })
                     };
                 });
 
